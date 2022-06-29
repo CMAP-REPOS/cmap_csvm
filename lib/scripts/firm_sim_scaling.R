@@ -85,7 +85,7 @@ firm_sim_scale_employees <- function(Firms, emp_control, emp_control_taz, c_cbp_
   setnames(FirmsNonCMAP, "MESOZONE", "ZONE")
   
   FirmsNonCMAP <- firm_sim_scale_employees_taz(RegionFirms = FirmsNonCMAP,
-                                              Employment.SE = emp_control,
+                                              Employment.SE = emp_control[ZONE >= 150],
                                               MaxBusID = max(c(Firms$BusID, FirmsCMAP$BusID)))
 
   setnames(FirmsNonCMAP, "ZONE", "MESOZONE")
