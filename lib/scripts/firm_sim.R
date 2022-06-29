@@ -89,6 +89,6 @@ firm_sim <- function(cbp) {
   progressEnd(dir = SCENARIO_LOG_PATH)
   
   # Return results
-  return(RegionFirms)
+  return(list(RegionFirms = RegionFirms))
   
 }
