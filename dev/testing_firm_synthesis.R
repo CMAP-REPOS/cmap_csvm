@@ -18,4 +18,15 @@ taz_se[RegionFirms[, .(Emp = sum(Emp)), by = .(TAZ, n2)], Emp := i.Emp, on = c("
 
 taz_se[is.na(Emp) & SE > 0]
 
-taz_se[is.na(Emo)] <- 0
+taz_se[is.na(Emp), Emp := 0] 
+taz_se[is.na(SE), SE := 0] 
+
+taz_se[, Diff := Emp - SE]
+taz_se_n2 <- taz_se[, .(Emp = sum(Emp), SE = sum(SE), Diff = sum(Diff)), keyby = n2]
+
+n2labels <- unique(NAICS2007[,.(n2 = NAICS2, Label2)])
+taz_se_n2[n2labels, Label2 := i.Label2, on = "n2"]
+
+setcolorder(taz_se_n2, c("Label2", names(taz_se_n2)[1:4]))
+
+fwrite(taz_se_n2, "./dev/Testing_Firm_Synthesis_Comparison_n2.csv")
