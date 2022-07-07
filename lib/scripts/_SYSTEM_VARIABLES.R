@@ -20,10 +20,14 @@ Sys.setenv(R_LIBS = paste(SYSTEM_PKGS_PATH, Sys.getenv("R_LIBS"), sep=.Platform$
 SYSTEM_DATA_PATH      <- file.path(SYSTEM_APP_PATH, "lib", "data")
 SYSTEM_TEMPLATES_PATH <- file.path(SYSTEM_APP_PATH, "lib", "templates")
 SYSTEM_SCRIPTS_PATH   <- file.path(SYSTEM_APP_PATH, "lib", "scripts")
+SYSTEM_DEV_PATH       <- file.path(SYSTEM_APP_PATH, "dev")
+SYSTEM_DOCS_PATH      <- file.path(SYSTEM_APP_PATH, "docs")
+
 
 SYSTEM_FIRMSYN_OUTPUTNAME <- "1.Firms.RData"
 SYSTEM_FTTM_OUTPUTNAME    <- "2.CommercialVehileTrips.RData"
 SYSTEM_TT_OUTPUTNAME      <- "3.TripTables.RData"
+SYSTEM_DB_OUTPUTNAME      <- "4.DashboardTables.RData"
 
 # location of pandoc install, required for rmarkdown/dashboard
 # this should already be set with rstudio installation
