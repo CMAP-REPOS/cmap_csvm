@@ -8,19 +8,22 @@
 # Segmentation should be updated to something more appropriate for the model employment categories
 # CMAP model uses the NAICS2 codes, use those or sensible groupings of those codes
 
-# # set up script
+
+# Setup -------------------------------------------------------------------
 source("./dev/init_dev.R")
-
+library(readxl)
+library(tidyverse)
 THIS_MODEL_PATH <- file.path("./dev/Estimation/cv_activities/")
-
 # use the NAICS2007 table built in to rFreight package to create a labels list
 n2labels <- unique(NAICS2007[,.(n2 = NAICS2, Label2)])
 
-# Load the existing example tabulation
+
+# Load Example Output -----------------------------------------------------
 cv_activities_model_old <- readRDS(file.path(THIS_MODEL_PATH, "_cv_activities_model.RDS"))
 # Output format needs to be the same as this, except that industry is replaced with new employment group categroization.
 
-# Load the firm synthsis output which is the input to this model for reference
+
+## Load Output of Firm Synthesis (For Reference) ---------------------------
 load(file.path("scenarios/base/outputs/1.Firms.RData"))
 names(firm_sim_results)
 firm_sim_results$RegionFirms
@@ -40,10 +43,140 @@ firm_sim_results$RegionFirms[,.N, keyby = n2]
 
 ### TODO update old code from this point on...
 
-# Load the estimation datasets
-est <- readRDS(file.path("dev", "Data_Processed", "outputs", "semcog_cvs_est.RDS"))
-trip <- readRDS(file.path("dev", "Data_Processed", "outputs", "semcog_cvs_trip.RDS"))
 
+# Load Survey Data --------------------------------------------------------
+est <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xlsx', sheet = 1)
+#driver <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xlsx', sheet = 2)
+#trips <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xlsx', sheet = 3)
+#not joining yet, using just est for now
+
+est_vars <- est %>% 
+  select(AGEN_NAICS, AQ6A_OPEN_A:AQ6C_OPEN_D, ExpansionWeight, NormalizedWeight)
+# Prepare Employment Category ---------------------------------------------
+est_rename <- est_vars %>% 
+  mutate(EmpCatName = case_when(
+    AGEN_NAICS %in% c(44,45) ~ 'Retail',
+    AGEN_NAICS %in% c(22, 23) ~ 'Construction',
+    AGEN_NAICS %in% c(53, 54) ~ 'Office_Professional',
+    AGEN_NAICS %in% c(61,62) ~ 'Ed_Health_SocialServices',
+    AGEN_NAICS %in% c(561, 562, 5617) ~ 'Admin_Support_Waste',
+    AGEN_NAICS == 92 ~ 'Service_Public',
+    AGEN_NAICS == 72 ~ 'Service_FoodDrink',
+    AGEN_NAICS == 81 ~ 'Service_Other',
+    AGEN_NAICS == 42 ~ 'Wholesale',
+  ))
+
+
+# Create Sums and Categorize ----------------------------------------------
+colSums(!is.na(est_rename))
+
+
+est_Q6_sums <- est_rename %>% 
+  rowwise() %>% 
+  mutate(Goods = sum(across(AQ6A_OPEN_A:AQ6B_OPEN_D), na.rm = T),
+         Services = sum(across(AQ6C_OPEN_A:AQ6C_OPEN_D), na.rm = T),
+         Q6Trip_Total = (Goods + Services))
+
+firm_activity <- est_Q6_sums %>% 
+  mutate(Activity = case_when(Goods >0 & Services == 0 ~ 'Goods',
+                              Goods == 0 & Services > 0 ~ 'Services',
+                              Goods > 0 & Services > 0 ~ 'GoodsAndServices',
+                              Goods == 0 & Services == 0 ~ 'NoData',
+                              T ~ 'NA'))
+
+firm_activity_expansion <- firm_activity %>% 
+  mutate(TotalTrips_Expansion = (Q6Trip_Total * ExpansionWeight)) %>% 
+  select(-(1:13))
+  
+
+
+
+
+
+# Unweighted Crosstabs (Exploratory) --------------------------------------
+#Distribution of Firm Activity Type by NAICS2 Group
+firm_activity_expansion %>% 
+  group_by(EmpCatName, Activity) %>%
+  summarise(n = n()) %>%
+  mutate(prop = n/sum(n)) %>% 
+  subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
+  spread(Activity, prop) %>% 
+  mutate(
+    across(Goods:Services, ~replace_na(.x, 0))) %>% 
+  mutate(
+    across(Goods:Services, round, 4)) %>%
+  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
+  as.data.table()
+
+#Distribution of Trips by Firm Activity Type and NAICS2 Group
+firm_activity_expansion %>% 
+  group_by(EmpCatName, Activity) %>%
+  summarise(n = sum(Q6Trip_Total))%>%
+  mutate(prop = n/sum(n)) %>% 
+  subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
+  spread(Activity, prop) %>% 
+  mutate(
+    across(Goods:Services, ~replace_na(.x, 0))) %>% 
+  mutate(
+    across(Goods:Services, round, 4)) %>%
+  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
+  as.data.table()
+
+#Number of firms by Firm Activity
+firm_activity_expansion %>% 
+  group_by(Activity) %>% 
+  count()
+
+#Breakdown of NAICS2 Employer Category for Firms with Insufficient Trips Count Data  
+firm_activity_expansion %>% 
+  group_by(Activity) %>% 
+  count(EmpCatName) %>% 
+  filter(Activity == 'NoData')
+ 
+
+
+# Weighted Crosstabs ------------------------------------------------------
+FirmActivity_Type_weight <- firm_activity_expansion %>% 
+  group_by(EmpCatName, Activity) %>%
+  tally(wt = ExpansionWeight) %>% 
+  mutate(prop = n/sum(n)) %>% 
+  subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
+  spread(Activity, prop) %>% 
+  mutate(
+    across(Goods:Services, ~replace_na(.x, 0))) %>% 
+  mutate(
+    across(Goods:Services, round, 4)) %>%
+  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
+  as.data.table()
+  
+FirmActivity_Trips_weight <- firm_activity_expansion %>% 
+  group_by(EmpCatName, Activity) %>%
+  summarise(n = sum(TotalTrips_Expansion))%>%
+  mutate(prop = n/sum(n)) %>% 
+  subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
+  spread(Activity, prop) %>% 
+  mutate(
+    across(Goods:Services, ~replace_na(.x, 0))) %>% 
+  mutate(
+    across(Goods:Services, round, 4)) %>%
+  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
+  as.data.table()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Example Code ------------------------------------------------------------
 # standardise naming in CVS processing
 # employment category should be called EmpCatName
 setnames(est, "Model_EmpCat", "EmpCatName")
