@@ -181,7 +181,12 @@ FirmActivity_Type_weight <- firm_activity_expansion %>%
          Service = Services) %>% 
   filter(!is.na(EmpCatGroupedName)) %>% 
   as.data.table()
-  
+
+
+saveRDS(FirmActivity_Type_weight, 'dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS')
+
+saveRDS(dcast(mpreddata, EmpCatGroupedName~Activity, value.var = "Proportion"),
+        "dev/Estimation/cv_activities/cv_activities_model.RDS")
 
 
 
