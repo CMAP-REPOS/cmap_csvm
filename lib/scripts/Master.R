@@ -10,16 +10,20 @@ SCENARIO_RUN_START   <- Sys.time()
 ### 1. Firm Synthesis ------------------------------------------------------------------------
  
 if (SCENARIO_RUN_FIRMSYN) {
-
+  
+  cat("Starting Firm Synthesis Step", "\n")
+  
   # Load executive functions (process inputs and simulation)
   source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_process_inputs.R"))
   source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim.R"))
 
   # Process inputs
+  cat("Processing Firm Synthesis Inputs", "\n")
   firm_inputs <- new.env()
   cbp <- firm_sim_process_inputs(envir = firm_inputs)
 
   # Run simulation
+  cat("Running Firm Synthesis Simulation", "\n")
   firm_sim_results <- suppressMessages(
     run_sim(
       FUN = firm_sim,
@@ -31,6 +35,7 @@ if (SCENARIO_RUN_FIRMSYN) {
   )
   
   # Save inputs and results
+  cat("Saving Firm Synthesis Database", "\n")
   save(firm_sim_results, 
        firm_inputs, 
        file = file.path(SCENARIO_OUTPUT_PATH,

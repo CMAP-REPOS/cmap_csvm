@@ -78,6 +78,12 @@ firm_sim <- function(cbp) {
   
   # Extract regional firms
   RegionFirms <- FirmsDomestic[MESOZONE < 150]
+  
+  # Add employment classifications
+  RegionFirms[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
+                 EmpCatGroupedName := i.EmpCatGroupedName,
+                 on = "n2"]
+  
   save(RegionFirms, file = file.path(SCENARIO_OUTPUT_PATH, "RegionFirms.Rdata"))
   
   # save warehouse list for use in truck touring model
@@ -89,6 +95,7 @@ firm_sim <- function(cbp) {
   progressEnd(dir = SCENARIO_LOG_PATH)
   
   # Return results
-  return(list(RegionFirms = RegionFirms))
+  return(list(RegionFirms = RegionFirms, 
+              TAZLandUseCVTM = TAZLandUseCVTM))
   
 }

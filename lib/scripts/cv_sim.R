@@ -9,7 +9,8 @@ cv_sim <- function(firms) {
   if(!exists("run_step")) run_step <- rep(TRUE, 8)
   
   # Read skims from .rds file
-  skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
+  ### TEMP comment this out until we have skims ready
+  # skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
   
   if(run_step[1]){
     

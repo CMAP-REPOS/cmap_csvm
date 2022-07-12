@@ -28,7 +28,7 @@ SYSTEM_DOCS_PATH      <- file.path(SYSTEM_APP_PATH, "docs")
 
 
 SYSTEM_FIRMSYN_OUTPUTNAME <- "1.Firms.RData"
-SYSTEM_FTTM_OUTPUTNAME    <- "2.CommercialVehileTrips.RData"
+SYSTEM_CVTM_OUTPUTNAME    <- "2.CommercialVehileTrips.RData"
 SYSTEM_TT_OUTPUTNAME      <- "3.TripTables.RData"
 SYSTEM_DB_OUTPUTNAME      <- "4.DashboardTables.RData"
 
