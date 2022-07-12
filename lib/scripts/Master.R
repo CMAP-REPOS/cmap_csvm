@@ -68,7 +68,9 @@ if (SCENARIO_RUN_CVTM) {
                                                       packages = SYSTEM_PKGS, 
                                                       lib = SYSTEM_PKGS_PATH,
                                                       inputEnv = cv_inputs))
-  cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
+  
+  ###TEMP commenting out until all steps working
+  #cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
   
   # Save inputs and results
   cat("Saving Commercial Vehicle Touring Database", "\n")
