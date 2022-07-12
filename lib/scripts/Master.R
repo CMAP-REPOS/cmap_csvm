@@ -45,44 +45,51 @@ if (SCENARIO_RUN_FIRMSYN) {
 }
 
 
-# ### 3. Simulate Freight Truck Movements  ------------------------------------------------------------------------
-# 
-# if (SCENARIO_RUN_FTTM) {
-# 
-#   # Load executive functions (process inputs and simulation)
-#   source(file = file.path(SYSTEM_SCRIPTS_PATH, "ft_sim.R"))
-#   source(file = file.path(SYSTEM_SCRIPTS_PATH, "ft_sim_process_inputs.R"))
-# 
-#   # Process inputs
-#   ft_inputs <- new.env()
-#   AnnualShipments <- ft_sim_process_inputs(envir = ft_inputs)
-# 
-#   # Run simulation
-#   ft_trips <- suppressMessages(
-#     run_sim(
-#       FUN = ft_sim,
-#       data = AnnualShipments,
-#       packages = SYSTEM_PKGS,
-#       lib = SYSTEM_PKGS_PATH,
-#       inputEnv = ft_inputs
-#     )
-#   )
-# 
-#   # Save inputs and results
-#   save(ft_trips,
-#        ft_inputs,
-#        file = file.path(SCENARIO_OUTPUT_PATH,
-#                         SYSTEM_FTTM_OUTPUTNAME))
-# 
-#   rm(AnnualShipments,
-#      ft_trips,
-#      ft_inputs)
-# 
-#   gc(verbose = FALSE)
-# 
-# }
+### 2. Simulate Commercial Vehicle Movements  ------------------------------------------------------------------------
 
-### 4. Produce Trip Tables -------------------------------------------------------------------------
+if (SCENARIO_RUN_CVTM) {
+
+  cat("Starting Commercial Vehicle Touring Step", "\n")
+  
+  # Load executive functions (process inputs and simulation)
+  source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim.R"))
+  source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_process_inputs.R"))
+
+  # Process inputs
+  cat("Processing Commercial Vehicle Touring Inputs", "\n")
+  cv_inputs <- new.env()
+  ScenarioFirms <- cv_sim_process_inputs(envir = cv_inputs)
+  
+  # Run simuation
+  cat("Running Commercial Vehicle Touring Simulation", "\n")
+  cv_sim_results <- list()
+  cv_sim_results$cv_trips <- suppressMessages(run_sim(FUN = cv_sim, data = ScenarioFirms,
+                                                      k = USER_PROCESSOR_CORES, 
+                                                      packages = SYSTEM_PKGS, 
+                                                      lib = SYSTEM_PKGS_PATH,
+                                                      inputEnv = cv_inputs))
+  
+  ###TEMP commenting out until all steps working
+  #cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
+  
+  # Save inputs and results
+  cat("Saving Commercial Vehicle Touring Database", "\n")
+  save(cv_sim_results, 
+       cv_inputs, 
+       file = file.path(SCENARIO_OUTPUT_PATH, 
+                        SYSTEM_CVTM_OUTPUTNAME))
+
+  # Clean up workspace
+  rm(cv_sim_results, 
+     cv_inputs, 
+     ScenarioFirms)
+  
+  gc(verbose = FALSE)
+  
+
+}
+
+### 3. Produce Trip Tables -------------------------------------------------------------------------
 
 # if (SCENARIO_RUN_TT) {
 # 
@@ -117,7 +124,7 @@ if (SCENARIO_RUN_FIRMSYN) {
 # 
 # }
 
-# ### Produce Dashboard -------------------------------------------------------------------------
+# ### 4. Produce Dashboard -------------------------------------------------------------------------
 # 
 # SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
 # 
