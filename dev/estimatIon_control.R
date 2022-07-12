@@ -9,7 +9,7 @@ source("./dev/init_dev.R")
 ### Open and Review the Estimated Models
 
 # Firm activities
-activities <- readRDS("./dev/Estimation/cv_activities/cv_activities_model.RDS")
+activities <- readRDS("./dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS")
 activities
 
 # # Scheduled Stops
@@ -48,6 +48,11 @@ activities
 # # stop duration model is misnamed!
 # stopdur <- readRDS("./dev/Estimation/cv_duration/cv_duration.rds")
 # saveRDS(stopdur, "./dev/Estimation/cv_duration/cv_stopduration_model.rds")
+
+# ###TEMP rename
+# activities <- readRDS("./dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS")
+# saveRDS(activities, "./dev/Estimation/cv_activities/cv_activities_model.RDS")
+
 
 paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_model.RDS")) #,
                                                    # "cv_stops/final_models/goods/cv_goods_model.RDS",

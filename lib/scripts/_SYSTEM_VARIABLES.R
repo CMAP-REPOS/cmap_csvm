@@ -6,6 +6,9 @@ SYSTEM_REPORT_PKGS <- c("DT", "flexdashboard", "leaflet", "geojsonio", "htmltool
                         "knitr", "mapview", "plotly", "RColorBrewer", "rgdal", "rgeos",
                         "rmarkdown", "scales", "stringr", "jsonlite", "pander")
 
+SYSTEM_DEV_PKGS <- c("sf", "lwgeom", "dplyr", "ggrepel",
+                     "ggspatial", "bookdown", "leaps")
+
 # combine lists so all install if needed on call to initializeApp
 SYSTEM_PKGS <- c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS[!SYSTEM_REPORT_PKGS %in% SYSTEM_PKGS])
 
