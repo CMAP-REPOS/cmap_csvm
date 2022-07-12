@@ -95,10 +95,11 @@ firm_activity_expansion <- firm_activity %>%
 
 # Unweighted Crosstabs (Exploratory) --------------------------------------
 #Distribution of Firm Activity Type by NAICS2 Group
+#Inlcude some logic to check for if AQ5 was >0, check if businesses said they have vehicles but didnt list any trips
 firm_activity_expansion %>% 
   group_by(EmpCatName, Activity) %>%
   summarise(n = n()) %>%
-  mutate(prop = n/sum(n)) %>% 
+  #mutate(prop = n/sum(n)) %>% 
   subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
   spread(Activity, prop) %>% 
   mutate(
@@ -176,7 +177,7 @@ FirmActivity_Trips_weight <- firm_activity_expansion %>%
 
 
 
-# Example Code ------------------------------------------------------------
+=# Example Code ------------------------------------------------------------
 # standardise naming in CVS processing
 # employment category should be called EmpCatName
 setnames(est, "Model_EmpCat", "EmpCatName")
