@@ -45,7 +45,7 @@ if (SCENARIO_RUN_FIRMSYN) {
 }
 
 
-### 3. Simulate Commercial Vehicle Movements  ------------------------------------------------------------------------
+### 2. Simulate Commercial Vehicle Movements  ------------------------------------------------------------------------
 
 if (SCENARIO_RUN_CVTM) {
 
@@ -89,7 +89,7 @@ if (SCENARIO_RUN_CVTM) {
 
 }
 
-### 4. Produce Trip Tables -------------------------------------------------------------------------
+### 3. Produce Trip Tables -------------------------------------------------------------------------
 
 # if (SCENARIO_RUN_TT) {
 # 
@@ -124,7 +124,7 @@ if (SCENARIO_RUN_CVTM) {
 # 
 # }
 
-# ### Produce Dashboard -------------------------------------------------------------------------
+# ### 4. Produce Dashboard -------------------------------------------------------------------------
 # 
 # SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
 # 

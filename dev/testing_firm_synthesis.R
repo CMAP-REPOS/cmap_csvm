@@ -1,10 +1,10 @@
 # Test Script Review Firm synthesis Outputs
 
-### code for inline running
-# global environment
-for(n in ls(firm_inputs, all.names=TRUE)) assign(n, get(n, firm_inputs), environment())
+source("./dev/init_dev.R")
 
-
+# ### code for inline running
+# # global environment
+# for(n in ls(firm_inputs, all.names=TRUE)) assign(n, get(n, firm_inputs), environment())
 
 ### code for review of results
 load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_FIRMSYN_OUTPUTNAME))
