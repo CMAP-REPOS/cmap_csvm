@@ -27,15 +27,9 @@ cv_sim_process_inputs <- function(envir) {
   
   ### Load inputs/outputs from earlier steps
   load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_FIRMSYN_OUTPUTNAME))
-  envir[["TAZLandUseCVTM"]] <- firm_sim_results[["TAZLandUseCVTM"]]
-  ScenarioFirms <- firm_sim_results[["ScenarioFirms"]][!is.na(TAZ)]
-  
-  # Naming in TAZLandUsCVTM for consistency with estimated model parameters
-  setnames(envir[["TAZLandUseCVTM"]], c("TAZ", "NEmp_Ed_Pub_Other_Ser", "NEmp_Industrial", 
-                                        "NEmp_Info_FIRE_Prof", "NEmp_Leisure", "NEmp_Medical_Services", 
-                                        "NEmp_Production", "NEmp_Retail", "NEmp_Total", "HH", 
-                                        "NEmp_Transportation"))
-  
+  envir[["TAZLandUseCVTM"]] <- firm_sim_results[["emp_control_taz"]]
+  ScenarioFirms <- firm_sim_results[["RegionFirms"]][!is.na(TAZ)]
+
   ## Add calibrated parameters to environment individually
   envir[["cv_calibrated_parameters"]]
   for(i in 1:nrow(envir[["cv_calibrated_parameters"]])){
