@@ -47,5 +47,5 @@ n2labels[, EmpCatGroupedName := case_when(
 # write the file to lib/data in the application
 fwrite(n2labels, file.path("lib", 
                                 "data", 
-                                "NAICS2_to_EmpCats.csv"))
+                                "corresp_naics2_empcats.csv"))
 
