@@ -51,8 +51,9 @@ est <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xls
 #not joining yet, using just est for now
 
 est_vars <- est %>% 
-  select(AGEN_NAICS, AQ6A_OPEN_A:AQ6C_OPEN_D, ExpansionWeight, NormalizedWeight)
+  select(AGEN_NAICS, AQ5, AQ6A_OPEN_A:AQ6C_OPEN_D, ExpansionWeight, NormalizedWeight) #add AQ5 to validate trip activity
 # Prepare Employment Category ---------------------------------------------
+
 est_rename <- est_vars %>% 
   mutate(EmpCatName = case_when(
     AGEN_NAICS %in% c(44,45) ~ 'Retail',
@@ -66,26 +67,61 @@ est_rename <- est_vars %>%
     AGEN_NAICS == 42 ~ 'Wholesale',
   ))
 
+est_rename %>% 
+  group_by(EmpCatName) %>% 
+  count()
 
 # Create Sums and Categorize ----------------------------------------------
 colSums(!is.na(est_rename))
 
-
+#need to change this, it matters whether is NA or not
 est_Q6_sums <- est_rename %>% 
   rowwise() %>% 
-  mutate(Goods = sum(across(AQ6A_OPEN_A:AQ6B_OPEN_D), na.rm = T),
-         Services = sum(across(AQ6C_OPEN_A:AQ6C_OPEN_D), na.rm = T),
-         Q6Trip_Total = (Goods + Services))
+  mutate(Goods = ifelse((is.na(AQ6A_OPEN_A) & is.na(AQ6A_OPEN_B) & is.na(AQ6A_OPEN_C) & is.na(AQ6A_OPEN_D) &
+                          is.na(AQ6B_OPEN_A) & is.na(AQ6B_OPEN_B) & is.na(AQ6B_OPEN_C) & is.na(AQ6B_OPEN_D)),
+                        NA,
+                        sum(across(AQ6A_OPEN_A:AQ6B_OPEN_D), na.rm = T)),
+         Services = ifelse((is.na(AQ6C_OPEN_A) & is.na(AQ6C_OPEN_B) & is.na(AQ6C_OPEN_C) & is.na(AQ6C_OPEN_D)),
+                           NA,
+                           sum(across(AQ6C_OPEN_A:AQ6C_OPEN_D), na.rm = T))
+         )
+        
+  
+
+
+est_Q6_sums <- est_Q6_sums %>% 
+  mutate(Own_Vehicles = case_when(AQ5 > 0 ~ '1',
+                               AQ5 ==0 ~ '0',
+                               is.na(AQ5) ~ 'NA',),
+         Goods_yesno = case_when(Goods >0 ~ '1',
+                                 Goods ==0 ~ '0',
+                                 is.na(Goods) ~ 'NA'),
+         Services_yesno = case_when(Services >0 ~ '1',
+                                 Services ==0 ~ '0',
+                                 is.na(Services) ~ 'NA'))
 
 firm_activity <- est_Q6_sums %>% 
-  mutate(Activity = case_when(Goods >0 & Services == 0 ~ 'Goods',
-                              Goods == 0 & Services > 0 ~ 'Services',
-                              Goods > 0 & Services > 0 ~ 'GoodsAndServices',
-                              Goods == 0 & Services == 0 ~ 'NoData',
-                              T ~ 'NA'))
+  mutate(Activity = case_when(Goods_yesno == 1 & Services_yesno == 0 ~ 'Goods',
+                              Goods_yesno == 0 & Services_yesno == 1 ~ 'Services',
+                              Goods_yesno == 0 & Services_yesno == 0 ~ 'NoGoodsOrServices',
+                              Goods_yesno == 1 & Services_yesno == 'NA' ~ 'Goods_NASerivces',
+                              Goods_yesno == 'NA' & Services_yesno ==1 ~ 'Services_NAGoods',
+                              Goods_yesno == 'NA' & Services_yesno == 'NA' ~ 'NoData',
+                              Goods_yesno == 1 & Services_yesno == 1 ~ 'GoodsAndServices'))
+    
+    
+    
+    
+#Logic Check AQ5-AQ6
+firm_activity %>% 
+  group_by(Own_Vehicles, Activity) %>% 
+  summarise(n = n()) %>% 
+  spread(Activity, n) %>% 
+  select(Goods, GoodsAndServices, Services, NoGoodsOrServices, NoData)
+
+
 
 firm_activity_expansion <- firm_activity %>% 
-  mutate(TotalTrips_Expansion = (Q6Trip_Total * ExpansionWeight)) %>% 
   select(-(1:13))
   
 
@@ -96,23 +132,13 @@ firm_activity_expansion <- firm_activity %>%
 # Unweighted Crosstabs (Exploratory) --------------------------------------
 #Distribution of Firm Activity Type by NAICS2 Group
 #Inlcude some logic to check for if AQ5 was >0, check if businesses said they have vehicles but didnt list any trips
+#if own vehicles but didnt respond/entered no trips - 
+
+
+
 firm_activity_expansion %>% 
   group_by(EmpCatName, Activity) %>%
   summarise(n = n()) %>%
-  #mutate(prop = n/sum(n)) %>% 
-  subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
-  spread(Activity, prop) %>% 
-  mutate(
-    across(Goods:Services, ~replace_na(.x, 0))) %>% 
-  mutate(
-    across(Goods:Services, round, 4)) %>%
-  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
-  as.data.table()
-
-#Distribution of Trips by Firm Activity Type and NAICS2 Group
-firm_activity_expansion %>% 
-  group_by(EmpCatName, Activity) %>%
-  summarise(n = sum(Q6Trip_Total))%>%
   mutate(prop = n/sum(n)) %>% 
   subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
   spread(Activity, prop) %>% 
@@ -122,6 +148,7 @@ firm_activity_expansion %>%
     across(Goods:Services, round, 4)) %>%
   select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
   as.data.table()
+
 
 #Number of firms by Firm Activity
 firm_activity_expansion %>% 
@@ -147,21 +174,14 @@ FirmActivity_Type_weight <- firm_activity_expansion %>%
     across(Goods:Services, ~replace_na(.x, 0))) %>% 
   mutate(
     across(Goods:Services, round, 4)) %>%
-  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
+  select(EmpCatGroupedName = EmpCatName, 
+         Goods, 
+         GoodsAndService = GoodsAndServices,
+         Other = NoData,
+         Service = Services) %>% 
+  filter(!is.na(EmpCatGroupedName)) %>% 
   as.data.table()
   
-FirmActivity_Trips_weight <- firm_activity_expansion %>% 
-  group_by(EmpCatName, Activity) %>%
-  summarise(n = sum(TotalTrips_Expansion))%>%
-  mutate(prop = n/sum(n)) %>% 
-  subset(select = c('EmpCatName', 'Activity', 'prop')) %>% 
-  spread(Activity, prop) %>% 
-  mutate(
-    across(Goods:Services, ~replace_na(.x, 0))) %>% 
-  mutate(
-    across(Goods:Services, round, 4)) %>%
-  select(EmpCatName, Goods, GoodsAndServices, Services, NoData) %>% 
-  as.data.table()
 
 
 
