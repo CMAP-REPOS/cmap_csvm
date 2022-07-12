@@ -177,7 +177,7 @@ FirmActivity_Trips_weight <- firm_activity_expansion %>%
 
 
 
-=# Example Code ------------------------------------------------------------
+# Example Code ------------------------------------------------------------
 # standardise naming in CVS processing
 # employment category should be called EmpCatName
 setnames(est, "Model_EmpCat", "EmpCatName")
