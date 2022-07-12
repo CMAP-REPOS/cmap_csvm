@@ -45,19 +45,23 @@ if (SCENARIO_RUN_FIRMSYN) {
 }
 
 
-### 3. Simulate Freight Truck Movements  ------------------------------------------------------------------------
+### 3. Simulate Commercial Vehicle Movements  ------------------------------------------------------------------------
 
 if (SCENARIO_RUN_CVTM) {
 
+  cat("Starting Commercial Vehicle Touring Step", "\n")
+  
   # Load executive functions (process inputs and simulation)
   source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim.R"))
   source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_process_inputs.R"))
 
   # Process inputs
+  cat("Processing Commercial Vehicle Touring Inputs", "\n")
   cv_inputs <- new.env()
   ScenarioFirms <- cv_sim_process_inputs(envir = cv_inputs)
   
   # Run simuation
+  cat("Running Commercial Vehicle Touring Simulation", "\n")
   cv_sim_results <- list()
   cv_sim_results$cv_trips <- suppressMessages(run_sim(FUN = cv_sim, data = ScenarioFirms,
                                                       k = USER_PROCESSOR_CORES, 
@@ -67,6 +71,7 @@ if (SCENARIO_RUN_CVTM) {
   cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
   
   # Save inputs and results
+  cat("Saving Commercial Vehicle Touring Database", "\n")
   save(cv_sim_results, 
        cv_inputs, 
        file = file.path(SCENARIO_OUTPUT_PATH, 
