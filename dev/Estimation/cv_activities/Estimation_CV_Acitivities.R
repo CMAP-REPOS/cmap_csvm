@@ -19,7 +19,7 @@ n2labels <- unique(NAICS2007[,.(n2 = NAICS2, Label2)])
 
 
 # Load Example Output -----------------------------------------------------
-cv_activities_model_old <- readRDS(file.path(THIS_MODEL_PATH, "_cv_activities_model.RDS"))
+cv_activities_model_old <- readRDS(file.path(THIS_MODEL_PATH, "_cv_activities_model_old.RDS"))
 # Output format needs to be the same as this, except that industry is replaced with new employment group categroization.
 
 
@@ -74,9 +74,7 @@ est_rename %>%
   count()
 
 # Create Trip Sums and Categorize ----------------------------------------------
-colSums(!is.na(est_rename))
-
-#If Relevant columsn are all NA, Goods/Services Trips = NA, otherwise they are summed
+#If Relevant columns are all NA, Goods or Services Trips = NA, otherwise they are summed, na.rm = T.
 est_Q6_sums <- est_rename %>% 
   rowwise() %>% 
   mutate(Goods = ifelse((is.na(AQ6A_OPEN_A) & is.na(AQ6A_OPEN_B) & is.na(AQ6A_OPEN_C) & is.na(AQ6A_OPEN_D) &
@@ -117,9 +115,7 @@ firm_activity <- est_Q6_sums %>%
 
 
 
-
-
-#to inspect observations with missing Q5 and Q6
+##to inspect observations with missing Q5 and Q6##
 Missing_Q5Q6_List <- firm_activity %>% 
   filter(Own_Vehicles == 'NA' & Activity == 'NoData') %>% 
   select(EMP_telkey)
@@ -129,16 +125,15 @@ Missing_Q5Q6 <- est %>%
 
 #Get rid of observations with missing Q5 and Q6 data
 firm_activity <- firm_activity %>% 
-  filter(Own_Vehicles != 'NA')
+  filter(Own_Vehicles != 'NA' & Activity != 'NoData')
 
   
 
 
 
 
-# For Exploring Incomensurable Data --------------------------------------
-#Distribution of Firm Activity Type by NAICS2 Group
-#Include some logic to check for if AQ5 was >0, check if businesses said they have vehicles but didnt list any trips
+# For Exploring incongruent Data --------------------------------------
+#Includes some logic to check for if AQ5 was >0, check if businesses said they have vehicles but didnt list any trips
 #if own vehicles but didnt respond/entered no trips - 
 #Checking Records where No/NA vehicles but positive number of trips
 #Validating Records
@@ -167,10 +162,10 @@ NATrips_NAVehcile_List <- firm_activity %>%
   filter(Own_Vehicles == 'NA' & Activity == 'NoData') %>% 
   select(EMP_telkey)
 
-#those records with missing Q5 & Q6 are also missing a lot of other information, will remove from the final count
 MissingInfo <- est %>% 
   filter(EMP_telkey %in% NATrips_NAVehcile_List$EMP_telkey)
-
+#those records with missing Q5 & Q6 are also missing a lot of other information,# 
+#will remove from the final count#
 
 
 
@@ -180,24 +175,13 @@ firm_activity_expansion <- firm_activity %>%
   select(-(1:15)) %>% 
   filter(!is.na(Activity))
 
-
-#Number of firms by Firm Activity
-firm_activity_expansion %>% 
-  group_by(Activity) %>% 
-  count()
-
-#Breakdown of NAICS2 Employer Category for Firms with Insufficient Trips Count Data  
-firm_activity_expansion %>% 
-  group_by(Activity) %>% 
-  count(EmpCatName) %>% 
-  filter(Activity == 'Other')
  
 
 
 # Weighted Crosstabs ------------------------------------------------------
 firm_activity_weighted_count <-  firm_activity_expansion %>% 
   group_by(EmpCatName, Activity) %>%
-  tally(wt = ExpansionWeight )%>% 
+  tally(wt = ExpansionWeight) %>% 
   subset(select = c('EmpCatName', 'Activity', 'n'))%>% 
   spread(Activity, n)%>% 
   mutate(
@@ -217,20 +201,40 @@ firm_activity_weighted_prop <- firm_activity_weighted_count
 firm_activity_weighted_prop[,2:5] <- sweep(firm_activity_weighted_count[,2:5], 1, rowSums(firm_activity_weighted_count[,2:5]), FUN="/") 
 
 firm_activity_weighted_prop <- firm_activity_weighted_prop %>% 
-  mutate(Total = sum(across(Goods:Service)))
+  mutate(Total = sum(across(Goods:Service))) 
+
+firm_activity_weighted_prop_final <- firm_activity_weighted_prop %>%
+  select(-Total) %>% 
+  as.data.table()
 
 
-saveRDS(firm_activity_weighted_prop, 'dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS')
-
-
-
-
-
-
-
+saveRDS(firm_activity_weighted_prop_final, 'dev/Estimation/cv_activities/cv_activities_model.RDS')
 
 
 
+# Summary Tables ----------------------------------------------------------
+#Breakdown of NAICS2 Group for Activity = Other
+firm_activity_expansion %>% 
+  group_by(Activity) %>% 
+  count(EmpCatName) %>% 
+  filter(Activity == 'Other') %>% 
+  as.data.table()
+
+#Count of firms for each activity
+firm_activity_expansion %>% 
+  group_by(Activity) %>% 
+  count() %>% 
+  as.data.table()
+
+#Raw Count of Activity for each firm by NAICS2 Groups
+firm_activity_expansion %>% 
+  group_by(EmpCatName, Activity) %>%
+  count() %>% 
+  subset(select = c('EmpCatName', 'Activity', 'n')) %>% 
+  spread(Activity, n) %>% 
+  filter(!is.na(EmpCatName)) %>% 
+  as.data.table()
+  
 
 
 

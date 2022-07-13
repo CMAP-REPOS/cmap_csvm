@@ -10,10 +10,7 @@ source("./dev/init_dev.R")
 
 # Firm activities
 activities <- readRDS("./dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS")
-# remove total column, convert to data.table, save with correct name
-activities <- data.table(activities)
-activities[, Total := NULL]
-saveRDS(activities, "./dev/Estimation/cv_activities/cv_activities_model.RDS")
+activities
 
 # # Scheduled Stops
 # goods <- readRDS("./dev/Estimation/cv_stops/final_models/goods/cv_goods_model.RDS")
@@ -51,6 +48,11 @@ saveRDS(activities, "./dev/Estimation/cv_activities/cv_activities_model.RDS")
 # # stop duration model is misnamed!
 # stopdur <- readRDS("./dev/Estimation/cv_duration/cv_duration.rds")
 # saveRDS(stopdur, "./dev/Estimation/cv_duration/cv_stopduration_model.rds")
+
+# ###TEMP rename
+# activities <- readRDS("./dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS")
+# saveRDS(activities, "./dev/Estimation/cv_activities/cv_activities_model.RDS")
+
 
 paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_model.RDS")) #,
                                                    # "cv_stops/final_models/goods/cv_goods_model.RDS",
