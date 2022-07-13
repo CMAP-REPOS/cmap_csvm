@@ -33,4 +33,4 @@ setcolorder(taz_se_n2, c("Label2", names(taz_se_n2)[1:5]))
 taz_se_n2[, n2 := as.character(n2)]
 taz_se_n2 <- add_totals(taz_se_n2, rowtotal = FALSE, idcols = 2L)
 
-fwrite(taz_se_n2, "./dev/Testing_Firm_Synthesis_Comparison_n2.csv")
+fwrite(taz_se_n2, file.path(SYSTEM_DEV_TESTING_PATH, "Testing_Firm_Synthesis_Comparison_n2.csv"))
