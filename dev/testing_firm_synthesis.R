@@ -29,4 +29,4 @@ taz_se_n2[n2labels, Label2 := i.Label2, on = "n2"]
 
 setcolorder(taz_se_n2, c("Label2", names(taz_se_n2)[1:4]))
 
-fwrite(taz_se_n2, "./dev/Testing_Firm_Synthesis_Comparison_n2.csv")
+fwrite(taz_se_n2, file.path(SYSTEM_DEV_TESTING_PATH, "Testing_Firm_Synthesis_Comparison_n2.csv"))

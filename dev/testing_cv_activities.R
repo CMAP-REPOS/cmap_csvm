@@ -51,4 +51,4 @@ activities_test[, c("GoodsDiff", "ServiceDiff", "GoodsAndServiceDiff", "OtherDif
 # any deviation of more than 1%?
 activities_test[abs(GoodsDiff) > 0.01 | abs(ServiceDiff) > 0.01 | abs(GoodsAndServiceDiff) > 0.01 | abs(OtherDiff) > 0.01]
 
-fwrite(activities_test, "./dev/Testing_CV_Activities.csv")
+fwrite(activities_test, file.path(SYSTEM_DEV_TESTING_PATH, "Testing_CV_Activities.csv"))
