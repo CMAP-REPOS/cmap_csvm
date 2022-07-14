@@ -1,0 +1,26 @@
+Label2,n2,Firms,Emp,SE,Diff
+"Agriculture, Forestry, Fishing and Hunting",11,5771,13934,13934,0
+"Mining, Quarrying, and Oil and Gas Extraction",21,474,2718,2718,0
+Utilities,22,601,17897,17897,0
+Construction,23,18389,175584,175584,0
+Manufacturing,31,3298,78886,78886,0
+Manufacturing,32,4092,155619,155619,0
+Manufacturing,33,6368,280043,280043,0
+Wholesale Trade,42,10911,247617,247617,0
+Retail Trade,44,16747,366697,366697,0
+Retail Trade,45,7062,148444,148444,0
+Transportation and Warehousing,48,8379,166020,166020,0
+Transportation and Warehousing,49,2756,61265,61265,0
+Information,51,2378,81260,81260,0
+Finance and Insurance,52,11050,242550,242550,0
+Real Estate and Rental and Leasing,53,7006,69167,69167,0
+"Professional, Scientific, and Technical Services",54,23692,346802,346802,0
+Management of Companies and Enterprises,55,1136,85520,85520,0
+Administrative and Support and Waste Management and Remediation Services,56,11123,252793,252793,0
+Educational Services,61,3732,148212,148212,0
+Health Care and Social Assistance,62,21948,622773,622773,0
+"Arts, Entertainment, and Recreation",71,3467,78396,78396,0
+Accommodation and Food Services,72,8137,411946,411946,0
+Other Services (except Public Administration),81,20070,220060,220060,0
+Public Administration,92,0,0,584614,-584614
+,Total,198587,4274203,4858817,-584614
