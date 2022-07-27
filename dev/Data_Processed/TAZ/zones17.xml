@@ -1,0 +1,336 @@
+<?xml version="1.0"?>
+<metadata>
+	<idinfo>
+		<citation>
+			<citeinfo>
+				<pubdate>20190401</pubdate>
+				<title>CMAP Zones 2017</title>
+			</citeinfo>
+		</citation>
+		<descript>
+			<abstract>These zones are units of geography that are used in CMAP's transportation modeling activities. Zone boundaries are derived from the Public Land Survey System (PLSS). This version of the CMAP modeling zones differs from previous versions in that there are nearly twice as many zones. Zones covering more dense or more diverse areas have been subdivided and Census-based zone boundaries have been replaced to give all zones PLSS-based boundaries.</abstract>
+			<purpose>Modeling zones used as traffic analysis zones.</purpose>
+		</descript>
+		<keywords>
+			<theme>
+				<themekt>None</themekt>
+				<themekey>Zones</themekey>
+				<themekey>Modeling</themekey>
+				<themekey>TAZs</themekey>
+			</theme>
+		</keywords>
+		<accconst>None</accconst>
+		<useconst>None</useconst>
+		<native> Version 6.2 (Build 9200) ; Esri ArcGIS 10.7.0.10450</native>
+	</idinfo>
+	<spdoinfo>
+		<ptvctinf>
+			<sdtsterm>
+				<sdtstype>GT-polygon composed of chains</sdtstype>
+				<ptvctcnt>3632</ptvctcnt>
+			</sdtsterm>
+		</ptvctinf>
+	</spdoinfo>
+	<eainfo>
+		<detailed>
+			<enttyp>
+				<enttypl>zones17</enttypl>
+				<enttypd>CMAP traffic analysis zones (TAZs)</enttypd>
+				<enttypds>CMAP</enttypds>
+			</enttyp>
+			<attr>
+				<attrlabl>OBJECTID</attrlabl>
+				<attrdef>Internal feature number.</attrdef>
+				<attrdefs>Esri</attrdefs>
+				<attrdomv>
+					<udom>Sequential unique whole numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>Shape</attrlabl>
+				<attrdef>Feature geometry.</attrdef>
+				<attrdefs>Esri</attrdefs>
+				<attrdomv>
+					<udom>Coordinates defining the features.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>zone17</attrlabl>
+				<attrdef>Zone ID.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<rdom>
+						<rdommin>1</rdommin>
+						<rdommax>3632</rdommax>
+						<attrmres>1</attrmres>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>cbd</attrlabl>
+				<attrdef>Chicago central business district flag.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>1</edomv>
+						<edomvd>True</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>0</edomv>
+						<edomvd>False</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>chicago</attrlabl>
+				<attrdef>City of Chicago flag.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>1</edomv>
+						<edomvd>True</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>0</edomv>
+						<edomvd>False</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>cmap</attrlabl>
+				<attrdef>CMAP planning area flag.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>1</edomv>
+						<edomvd>True</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>0</edomv>
+						<edomvd>False</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>county_fips</attrlabl>
+				<attrdef>County FIPS code.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<codesetd>
+						<codesetn>Federal Information Processing Standard</codesetn>
+						<codesets>National Institute of Standards and Technology</codesets>
+					</codesetd>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>county_name</attrlabl>
+				<attrdef>County name.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>Name of the county.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>state</attrlabl>
+				<attrdef>Abbreviated state name.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<codesetd>
+						<codesetn>US state postal code</codesetn>
+						<codesets>USPS</codesets>
+					</codesetd>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>township_range</attrlabl>
+				<attrdef>Concatenation of PLSS township and range designation numbers.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>Concatenation of Public Land Survey System township and range designation numbers.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>sqmi</attrlabl>
+				<attrdef>Area in square miles</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>Area in square miles measured using original projection.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>m01_type</attrlabl>
+				<attrdef>Activity density categories used in CMAP's distribution and mode choice models.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>1</edomv>
+						<edomvd>Chicago Central Area zone</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>2</edomv>
+						<edomvd>Chicago outside of Central Area</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>3</edomv>
+						<edomvd>Dense suburban area with 500 or more activities per square mile</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>4</edomv>
+						<edomvd>Suburban area with less than 500 activities per square mile</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>ga</attrlabl>
+				<attrdef>Emme zone partition groups for Chicago, suburban Cook, and each other county.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>ga03-ga12, ga14-ga23 = Each other county</udom>
+				</attrdomv>
+				<attrdomv>
+					<edom>
+						<edomv>ga01</edomv>
+						<edomvd>Chicago</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>ga02</edomv>
+						<edomvd>Suburban Cook</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>ge</attrlabl>
+				<attrdef>Emme zone partition groups for Central Area and not Central Area.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>ge00</edomv>
+						<edomvd>Not Central Area.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>ge01</edomv>
+						<edomvd>Central Area.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>gj</attrlabl>
+				<attrdef>Emme zone partition groups for each CMAP county, external IL, IN, and WI.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>gj01-gj07 = Each CMAP county</udom>
+				</attrdomv>
+				<attrdomv>
+					<edom>
+						<edomv>gj08</edomv>
+						<edomvd>External Illinois</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>gj09</edomv>
+						<edomvd>Indiana</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>gj10</edomv>
+						<edomvd>Wisconsin</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>gm</attrlabl>
+				<attrdef>Emme zone partition groups for Chicago-Gary-Kenosha CMSA and not Chicago-Gary-Kenosha CMSA.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>gm00</edomv>
+						<edomvd>Not Chicago-Gary-Kenosha CMSA.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>gm01</edomv>
+						<edomvd>Chicago-Gary-Kenosha CMSA.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>gn</attrlabl>
+				<attrdef>Emme zone partition groups for the CMAP non-attainment area and not the CMAP non-attainment area.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<edom>
+						<edomv>gn00</edomv>
+						<edomvd>Not CMAP non-attainment area.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+					<edom>
+						<edomv>gn01</edomv>
+						<edomvd>CMAP non-attainment area.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>gp</attrlabl>
+				<attrdef>Emme zone partition groups for each 2000 5-percent PUMA in the 7-counties plus Grundy County and Indiana and a group for zones not in one of those PUMAs.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>gp01-gp60 = Each 2000 5-percent PUMA in the 7-counties plus Grundy County and Indiana</udom>
+				</attrdomv>
+				<attrdomv>
+					<edom>
+						<edomv>gp00</edomv>
+						<edomvd>Not a 2000 5-percent PUMA in the 7-counties plus Grundy County and Indiana.</edomvd>
+						<edomvds>CMAP</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>Shape_Length</attrlabl>
+				<attrdef>Length of feature in internal units.</attrdef>
+				<attrdefs>Esri</attrdefs>
+				<attrdomv>
+					<udom>Positive real numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>Shape_Area</attrlabl>
+				<attrdef>Area of feature in internal units squared.</attrdef>
+				<attrdefs>Esri</attrdefs>
+				<attrdomv>
+					<udom>Positive real numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>gs</attrlabl>
+				<attrdef>Emme zone partition groups for each CMAP ring sector.</attrdef>
+				<attrdefs>CMAP</attrdefs>
+				<attrdomv>
+					<udom>gs01-gs25</udom>
+				</attrdomv>
+			</attr>
+		</detailed>
+	</eainfo>
+	<metainfo>
+		<metd>20210422</metd>
+		<metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+		<metstdv>FGDC-STD-001-1998</metstdv>
+		<mettc>local time</mettc>
+	</metainfo>
+</metadata>

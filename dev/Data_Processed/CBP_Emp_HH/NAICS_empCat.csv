@@ -1,0 +1,22 @@
+NAICS Sector,Construction,Manufacturing,"TCU (Transportation, Communication, Utilities)",Wholesale,Retail,Finance/Insurance/Real Estate,Service,Government,Other,Total Private,Total
+"Agriculture, Forestry, Fishing and Hunting",,,,,,,,,,11,11 
+"Mining, Quarrying, and Oil and Gas Extraction",,,,,,,,,,21,21 
+Utilities,,,22,,,,,,,22,22 
+Construction,23,,,,,,,,,23,23 
+Manufacturing,,31-33,,,,,,,,31-33,31-33 
+Wholesale Trade,,,,42,,,,,,42,42 
+Retail Trade,,,,,44-45,,,,,44-45,44-45
+Transportation and Warehousing,,,48-49,,,,,,,48-49,48-49 
+Information,,,,,,,51,,,51,51 
+Finance and Insurance,,,,,,52,,,,52,52 
+Retail Estate Rental and Leasing,,,,,,53,,,,53,53 
+"Professional, Scientific, and Technical Services",,,,,,,54,,,54,54 
+Management of Companies and Enterprises,,,,,,,55,,,55,55 
+Administrative and Support and Waste Management and Remediation Services,,,,,,,56,,,56,56 
+Educational Services,,,,,,,61,,,61,61 
+Health Care and Social Assistance,,,,,,,62,,,62,62 
+"Arts, Entertainment, and Recreation",,,,,,,71,,,71,71 
+Accommodation and Food Services,,,,,,,72,,,72,72 
+Other Services (except Public Administration),,,,,,,81,,,81,81 
+Public Administration,,,,,,,,92,,,92 
+Unclassified,,,,,,,,,99,99,99
