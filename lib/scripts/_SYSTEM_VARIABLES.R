@@ -7,13 +7,13 @@ SYSTEM_REPORT_PKGS <- c("DT", "flexdashboard", "leaflet", "geojsonio", "htmltool
                         "rmarkdown", "scales", "stringr", "jsonlite", "pander")
 
 SYSTEM_DEV_PKGS <- c("sf", "lwgeom", "dplyr", "ggrepel",
-                     "ggspatial", "bookdown", "leaps")
+                     "ggspatial", "bookdown", "leaps", "openxlsx")
 
 # combine lists so all install if needed on call to initializeApp
 SYSTEM_PKGS <- c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS[!SYSTEM_REPORT_PKGS %in% SYSTEM_PKGS])
 
 SYSTEM_APP_PATH       <- getwd()
-SYSTEM_RFREIGHT_PATH  <- file.path(SYSTEM_APP_PATH, "lib", "rFreight_0.1-32.zip")
+SYSTEM_RFREIGHT_PATH  <- file.path(SYSTEM_APP_PATH, "lib", "rFreight_0.1-33.zip")
 SYSTEM_PKGS_PATH      <- file.path(SYSTEM_APP_PATH, "lib", "pkgs", "library")
 # add the library folder to the library search paths -- required for proper install and loading, 
 # especially with future
