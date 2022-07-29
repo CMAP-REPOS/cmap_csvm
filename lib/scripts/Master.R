@@ -68,7 +68,7 @@ if (SCENARIO_RUN_CVTM) {
   # Run simuation
   cat("Running Commercial Vehicle Touring Simulation", "\n")
   cv_sim_results <- list()
-  cv_sim_results$cv_trips <- suppressMessages(run_sim(FUN = cv_sim, data = ScenarioFirms,
+  cv_sim_results <- suppressMessages(run_sim(FUN = cv_sim, data = ScenarioFirms,
                                                       k = USER_PROCESSOR_CORES, 
                                                       packages = SYSTEM_PKGS, 
                                                       lib = SYSTEM_PKGS_PATH,
