@@ -21,22 +21,22 @@ cv_sim <- function(firms) {
     gc()
   }
   
-  # if(run_step[2]){
-  #   
-  #   # Simulate scheduled stops
-  #   cat("Simulating Commercial Vehicle Scheduled Stops", "\n")
-  #   firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
-  #                                      skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
-  #                                      firms = firms,
-  #                                      numZones = numZones,
-  #                                      d_bars = d_bars,
-  #                                      hurdle_support = hurdle_support,
-  #                                      TAZLandUseCVTM = TAZLandUseCVTM,
-  #                                      cv_goods_model = cv_goods_model,
-  #                                      cv_service_model = cv_service_model)
-  #   gc()
-  # }
-  # 
+  if(run_step[2]){
+
+    # Simulate scheduled stops
+    cat("Simulating Commercial Vehicle Scheduled Stops", "\n")
+    firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
+                                       skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
+                                       firms = firms,
+                                       numZones = numZones,
+                                       d_bars = d_bars,
+                                       hurdle_support = hurdle_support,
+                                       TAZLandUseCVTM = TAZLandUseCVTM,
+                                       cv_goods_model = cv_goods_model,
+                                       cv_service_model = cv_service_model)
+    gc()
+  }
+
   # if(run_step[3]){
   #   
   #   # Simulate vehicle choice
@@ -121,7 +121,8 @@ cv_sim <- function(firms) {
     
     ###TEMP just return results through active steps
     
-    return(#cv_trips = allTrips
-      firmActivities = firmActivities)
+    return(list(#cv_trips = allTrips
+      firmActivities = firmActivities,
+      firmStops = firmStops))
   }
 }

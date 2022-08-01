@@ -14,6 +14,7 @@ source("./dev/init_dev.R")
 ### READ INPUT FILES ==================================================# Review GPS
 
 # data
+### TODO need skims that are consistent with the zone17 system
 skims <- fread(file.path(SCENARIO_INPUT_PATH, "cmap_data_zone_skims.csv"))
 max(skims$Origin)
 max(skims$Destination)

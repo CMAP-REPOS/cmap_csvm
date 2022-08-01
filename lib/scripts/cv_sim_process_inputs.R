@@ -40,6 +40,11 @@ cv_sim_process_inputs <- function(envir) {
   
   ### Load scenario input files
   
+  ### TODO need to import correct skims for full zone17 zone system by time period here
+  scenario.files <- c(skims  = file.path(SCENARIO_INPUT_PATH, "cmap_data_zone_skims.csv"))
+  
+  loadInputs(files = scenario.files, envir = envir)
+  
   # ### Load skims
   # # Import skim matrices for time, distance, and tolls.
   # # are tolls skims available?
