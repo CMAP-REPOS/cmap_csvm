@@ -44,9 +44,20 @@ firm_sim_process_inputs <- function(envir) {
                                      fun.aggregate = sum,
                                      value.var = "Employment")
   
-  ### TEMP add HH field, zeros for now, 
+  ### TEMP add HH field, zeros for now, and add temp names for the employment variables
+  ### TODO add a total employment field -- update the code using the rFreight summarizeTAZLandUse that includes this
   ### TODO replace with data from HH_IN.TXT, https://github.com/CMAP-REPOS/cmap_csvm/issues/14
   envir[["TAZLandUseCVTM"]][, TotalHHs := 0]
+  
+  # Ensure that naming in TAZLandUsCVTM is consistent with estimated model parameters
+  envir[["TAZLandUseCVTM"]][, c("NEmp_Ed_Pub_Other_Ser", "NEmp_Industrial", 
+                                "NEmp_Info_FIRE_Prof", "NEmp_Leisure", "NEmp_Medical_Services", 
+                                "NEmp_Production", "NEmp_Retail", "NEmp_Total", "HH", 
+                                "NEmp_Transportation") := .(Ed_Health_SocialServices, Construction,
+                                                            Office_Professional, Service_FoodDrink,
+                                                            Ed_Health_SocialServices, Transport_Industry,
+                                                            Retail, Service_FoodDrink + Service_Other + Office_Professional,
+                                                            TotalHHs, Transport_Industry)]
   
   ### Define additional variables
   

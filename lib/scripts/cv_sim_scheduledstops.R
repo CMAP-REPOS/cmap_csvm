@@ -29,14 +29,9 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
   # Add total household and employment numbers for potential stop zone
   tazZones <- merge(tazZones, TAZLandUseCVTM[, .(DTAZ = TAZ, HH, NEmp_Total)], by = "DTAZ") 
   
-  # Add flag for crossing international border
-  tazZones[, boundary := ifelse((TAZ %in% BASE_TAZ_US & DTAZ %in% BASE_TAZ_CANADA)|
-                                  (TAZ %in% BASE_TAZ_CANADA & DTAZ %in% BASE_TAZ_US),
-                                1,0)]
-  
   # Calculate zone attractiveness
   Beta <- 2
-  tazZones[, Attraction := (Beta * NEmp_Total + HH) * exp(-(dist + BASE_INTERNATIONAL_PENALTY * boundary)/d_bars[as.character(EmpCatGroupedName)])]
+  tazZones[, Attraction := (Beta * NEmp_Total + HH) * exp(-dist/d_bars[as.character(EmpCatGroupedName)])]
   tazZones[, c("dist", "HH", "NEmp_Total") := NULL]
   setkey(tazZones, TAZ, EmpCatGroupedName, DTAZ)
   
@@ -46,9 +41,8 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
                        c("Zones", "ZonesMin", "ZonesMax") := .(Zones, ZonesMin, ZonesMax),
                        on = c("TAZ", "EmpCatGroupedName")]
   
-  # Adding differential sampling size for internal and buffer zones
-  # Buffer zones tend to be larger (more aggregate) so reduce the number of zones sampled in the buffer
-  firmSample[, numZones := ifelse(TAZ %in% BASE_TAZ_MODEL_REGION, numZones, numZones/2)]
+  # Adding sampling size for internal zones
+  firmSample[, numZones := numZones]
   
   # List of zone and firm index sequences for each market
   ZonesIndex <- mapply(seq, from = firmSample$ZonesMin, to = firmSample$ZonesMax, SIMPLIFY = FALSE)

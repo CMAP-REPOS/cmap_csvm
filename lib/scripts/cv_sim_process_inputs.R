@@ -41,18 +41,19 @@ cv_sim_process_inputs <- function(envir) {
   ### Load scenario input files
   
   ### TODO need to import correct skims for full zone17 zone system by time period here
-  scenario.files <- c(skims  = file.path(SCENARIO_INPUT_PATH, "cmap_data_zone_skims.csv"))
+  #scenario.files <- c(skims  = file.path(SCENARIO_INPUT_PATH, "cmap_data_zone_skims.csv"))
   
-  loadInputs(files = scenario.files, envir = envir)
+  #loadInputs(files = scenario.files, envir = envir)
   
   # ### Load skims
   
   ### TEMP skim for testing (just averaged fields required for stops and vehicle choice)
   skims_tod <- merge(data.table(OTAZ = BASE_TAZ_INTERNAL, k = 1),
                      data.table(DTAZ = BASE_TAZ_INTERNAL, k = 1),
-                     by = k, 
+                     by = "k", 
                      allow.cartesian = TRUE)[, k := NULL]
   
+  setkey(skims_tod, OTAZ, DTAZ)
   skims_tod[, time.avg := runif(.N, min = 1, max = 80)]
   skims_tod[, dist.avg := runif(.N, min = 1, max = 50)]
   skims_tod[, toll.avg := 0]
