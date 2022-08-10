@@ -44,6 +44,10 @@ firm_sim_process_inputs <- function(envir) {
                                      fun.aggregate = sum,
                                      value.var = "Employment")
   
+  ### TEMP add HH field, zeros for now, 
+  ### TODO replace with data from HH_IN.TXT, https://github.com/CMAP-REPOS/cmap_csvm/issues/14
+  envir[["TAZLandUseCVTM"]][, TotalHHs := 0]
+  
   ### Define additional variables
   
   # Correspondence between TAZ and MZ based on employment data

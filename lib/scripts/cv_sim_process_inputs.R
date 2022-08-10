@@ -46,6 +46,21 @@ cv_sim_process_inputs <- function(envir) {
   loadInputs(files = scenario.files, envir = envir)
   
   # ### Load skims
+  
+  ### TEMP skim for testing (just averaged fields required for stops and vehicle choice)
+  skims_tod <- merge(data.table(OTAZ = BASE_TAZ_INTERNAL, k = 1),
+                     data.table(DTAZ = BASE_TAZ_INTERNAL, k = 1),
+                     by = k, 
+                     allow.cartesian = TRUE)[, k := NULL]
+  
+  skims_tod[, time.avg := runif(.N, min = 1, max = 80)]
+  skims_tod[, dist.avg := runif(.N, min = 1, max = 50)]
+  skims_tod[, toll.avg := 0]
+  
+  saveRDS(skims_tod, 
+          file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"),
+          compress = FALSE)
+  
   # # Import skim matrices for time, distance, and tolls.
   # # are tolls skims available?
   # if(BASE_TOLL_SKIM_AVAILABLE) {
