@@ -1,0 +1,285 @@
+### Interactive script for debugging CMAP CSVM
+
+### Set up R and create command arguments as if the model was called from batch ----------------
+
+# Clear the environment
+rm(list = ls())
+
+# Define which scenario/year to run
+# Base scenario, called in the style of batch file
+SYSTEM_COMMAND_ARGS <- c("base", 2015)
+
+### Initialize Application -------------------------------------------------------------------
+
+# Start the rFreight application
+# source(file.path("lib", "scripts", "init_start_rFreight_model.R"))
+# Content of init_start_rFreight_model.R:
+
+# initialization script for rFreight applications
+
+# Load global variables
+source(file.path("lib", "scripts", "_SYSTEM_VARIABLES.R"))
+source(file.path(SYSTEM_SCRIPTS_PATH, "_BASE_VARIABLES.R"))
+source(file.path(SYSTEM_SCRIPTS_PATH, "_SCENARIO_VARIABLES.R"))
+source(file.path(SYSTEM_SCRIPTS_PATH, "_USER_VARIABLES.R"))
+
+# Install rFreight and any packages not available on CRAN
+source(file.path(SYSTEM_SCRIPTS_PATH, "init_install_special_packages.R"))
+
+# Load current rFreight installation
+suppressWarnings(suppressMessages(library(rFreight,
+                                          lib.loc = SYSTEM_PKGS_PATH)))
+
+# Check for new rFreight version, load rFreight and other packages, create output folder
+initializeApp(rFreight.path = SYSTEM_RFREIGHT_PATH,
+              output.path = SCENARIO_OUTPUT_PATH,
+              lib = SYSTEM_PKGS_PATH,
+              packages = c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS),
+              reload.rFreight = FALSE)
+
+
+cat("Running the", SCENARIO_NAME, "scenario for", SCENARIO_YEAR, "\n")
+SCENARIO_RUN_START   <- Sys.time()
+
+
+### FIRM SYNTHESIS =============================================================
+# Load executive functions (process inputs and simulation)
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_process_inputs.R"))
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim.R"))
+
+# # Process inputs
+# firm_inputs <- new.env()
+# Establishments <- firm_sim_process_inputs(envir = firm_inputs)
+# 
+# # For scratch only, bring model component input environment variables into the
+# # global environment
+# for(n in ls(firm_inputs, all.names=TRUE)) assign(n, get(n, firm_inputs), environment())
+# 
+# # Begin progress tracking
+# progressStart(action = "Simulating...", task = "Firms", dir = SCENARIO_LOG_PATH, subtasks = TRUE)
+# 
+# # Different approach in base and future scenarios: base year start from start,
+# # future year build on base year scaled firm list
+# 
+# if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME | SCENARIO_NAME == "2015_Test"){
+#   
+#   cat("Creating Base Year Establishment List", "\n")
+#   
+#   # Add a business ID variable
+#   Establishments[, BusID := .I]
+#   
+#   # Add employment classifications
+#   Establishments[UEmpCats, 
+#                  c("EmpCatName", "EmpCatGroupedName") := .(i.EmpCatName, i.EmpCatGroupedName),
+#                  on = c("EmpCatID")]
+#   
+#   # Scale firms to TAZ employment forecasts
+#   cat("Scaling Base Year Establishments to Match Base Year TAZ Emplyoment", "\n")
+#   ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = Establishments, 
+#                                                     TAZEmployment = TAZEmployment[TAZ %in% BASE_TAZ_INTERNAL], 
+#                                                     NewFirmsProportion = BASE_NEW_FIRMS_PROP,
+#                                                     MaxBusID = max(Establishments$BusID),
+#                                                     EstSizeCategories = EstSizeCategories)
+#   
+#   BaseYearFirms <- copy(ScenarioFirms)
+#   
+#   # Future year
+# } else {
+#   if(file.exists(SCENARIO_BASEFIRMS)){
+#     # Load the output from the base year firm synthesis model
+#     cat("Loading Base Year Establishment List", "\n")
+#     load(SCENARIO_BASEFIRMS)
+#     BaseYearFirms <- firm_sim_results$BaseYearFirms
+#     
+#     # Scale firms to TAZ employment forecasts
+#     cat("Scaling Base Year Establishment List to Match TAZ Employment Forecasts", "\n")
+#     ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = BaseYearFirms, 
+#                                                       TAZEmployment = TAZEmployment[TAZ %in% BASE_TAZ_INTERNAL], 
+#                                                       NewFirmsProportion = BASE_NEW_FIRMS_PROP,
+#                                                       MaxBusID = max(BaseYearFirms$BusID),
+#                                                       EstSizeCategories = EstSizeCategories)
+#     
+#   } else {
+#     
+#     stop("No Base Scenario outputs available. Please run the Base Scenario first.")
+#     
+#   }
+# }
+# 
+# # Return results
+# firm_sim_results <- list(ScenarioFirms = ScenarioFirms, 
+#                          BaseYearFirms = BaseYearFirms, 
+#                          TAZLandUseCVTM = TAZLandUseCVTM)
+# 
+# # End progress tracking
+# progressEnd(dir = SCENARIO_LOG_PATH)
+# 
+# # Save inputs and results
+# save(firm_sim_results, firm_inputs, file = file.path(SCENARIO_OUTPUT_PATH, 
+#                                                      SYSTEM_FIRMSYN_OUTPUTNAME))
+# lapply(1:length(firm_sim_results), 
+#        function(x) fwrite(firm_sim_results[[x]], 
+#                           file = file.path(SCENARIO_OUTPUT_PATH, 
+#                                            paste(SYSTEM_FIRMSYN_OUTPUTNAME, 
+#                                                  names(firm_sim_results)[x],
+#                                                  "csv",
+#                                                  sep = "."))))
+# 
+# rm(list = names(firm_inputs)) # For scratch only, remove variables that were added from model component environment
+# rm(firm_sim_results, firm_inputs, Establishments)
+# gc(verbose = FALSE)
+
+### Commercial Vehicle Touring Model ===========================================
+# Load executive functions (process inputs and simulation)
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim.R"))
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_process_inputs.R"))
+
+# Process inputs
+cv_inputs <- new.env()
+firms <- cv_sim_process_inputs(envir = cv_inputs)
+
+# For scratch only, bring model component input environment variables into the
+# global environment
+for(n in ls(cv_inputs, all.names=TRUE)) assign(n, get(n, cv_inputs), environment())
+
+# Begin progress tracking
+progressStart(action = "Simulating...", task = "Commercial Vehicle Movements", dir = SCENARIO_LOG_PATH)
+
+# Read skims from .rds files
+skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
+
+# Run simuation
+# Simulate firm activities
+firmActivities <- cv_sim_activities(firms = firms, 
+                                    cv_activities_model = cv_activities_model)
+gc()
+
+# Simulate scheduled stops
+firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
+                                   skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
+                                   firms = firms,
+                                   numZones = numZones,
+                                   d_bars = d_bars,
+                                   hurdle_support = hurdle_support,
+                                   TAZLandUseCVTM = TAZLandUseCVTM,
+                                   cv_goods_model = cv_goods_model,
+                                   cv_service_model = cv_service_model)
+gc()
+
+# Simulate vehicle choice
+firmStopsVeh <- cv_sim_vehicle(database = firmStops, 
+                               firms = firms,
+                               skims = skims_tod[, .(OTAZ, DTAZ, dist = dist.avg)],
+                               model = cv_vehicle_model)
+gc()
+
+# Simulate stop duration
+firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh, 
+                                       model = cv_stopduration_model,
+                                       firms = firms)
+gc()
+
+# Simulate tours and routing
+firmTourSequence <- cv_sim_tours(firmStopsVehDur = firmStopsVehDur,
+                                 firms = firms,
+                                 branch.limit = branch.limit,
+                                 skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
+                                 model = cv_tours_model)
+gc()
+
+# Simulate scheduled trips
+scheduledTrips <- cv_sim_scheduledtrips(firmTourSequence = firmTourSequence,
+                                        firms = firms,
+                                        skims_tod = skims_tod,
+                                        model = cv_arrival_model)
+gc()
+
+# Simulate intermediate stops
+allTrips <- cv_sim_intermediatestops(database = scheduledTrips,
+                                     firms = firms,
+                                     skims_tod = skims_tod,
+                                     model = cv_intermediate_model,
+                                     cv_intermediate_attraction_model = cv_intermediate_attraction_model,
+                                     cv_stopduration_model = cv_stopduration_model,
+                                     deviance.threshold = deviance.threshold,
+                                     intstop.deviations = intstop.deviations,
+                                     TAZLandUseCVTM = TAZLandUseCVTM)
+gc()
+
+cv_sim_results <- list(cv_trips = allTrips)
+cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
+
+# End progress tracking
+progressEnd(dir = SCENARIO_LOG_PATH)
+
+# Save inputs and results
+save(cv_sim_results, cv_inputs, file = file.path(SCENARIO_OUTPUT_PATH, 
+                                                 SYSTEM_CVTM_OUTPUTNAME))
+
+
+rm(list = names(cv_inputs)) # For scratch only, remove variables that were added from model component environment
+rm(cv_sim_results, cv_inputs)
+gc(verbose = FALSE)
+
+
+# ### TRIP TABLES ================================================================
+# # Load executive functions
+# source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
+# source(file.path(SYSTEM_SCRIPTS_PATH, "tt_process_inputs.R"))
+# 
+# # Process inputs
+# tt_inputs <- new.env()
+# tt_process_inputs(envir = tt_inputs)
+# 
+# # For scratch only, bring model component input environment variables into the
+# # global environment
+# for(n in ls(tt_inputs, all.names=TRUE)) assign(n, get(n, tt_inputs), environment())
+# 
+# # Create trip tables
+# tt_list <- tt_build()
+# 
+# # Save raw results
+# save(tt_list, file = file.path(SCENARIO_OUTPUT_PATH, SYSTEM_TT_OUTPUTNAME))
+# 
+# lapply(1:length(tt_list), 
+#        function(x) if(is.data.table(tt_list[[x]])) fwrite(tt_list[[x]], 
+#                           file = file.path(SCENARIO_OUTPUT_PATH, 
+#                                            paste(SYSTEM_TT_OUTPUTNAME, 
+#                                                  names(tt_list)[x],
+#                                                  SCENARIO_ITERATION,
+#                                                  "csv",
+#                                                  sep = "."))))
+# 
+# rm(list = names(tt_inputs)) # For scratch only, remove variables that were added from model component environment
+# rm(tt_list, tt_inputs)
+# gc(verbose = FALSE)
+# 
+# ### DASHBOARD ==================================================================
+# SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
+# 
+# ### Run dashboard
+# loadPackages(SYSTEM_REPORT_PKGS)
+# 
+# # Load executive functions
+# source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build.R"))
+# source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build_process_inputs.R"))
+# 
+# # Process inputs
+# db_inputs <- new.env()
+# db_build_process_inputs(envir = db_inputs)
+# 
+# # For scratch only, bring model component input environment variables into the
+# # global environment
+# for(n in ls(db_inputs, all.names=TRUE)) assign(n, get(n, db_inputs), environment())
+# 
+# # Begin progress tracking
+# progressStart(action = "Writing...", task = "Dashboard", dir = SCENARIO_LOG_PATH, subtasks = FALSE)
+# 
+# # Render the dashboard into HTML
+# db_build_render()
+# 
+# # End progress tracking
+# progressEnd(dir = SCENARIO_LOG_PATH)
+# 
+# rm(list = names(db_inputs)) # For scratch only, remove variables that were added from model component environment
+
