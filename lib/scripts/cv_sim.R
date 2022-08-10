@@ -46,17 +46,17 @@ cv_sim <- function(firms) {
                                    skims = skims_tod[, .(OTAZ, DTAZ, dist = dist.avg)])
     gc()
   }
-  # 
-  # if(run_step[4]){
-  #   
-  #   # Simulate stop duration
-  #   cat("Simulating Commercial Vehicle Stop Duration", "\n")
-  #   firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh, 
-  #                                          model = cv_stopduration_model,
-  #                                          firms = firms)
-  #   gc()
-  # }
-  # 
+
+  if(run_step[4]){
+
+    # Simulate stop duration
+    cat("Simulating Commercial Vehicle Stop Duration", "\n")
+    firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh,
+                                           model = cv_stopduration_model,
+                                           firms = firms)
+    gc()
+  }
+
   # if(run_step[5]){
   #   
   #   # Simulate tours and routing
@@ -123,6 +123,7 @@ cv_sim <- function(firms) {
     return(list(#cv_trips = allTrips
       firmActivities = firmActivities,
       firmStops = firmStops,
-      firmStopsVeh = firmStopsVeh))
+      firmStopsVeh = firmStopsVeh,
+      firmStopsVehDur = firmStopsVehDur))
   }
 }
