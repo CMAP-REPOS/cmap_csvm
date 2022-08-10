@@ -16,6 +16,11 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
                                      BusID + Activity + TAZ + EmpCatGroupedName + TOTAL_EMPLOYEES ~ EmpCatGroupedName,
                                      fun.aggregate = length, 
                                      fill = 0)
+  ### TEMP add some placeholders to match naming in model objects until updates
+  firmActivities[, c("Ed_Pub_Other_Ser", "Industrial", "Info_FIRE_Prof", 
+                     "Leisure", "Medical_Services", "Production", "Transportation") := 
+                   .(Ed_Health_SocialServices, Construction, Office_Professional, Service_FoodDrink,
+                     Ed_Health_SocialServices, 0, 0)]
   
   progressUpdate(subtaskprogress = 0.2, subtask = "Stop Generation", prop = 1/7, dir = SCENARIO_LOG_PATH)
   
@@ -82,7 +87,11 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
                              by = c("TAZ", "DTAZ"))
   
   # Attach zone attributes
-  firmStops.Service <- merge(firmStops.Service, TAZLandUseCVTM, by.x = "DTAZ", by.y = "TAZ")
+  
+  ### TODO update subsetting of TAZLandUseCVTM to match with updated model object
+  cols <- c("TAZ", "HH", names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))])
+  names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))]
+  firmStops.Service <- merge(firmStops.Service, TAZLandUseCVTM[,cols, with = FALSE], by.x = "DTAZ", by.y = "TAZ")
   
   # Calibration adjustment of hurdle constant
   cv_service_model$coefficients$zero["(Intercept)"] <- cv_service_model$coefficients$zero["(Intercept)"] + CAL_CVTM_SCHED_SERVICE
@@ -111,7 +120,12 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
                            by = c("TAZ", "DTAZ"))
   
   # Attach zone attributes
-  firmStops.Goods <- merge(firmStops.Goods, TAZLandUseCVTM, by.x = "DTAZ", by.y = "TAZ")
+  
+  ### TODO update subsetting of TAZLandUseCVTM to match with updated model object
+  cols <- c("TAZ", "HH", names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))])
+  names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))]
+  
+  firmStops.Goods <- merge(firmStops.Goods, TAZLandUseCVTM[,cols, with = FALSE], by.x = "DTAZ", by.y = "TAZ")
   
   # Calibration adjustment of hurdle constant
   cv_goods_model$coefficients$zero["(Intercept)"] <- cv_goods_model$coefficients$zero["(Intercept)"] + CAL_CVTM_SCHED_GOODS
