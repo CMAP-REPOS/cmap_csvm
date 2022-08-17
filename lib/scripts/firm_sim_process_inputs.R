@@ -24,7 +24,8 @@ firm_sim_process_inputs <- function(envir) {
   
   ### Load scenario input files
   scenario.files <- c(emp_control          = file.path(SCENARIO_INPUT_PATH, "data_emp_control_mz.csv"),       #Control totals for emmployment by Mesozone
-                      emp_control_taz      = file.path(SCENARIO_INPUT_PATH, "data_emp_control_2017.csv"))     #Control totals for emmployment by TAZ
+                      emp_control_taz      = file.path(SCENARIO_INPUT_PATH, "data_emp_control_2017.csv"),
+                      hh_taz               = file.path(SCENARIO_INPUT_PATH, "data_hh.csv"))                   # HHs summarized at the TAZ level
                                           
   
   loadInputs(files = scenario.files, envir = envir)
@@ -44,20 +45,20 @@ firm_sim_process_inputs <- function(envir) {
                                      fun.aggregate = sum,
                                      value.var = "Employment")
   
-  ### TEMP add HH field, zeros for now, and add temp names for the employment variables
+  ### TEMP add HH field and add temp names for the employment variables
   ### TODO add a total employment field -- update the code using the rFreight summarizeTAZLandUse that includes this
-  ### TODO replace with data from HH_IN.TXT, https://github.com/CMAP-REPOS/cmap_csvm/issues/14
-  envir[["TAZLandUseCVTM"]][, TotalHHs := 0]
+  
+  envir[["TAZLandUseCVTM"]][data_hh[,.(TAZ = Zone17, HH)], HH := i.HH, on = "TAZ"]
   
   # Ensure that naming in TAZLandUsCVTM is consistent with estimated model parameters
   envir[["TAZLandUseCVTM"]][, c("NEmp_Ed_Pub_Other_Ser", "NEmp_Industrial", 
                                 "NEmp_Info_FIRE_Prof", "NEmp_Leisure", "NEmp_Medical_Services", 
-                                "NEmp_Production", "NEmp_Retail", "NEmp_Total", "HH", 
+                                "NEmp_Production", "NEmp_Retail", "NEmp_Total", 
                                 "NEmp_Transportation") := .(Ed_Health_SocialServices, Construction,
                                                             Office_Professional, Service_FoodDrink,
                                                             Ed_Health_SocialServices, Transport_Industry,
                                                             Retail, Service_FoodDrink + Service_Other + Office_Professional,
-                                                            TotalHHs, Transport_Industry)]
+                                                            Transport_Industry)]
   
   ### Define additional variables
   
