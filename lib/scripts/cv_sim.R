@@ -9,8 +9,7 @@ cv_sim <- function(firms) {
   if(!exists("run_step")) run_step <- rep(TRUE, 8)
   
   # Read skims from .rds file
-  ### TEMP comment this out until we have skims ready
-  # skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
+  skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
   
   if(run_step[1]){
     
@@ -37,27 +36,27 @@ cv_sim <- function(firms) {
     gc()
   }
 
-  # if(run_step[3]){
-  #   
-  #   # Simulate vehicle choice
-  #   cat("Simulating Commercial Vehicle Choice", "\n")
-  #   firmStopsVeh <- cv_sim_vehicle(database = firmStops, 
-  #                                  model = cv_vehicle_model,
-  #                                  firms = firms,
-  #                                  skims = skims_tod[, .(OTAZ, DTAZ, dist = dist.avg)])
-  #   gc()
-  # }
-  # 
-  # if(run_step[4]){
-  #   
-  #   # Simulate stop duration
-  #   cat("Simulating Commercial Vehicle Stop Duration", "\n")
-  #   firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh, 
-  #                                          model = cv_stopduration_model,
-  #                                          firms = firms)
-  #   gc()
-  # }
-  # 
+  if(run_step[3]){
+
+    # Simulate vehicle choice
+    cat("Simulating Commercial Vehicle Choice", "\n")
+    firmStopsVeh <- cv_sim_vehicle(database = firmStops,
+                                   model = cv_vehicle_model,
+                                   firms = firms,
+                                   skims = skims_tod[, .(OTAZ, DTAZ, dist = dist.avg)])
+    gc()
+  }
+
+  if(run_step[4]){
+
+    # Simulate stop duration
+    cat("Simulating Commercial Vehicle Stop Duration", "\n")
+    firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh,
+                                           model = cv_stopduration_model,
+                                           firms = firms)
+    gc()
+  }
+
   # if(run_step[5]){
   #   
   #   # Simulate tours and routing
@@ -119,10 +118,12 @@ cv_sim <- function(firms) {
     return(get(submodel_results_name))
   } else {
     
-    ###TEMP just return results through active steps
+    ###TEMP just return results through active steps with the table from each step returned
     
     return(list(#cv_trips = allTrips
       firmActivities = firmActivities,
-      firmStops = firmStops))
+      firmStops = firmStops,
+      firmStopsVeh = firmStopsVeh,
+      firmStopsVehDur = firmStopsVehDur))
   }
 }

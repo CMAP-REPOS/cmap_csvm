@@ -5,7 +5,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
   progressUpdate(subtaskprogress = 0, subtask = "Vehicle Choice", prop = 1/7, dir = SCENARIO_LOG_PATH)
   
   # Add firm details
-  database[firms, c("EmpCatGroupedName", "TAZ") := .(i.EmpCatName, i.TAZ), on = "BusID"]
+  database[firms, c("EmpCatGroupedName", "TAZ") := .(i.EmpCatGroupedName, i.TAZ), on = "BusID"]
   
   # Look up firm to stop distance
   database[skims[, .(TAZ = OTAZ, DTAZ, dist)], dist := i.dist, on = c("TAZ", "DTAZ")]

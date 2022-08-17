@@ -1,6 +1,5 @@
 # packages for model and report dashboard
-SYSTEM_PKGS <- c("data.table", "rFreight", "rhdf5", "rgdal", "rgeos", "future", 
-                 "namedCapture", "bit64", "reshape")
+SYSTEM_PKGS <- c("data.table", "rFreight", "rhdf5", "pscl", "TSP", "apollo")
 
 SYSTEM_REPORT_PKGS <- c("DT", "flexdashboard", "leaflet", "geojsonio", "htmltools", "htmlwidgets",
                         "knitr", "mapview", "plotly", "RColorBrewer", "rgdal", "rgeos",
