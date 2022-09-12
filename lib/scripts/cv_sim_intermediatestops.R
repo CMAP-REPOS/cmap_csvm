@@ -300,15 +300,6 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
     # Retain at least one option for each stop even if it is greater than the threshold
     tempDT[, below_dev_thresh := ifelse(DeltaD_k < deviance.threshold,1,0)]
     
-    # If the trip does not already involve an international crossing: 
-    # swtich the below dev thresh for any potential intermediate zones that would add an internatianl crossing
-    tempDT[, International := ifelse(OTAZ %in% BASE_TAZ_US & StopTAZ %in% BASE_TAZ_US, "US",
-                                ifelse(OTAZ %in% BASE_TAZ_CANADA & StopTAZ %in% BASE_TAZ_CANADA,
-                                         "Canada","International"))]
-    tempDT[, below_dev_thresh := ifelse((International == "US" & DTAZ %in% BASE_TAZ_CANADA)|
-                                          (International == "Canada" & DTAZ %in% BASE_TAZ_US),
-                                        0, below_dev_thresh)]
-    
     # Check the remaining number of acceptable locations and filter
     tempDT[, num_below_dev_thresh := sum(below_dev_thresh), by = .(BusID, Vehicle, TourID, TripID, IntID)]
     tempDT <- tempDT[below_dev_thresh == 1 | num_below_dev_thresh == 0]
