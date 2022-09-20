@@ -6,7 +6,7 @@ cv_sim <- function(firms) {
   progressStart(action = "Simulating...", task = "Commercial Vehicle Movements", dir = SCENARIO_LOG_PATH)
   
   # Define run_steps if it is not already in the environment (default to running all steps)
-  if(!exists("run_step")) run_step <- rep(TRUE, 8)
+  if(!exists("run_step")) run_step <- rep(TRUE, 7)
   
   # Read skims from .rds file
   skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
@@ -57,60 +57,45 @@ cv_sim <- function(firms) {
     gc()
   }
 
-  # if(run_step[5]){
-  #   
-  #   # Simulate tours and routing
-  #   cat("Simulating Commercial Vehicle Tour Type and Routing", "\n")
-  #   firmTourSequence <- cv_sim_tours(firmStopsVehDur = firmStopsVehDur,
-  #                                    firms = firms,
-  #                                    branch.limit = branch.limit,
-  #                                    skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
-  #                                    model = cv_tours_model)
-  #   gc()
-  # }
-  # 
-  # if(run_step[6]){
-  #   
-  #   # Simulate scheduled trips
-  #   cat("Simulating Commercial Vehicle Trip Scheduling", "\n")
-  #   scheduledTrips <- cv_sim_scheduledtrips(firmTourSequence = firmTourSequence,
-  #                                           firms = firms,
-  #                                           skims_tod = skims_tod,
-  #                                           model = cv_arrival_model)
-  #   gc()
-  # }
-  # 
-  # if(run_step[7]){
-  #   
-  #   # Simulate intermediate stops
-  #   cat("Simulating Commercial Vehicle Non-Scheduled Stops", "\n")
-  #   allTrips <- cv_sim_intermediatestops(database = scheduledTrips,
-  #                                        firms = firms,
-  #                                        skims_tod = skims_tod,
-  #                                        model = cv_intermediate_model,
-  #                                        cv_intermediate_attraction_model = cv_intermediate_attraction_model,
-  #                                        cv_stopduration_model = cv_stopduration_model,
-  #                                        deviance.threshold = deviance.threshold,
-  #                                        intstop.deviations = intstop.deviations,
-  #                                        TAZLandUseCVTM = TAZLandUseCVTM)
-  #   gc()
-  # }
-  # 
-  # if(run_step[8]){
-  #   
-  #   # Add external station information
-  #   cat("Adding Commercial Vehicle Trip External Stations", "\n")
-  #   
-  #   # This step requires the buffer-external-internal skims.
-  #   # for memory management, remove the regular skims first.
-  #   rm(skims_tod)
-  #   skims_buffer <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_buffer.rds"))
-  #   
-  #   allTrips <- cv_sim_externalstations(cv_trips = allTrips,
-  #                                       skims_buffer = skims_buffer)
-  #   gc()
-  # }
-  
+  if(run_step[5]){
+
+    # Simulate tours and routing
+    cat("Simulating Commercial Vehicle Tour Type and Routing", "\n")
+    firmTourSequence <- cv_sim_tours(firmStopsVehDur = firmStopsVehDur,
+                                     firms = firms,
+                                     branch.limit = branch.limit,
+                                     skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
+                                     model = cv_tours_model)
+    gc()
+  }
+
+  if(run_step[6]){
+
+    # Simulate scheduled trips
+    cat("Simulating Commercial Vehicle Trip Scheduling", "\n")
+    scheduledTrips <- cv_sim_scheduledtrips(firmTourSequence = firmTourSequence,
+                                            firms = firms,
+                                            skims_tod = skims_tod,
+                                            model = cv_arrival_model)
+    gc()
+  }
+
+  if(run_step[7]){
+
+    # Simulate intermediate stops
+    cat("Simulating Commercial Vehicle Non-Scheduled Stops", "\n")
+    allTrips <- cv_sim_intermediatestops(database = scheduledTrips,
+                                         firms = firms,
+                                         skims_tod = skims_tod,
+                                         model = cv_intermediate_model,
+                                         cv_intermediate_attraction_model = cv_intermediate_attraction_model,
+                                         cv_stopduration_model = cv_stopduration_model,
+                                         deviance.threshold = deviance.threshold,
+                                         intstop.deviations = intstop.deviations,
+                                         TAZLandUseCVTM = TAZLandUseCVTM)
+    gc()
+  }
+
   # End progress tracking
   progressEnd(dir = SCENARIO_LOG_PATH)
 
@@ -118,12 +103,12 @@ cv_sim <- function(firms) {
     return(get(submodel_results_name))
   } else {
     
-    ###TEMP just return results through active steps with the table from each step returned
-    
-    return(list(#cv_trips = allTrips
+    return(list(cv_trips = allTrips,
       firmActivities = firmActivities,
       firmStops = firmStops,
       firmStopsVeh = firmStopsVeh,
-      firmStopsVehDur = firmStopsVehDur))
+      firmStopsVehDur = firmStopsVehDur,
+      firmTourSequence = firmTourSequence,
+      scheduledTrips = scheduledTrips))
   }
 }
