@@ -8,7 +8,7 @@ BASE_SCENARIO_YEARS <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045)
 
 BASE_SEED_VALUE  <- 5 #seed for sampling to ensure repeatable results
 BASE_TIME_PERIOD_TRIP_POINT <- "START" #point in trip for time period allocation, from ("START", "MIDDLE", "END")
-
+BASE_TOLL_SKIM_AVAILABLE <- TRUE
 # 3. Define time-of-day groupings for skims and trip tables
 # Units are minutes after midnight 
 # (12:00 AM = 0 at the start of a range, 1440 at the end of a range)
