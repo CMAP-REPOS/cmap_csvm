@@ -25,7 +25,7 @@ firm_sim_process_inputs <- function(envir) {
   ### Load scenario input files
   scenario.files <- c(emp_control          = file.path(SCENARIO_INPUT_PATH, "data_emp_control_mz.csv"),       #Control totals for emmployment by Mesozone
                       emp_control_taz      = file.path(SCENARIO_INPUT_PATH, "data_emp_control_2017.csv"),
-                      hh_taz               = file.path(SCENARIO_INPUT_PATH, "data_hh.csv"))                   # HHs summarized at the TAZ level
+                      data_hh              = file.path(SCENARIO_INPUT_PATH, "data_hh.csv"))                   # HHs summarized at the TAZ level
                                           
   
   loadInputs(files = scenario.files, envir = envir)
@@ -48,7 +48,7 @@ firm_sim_process_inputs <- function(envir) {
   ### TEMP add HH field and add temp names for the employment variables
   ### TODO add a total employment field -- update the code using the rFreight summarizeTAZLandUse that includes this
   
-  envir[["TAZLandUseCVTM"]][data_hh[,.(TAZ = Zone17, HH)], HH := i.HH, on = "TAZ"]
+  envir[["TAZLandUseCVTM"]][envir[["data_hh"]][,.(TAZ = Zone17, HH)], HH := i.HH, on = "TAZ"]
   
   # Ensure that naming in TAZLandUsCVTM is consistent with estimated model parameters
   envir[["TAZLandUseCVTM"]][, c("NEmp_Ed_Pub_Other_Ser", "NEmp_Industrial", 
