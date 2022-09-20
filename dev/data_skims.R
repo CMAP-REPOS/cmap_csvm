@@ -13,3 +13,17 @@ str(mat1)
 test <- omx_to_dt(matrix_name = "mf522_htruck_cng_p1_time",
                   matrix_path = "./dev/Data_Processed/Skims/htruck_congested_skims.omx",value_col_name = "time",
                   row_lookup_name = "zone_number", col_lookup_name = "zone_number")
+
+
+
+listOMX("./dev/Data_Processed/Skims/htruck_congested_skims.omx")
+
+listOMX("./dev/Data_Processed/Skims/htruck_free-flow_skims.omx")
+
+listOMX("./dev/Data_Processed/Skims/mtruck_congested_skims.omx")
+
+listOMX("./dev/Data_Processed/Skims/mtruck_free-flow_skims.omx")
+
+listOMX("./dev/Data_Processed/Skims/ltruck_congested_skims.omx")
+
+listOMX("./dev/Data_Processed/Skims/ltruck_free-flow_skims.omx")
