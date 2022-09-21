@@ -42,39 +42,12 @@ cv_sim_process_inputs <- function(envir) {
 
   ### Load scenario input files
 
-  ### TODO need to import correct skims for full zone17 zone system by time period here
-  #scenario.files <- c(skims  = file.path(SCENARIO_INPUT_PATH, "cmap_data_zone_skims.csv"))
-
-  #loadInputs(files = scenario.files, envir = envir)
-
-  # ### Load skims
-
-  # ### TEMP skim for testing (just averaged fields required for stops and vehicle choice)
-  # skims_tod <- merge(data.table(OTAZ = BASE_TAZ_INTERNAL, k = 1),
-  #                    data.table(DTAZ = BASE_TAZ_INTERNAL, k = 1),
-  #                    by = "k",
-  #                    allow.cartesian = TRUE)[, k := NULL]
-  #
-  # setkey(skims_tod, OTAZ, DTAZ)
-  # skims_tod[, time.avg := runif(.N, min = 1, max = 80)]
-  # skims_tod[, dist.avg := runif(.N, min = 1, max = 50)]
-  # skims_tod[, toll.avg := 0]
-
+  ### Load skims
 
   # Import skim matrices for time, distance, and tolls.
-  # are tolls skims available?
   skims_names <- envir[["skims_names"]][condition == BASE_SKIM_CONDITION]
-   
-  if(BASE_TOLL_SKIM_AVAILABLE) {
-    num_skims <- 3
-    # skim_names <- c(SCENARIO_CV_SKIM_TIME, SCENARIO_CV_SKIM_DIST, SCENARIO_CV_SKIM_TOLL)
-    variable_names <- c("time","dist","toll")
-  } else {
-    num_skims <- 2
-    # skim_names <- c(SCENARIO_CV_SKIM_TIME, SCENARIO_CV_SKIM_DIST)
-    variable_names <- c("time","dist")
-  }
-
+  variable_names <- c("time","dist","toll")
+  
   # loop over the time periods and create a combined time, distance, and toll skims for each zone pair
   if(USER_PROCESSOR_CORES > 1){
     require(parallel)
@@ -94,15 +67,13 @@ cv_sim_process_inputs <- function(envir) {
     skims_int <- parLapply(clust, #here
                                1:length(BASE_TOD_RANGES),
                                function(x){
-                                 skims <- read_skims_from_omx(omxinputpaths = skims_names[time_period == x]$file_path, #lists path of files with x time period
-                                                              subsetvar = paste0('p',skims_names[time_period == x]$time_period),
+                                 skims <- read_skims_from_omx(omxinputpaths = file.path(SCENARIO_INPUT_PATH, skims_names[time_period == x]$file_name), #lists path of files with x time period
+                                                              subsetvar = paste0('P',skims_names[time_period == x]$time_period),
                                                               matnames = skims_names[time_period ==x]$matrix_name,
                                                               variablenames = skims_names[time_period ==x]$skims_type,
                                                               row_lookup_name = "zone_number",
                                                               col_lookup_name = "zone_number") 
-                                 # Create zero value toll tables
-                                 if(!BASE_TOLL_SKIM_AVAILABLE) skims[[1]][, toll := 0]
-                                 return(skims)
+                                 
                                })
     stopCluster(clust)
 
@@ -110,14 +81,12 @@ cv_sim_process_inputs <- function(envir) {
 
     skims_int <- lapply(1:length(BASE_TOD_RANGES),
                                function(x){
-                                 skims <- read_skims_from_omx(omxinputpaths = skims_names[time_period == x]$file_path, #lists path of files with x time period
+                                 skims <- read_skims_from_omx(omxinputpaths = file.path(SCENARIO_INPUT_PATH, skims_names[time_period == x]$file_name), #lists path of files with x time period
                                                               subsetvar = paste0('p',skims_names[time_period == x]$time_period),
                                                               matnames = skims_names[time_period ==x]$matrix_name,
                                                               variablenames = skims_names[time_period ==x]$skims_type,
                                                               row_lookup_name = "zone_number",
                                                               col_lookup_name = "zone_number") 
-                                 # Create zero value toll tables
-                                 if(!BASE_TOLL_SKIM_AVAILABLE) skims[[1]][, toll := 0]
                                  return(skims)
                                })
 
