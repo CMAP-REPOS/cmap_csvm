@@ -74,8 +74,7 @@ if (SCENARIO_RUN_CVTM) {
                                                       lib = SYSTEM_PKGS_PATH,
                                                       inputEnv = cv_inputs))
   
-  ###TEMP commenting out until all steps working
-  #cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
+  cv_sim_results$cv_trips[, TourID := as.integer(factor(paste(BusID, Vehicle, TourID)))]
   
   # Save inputs and results
   cat("Saving Commercial Vehicle Touring Database", "\n")
@@ -96,38 +95,38 @@ if (SCENARIO_RUN_CVTM) {
 
 ### 3. Produce Trip Tables -------------------------------------------------------------------------
 
-# if (SCENARIO_RUN_TT) {
-# 
-#   # Load executive functions
-#   source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
-#   source(file.path(SYSTEM_SCRIPTS_PATH, "tt_process_inputs.R"))
-# 
-#   # Process inputs
-#   tt_inputs <- new.env()
-#   ft_trips <- tt_process_inputs(envir = tt_inputs)
-# 
-#   # Create trip tables
-#   tt_list <- suppressMessages(
-#     run_sim(
-#       FUN = tt_build,
-#       data = ft_trips,
-#       packages = SYSTEM_PKGS,
-#       lib = SYSTEM_PKGS_PATH,
-#       inputEnv = tt_inputs
-#     )
-#   )
-# 
-#   # Save inputs and results
-#   save(tt_list,
-#        file = file.path(SCENARIO_OUTPUT_PATH,
-#                         SYSTEM_TT_OUTPUTNAME))
-# 
-#   rm(tt_list,
-#      tt_inputs)
-# 
-#   gc(verbose = FALSE)
-# 
-# }
+if (SCENARIO_RUN_TT) {
+
+  # Load executive functions
+  source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
+  source(file.path(SYSTEM_SCRIPTS_PATH, "tt_process_inputs.R"))
+
+  # Process inputs
+  tt_inputs <- new.env()
+  cv_trips <- tt_process_inputs(envir = tt_inputs)
+
+  # Create trip tables
+  tt_list <- suppressMessages(
+    run_sim(
+      FUN = tt_build,
+      data = cv_trips,
+      packages = SYSTEM_PKGS,
+      lib = SYSTEM_PKGS_PATH,
+      inputEnv = tt_inputs
+    )
+  )
+
+  # Save inputs and results
+  save(tt_list,
+       file = file.path(SCENARIO_OUTPUT_PATH,
+                        SYSTEM_TT_OUTPUTNAME))
+
+  rm(tt_list,
+     tt_inputs)
+
+  gc(verbose = FALSE)
+
+}
 
 # ### 4. Produce Dashboard -------------------------------------------------------------------------
 # 

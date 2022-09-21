@@ -8,7 +8,6 @@ BASE_SCENARIO_YEARS <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045)
 
 BASE_SEED_VALUE  <- 5 #seed for sampling to ensure repeatable results
 BASE_TIME_PERIOD_TRIP_POINT <- "START" #point in trip for time period allocation, from ("START", "MIDDLE", "END")
-BASE_TOLL_SKIM_AVAILABLE <- TRUE
 BASE_SKIM_CONDITION <- 'congested' #alternative is 'free flow'
 
 # 3. Define time-of-day groupings for skims and trip tables

@@ -7,6 +7,6 @@ tt_process_inputs <- function(envir){
   ### Load inputs/outputs from earlier steps
   load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_CVTM_OUTPUTNAME))
   
-  return(ft_trips)
+  return(cv_cv_sim_results$cv_trips)
   
 }
