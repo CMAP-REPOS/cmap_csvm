@@ -1,0 +1,145 @@
+file_name,matrix_name,vehicle_type,condition,skims_type,time_period
+htruck_congested_skims.omx,mf522_htruck_cng_p1_time,heavy,congested,time,1
+htruck_congested_skims.omx,mf523_htruck_cng_p1_dist,heavy,congested,dist,1
+htruck_congested_skims.omx,mf526_htruck_cng_p1_toll  ,heavy,congested,toll,1
+htruck_congested_skims.omx,mf549_htruck_cng_p2_time  ,heavy,congested,time,2
+htruck_congested_skims.omx,mf550_htruck_cng_p2_dist  ,heavy,congested,dist,2
+htruck_congested_skims.omx,mf553_htruck_cng_p2_toll,heavy,congested,toll,2
+htruck_congested_skims.omx,mf576_htruck_cng_p3_time,heavy,congested,time,3
+htruck_congested_skims.omx,mf577_htruck_cng_p3_dist  ,heavy,congested,dist,3
+htruck_congested_skims.omx,mf580_htruck_cng_p3_toll  ,heavy,congested,toll,3
+htruck_congested_skims.omx,mf603_htruck_cng_p4_time  ,heavy,congested,time,4
+htruck_congested_skims.omx,mf604_htruck_cng_p4_dist  ,heavy,congested,dist,4
+htruck_congested_skims.omx,mf607_htruck_cng_p4_toll  ,heavy,congested,toll,4
+htruck_congested_skims.omx,mf630_htruck_cng_p5_time  ,heavy,congested,time,5
+htruck_congested_skims.omx,mf631_htruck_cng_p5_dist,heavy,congested,dist,5
+htruck_congested_skims.omx,mf634_htruck_cng_p5_toll  ,heavy,congested,toll,5
+htruck_congested_skims.omx,mf657_htruck_cng_p6_time  ,heavy,congested,time,6
+htruck_congested_skims.omx,mf658_htruck_cng_p6_dist  ,heavy,congested,dist,6
+htruck_congested_skims.omx,mf661_htruck_cng_p6_toll  ,heavy,congested,toll,6
+htruck_congested_skims.omx,mf684_htruck_cng_p7_time  ,heavy,congested,time,7
+htruck_congested_skims.omx,mf685_htruck_cng_p7_dist  ,heavy,congested,dist,7
+htruck_congested_skims.omx,mf688_htruck_cng_p7_toll  ,heavy,congested,toll,7
+htruck_congested_skims.omx,mf711_htruck_cng_p8_time  ,heavy,congested,time,8
+htruck_congested_skims.omx,mf712_htruck_cng_p8_dist  ,heavy,congested,dist,8
+htruck_congested_skims.omx,mf715_htruck_cng_p8_toll  ,heavy,congested,toll,8
+htruck_free-flow_skims.omx,mf520_htruck_ff_gc_p1_time  ,heavy,free flow,time,1
+htruck_free-flow_skims.omx,mf521_htruck_ff_gc_p1_dist  ,heavy,free flow,dist,1
+htruck_free-flow_skims.omx,mf525_htruck_ff_gc_p1_toll  ,heavy,free flow,toll,1
+htruck_free-flow_skims.omx,mf547_htruck_ff_gc_p2_time  ,heavy,free flow,time,2
+htruck_free-flow_skims.omx,mf548_htruck_ff_gc_p2_dist  ,heavy,free flow,dist,2
+htruck_free-flow_skims.omx,mf552_htruck_ff_gc_p2_toll  ,heavy,free flow,toll,2
+htruck_free-flow_skims.omx,mf574_htruck_ff_gc_p3_time  ,heavy,free flow,time,3
+htruck_free-flow_skims.omx,mf575_htruck_ff_gc_p3_dist,heavy,free flow,dist,3
+htruck_free-flow_skims.omx,mf579_htruck_ff_gc_p3_toll  ,heavy,free flow,toll,3
+htruck_free-flow_skims.omx,mf601_htruck_ff_gc_p4_time  ,heavy,free flow,time,4
+htruck_free-flow_skims.omx,mf602_htruck_ff_gc_p4_dist  ,heavy,free flow,dist,4
+htruck_free-flow_skims.omx,mf606_htruck_ff_gc_p4_toll  ,heavy,free flow,toll,4
+htruck_free-flow_skims.omx,mf628_htruck_ff_gc_p5_time  ,heavy,free flow,time,5
+htruck_free-flow_skims.omx,mf629_htruck_ff_gc_p5_dist  ,heavy,free flow,dist,5
+htruck_free-flow_skims.omx,mf633_htruck_ff_gc_p5_toll  ,heavy,free flow,toll,5
+htruck_free-flow_skims.omx,mf655_htruck_ff_gc_p6_time  ,heavy,free flow,time,6
+htruck_free-flow_skims.omx,mf656_htruck_ff_gc_p6_dist  ,heavy,free flow,dist,6
+htruck_free-flow_skims.omx,mf660_htruck_ff_gc_p6_toll  ,heavy,free flow,toll,6
+htruck_free-flow_skims.omx,mf682_htruck_ff_gc_p7_time  ,heavy,free flow,time,7
+htruck_free-flow_skims.omx,mf683_htruck_ff_gc_p7_dist  ,heavy,free flow,dist,7
+htruck_free-flow_skims.omx,mf687_htruck_ff_gc_p7_toll  ,heavy,free flow,toll,7
+htruck_free-flow_skims.omx,mf709_htruck_ff_gc_p8_time  ,heavy,free flow,time,8
+htruck_free-flow_skims.omx,mf710_htruck_ff_gc_p8_dist  ,heavy,free flow,dist,8
+htruck_free-flow_skims.omx,mf714_htruck_ff_gc_p8_toll  ,heavy,free flow,toll,8
+mtruck_congested_skims.omx,mf513_mtruck_cng_p1_time,medium,congested,time,1
+mtruck_congested_skims.omx,mf514_mtruck_cng_p1_dist  ,medium,congested,dist,1
+mtruck_congested_skims.omx,mf517_mtruck_cng_p1_toll  ,medium,congested,toll,1
+mtruck_congested_skims.omx,mf540_mtruck_cng_p2_time  ,medium,congested,time,2
+mtruck_congested_skims.omx,mf541_mtruck_cng_p2_dist  ,medium,congested,dist,2
+mtruck_congested_skims.omx,mf544_mtruck_cng_p2_toll,medium,congested,toll,2
+mtruck_congested_skims.omx,mf567_mtruck_cng_p3_time  ,medium,congested,time,3
+mtruck_congested_skims.omx,mf568_mtruck_cng_p3_dist  ,medium,congested,dist,3
+mtruck_congested_skims.omx,mf571_mtruck_cng_p3_toll  ,medium,congested,toll,3
+mtruck_congested_skims.omx,mf594_mtruck_cng_p4_time  ,medium,congested,time,4
+mtruck_congested_skims.omx,mf595_mtruck_cng_p4_dist  ,medium,congested,dist,4
+mtruck_congested_skims.omx,mf598_mtruck_cng_p4_toll  ,medium,congested,toll,4
+mtruck_congested_skims.omx,mf621_mtruck_cng_p5_time  ,medium,congested,time,5
+mtruck_congested_skims.omx,mf622_mtruck_cng_p5_dist  ,medium,congested,dist,5
+mtruck_congested_skims.omx,mf625_mtruck_cng_p5_toll  ,medium,congested,toll,5
+mtruck_congested_skims.omx,mf648_mtruck_cng_p6_time  ,medium,congested,time,6
+mtruck_congested_skims.omx,mf649_mtruck_cng_p6_dist  ,medium,congested,dist,6
+mtruck_congested_skims.omx,mf652_mtruck_cng_p6_toll  ,medium,congested,toll,6
+mtruck_congested_skims.omx,mf675_mtruck_cng_p7_time  ,medium,congested,time,7
+mtruck_congested_skims.omx,mf676_mtruck_cng_p7_dist  ,medium,congested,dist,7
+mtruck_congested_skims.omx,mf679_mtruck_cng_p7_toll,medium,congested,toll,7
+mtruck_congested_skims.omx,mf702_mtruck_cng_p8_time  ,medium,congested,time,8
+mtruck_congested_skims.omx,mf703_mtruck_cng_p8_dist,medium,congested,dist,8
+mtruck_congested_skims.omx,mf706_mtruck_cng_p8_toll  ,medium,congested,toll,8
+mtruck_free-flow_skims.omx,mf511_mtruck_ff_gc_p1_time  ,medium,free flow,time,1
+mtruck_free-flow_skims.omx,mf512_mtruck_ff_gc_p1_dist  ,medium,free flow,dist,1
+mtruck_free-flow_skims.omx,mf516_mtruck_ff_gc_p1_toll  ,medium,free flow,toll,1
+mtruck_free-flow_skims.omx,mf538_mtruck_ff_gc_p2_time  ,medium,free flow,time,2
+mtruck_free-flow_skims.omx,mf539_mtruck_ff_gc_p2_dist  ,medium,free flow,dist,2
+mtruck_free-flow_skims.omx,mf543_mtruck_ff_gc_p2_toll  ,medium,free flow,toll,2
+mtruck_free-flow_skims.omx,mf565_mtruck_ff_gc_p3_time  ,medium,free flow,time,3
+mtruck_free-flow_skims.omx,mf566_mtruck_ff_gc_p3_dist  ,medium,free flow,dist,3
+mtruck_free-flow_skims.omx,mf570_mtruck_ff_gc_p3_toll  ,medium,free flow,toll,3
+mtruck_free-flow_skims.omx,mf592_mtruck_ff_gc_p4_time  ,medium,free flow,time,4
+mtruck_free-flow_skims.omx,mf593_mtruck_ff_gc_p4_dist  ,medium,free flow,dist,4
+mtruck_free-flow_skims.omx,mf597_mtruck_ff_gc_p4_toll  ,medium,free flow,toll,4
+mtruck_free-flow_skims.omx,mf619_mtruck_ff_gc_p5_time  ,medium,free flow,time,5
+mtruck_free-flow_skims.omx,mf620_mtruck_ff_gc_p5_dist  ,medium,free flow,dist,5
+mtruck_free-flow_skims.omx,mf624_mtruck_ff_gc_p5_toll  ,medium,free flow,toll,5
+mtruck_free-flow_skims.omx,mf646_mtruck_ff_gc_p6_time  ,medium,free flow,time,6
+mtruck_free-flow_skims.omx,mf647_mtruck_ff_gc_p6_dist  ,medium,free flow,dist,6
+mtruck_free-flow_skims.omx,mf651_mtruck_ff_gc_p6_toll  ,medium,free flow,toll,6
+mtruck_free-flow_skims.omx,mf673_mtruck_ff_gc_p7_time  ,medium,free flow,time,7
+mtruck_free-flow_skims.omx,mf674_mtruck_ff_gc_p7_dist  ,medium,free flow,dist,7
+mtruck_free-flow_skims.omx,mf678_mtruck_ff_gc_p7_toll  ,medium,free flow,toll,7
+mtruck_free-flow_skims.omx,mf700_mtruck_ff_gc_p8_time  ,medium,free flow,time,8
+mtruck_free-flow_skims.omx,mf701_mtruck_ff_gc_p8_dist  ,medium,free flow,dist,8
+mtruck_free-flow_skims.omx,mf705_mtruck_ff_gc_p8_toll  ,medium,free flow,toll,8
+ltruck_congested_skims.omx,mf504_ltruck_cng_p1_time  ,light,congested,time,1
+ltruck_congested_skims.omx,mf505_ltruck_cng_p1_dist  ,light,congested,dist,1
+ltruck_congested_skims.omx,mf508_ltruck_cng_p1_toll  ,light,congested,toll,1
+ltruck_congested_skims.omx,mf531_ltruck_cng_p2_time  ,light,congested,time,2
+ltruck_congested_skims.omx,mf532_ltruck_cng_p2_dist  ,light,congested,dist,2
+ltruck_congested_skims.omx,mf535_ltruck_cng_p2_toll  ,light,congested,toll,2
+ltruck_congested_skims.omx,mf558_ltruck_cng_p3_time  ,light,congested,time,3
+ltruck_congested_skims.omx,mf559_ltruck_cng_p3_dist  ,light,congested,dist,3
+ltruck_congested_skims.omx,mf562_ltruck_cng_p3_toll  ,light,congested,toll,3
+ltruck_congested_skims.omx,mf585_ltruck_cng_p4_time  ,light,congested,time,4
+ltruck_congested_skims.omx,mf586_ltruck_cng_p4_dist  ,light,congested,dist,4
+ltruck_congested_skims.omx,mf589_ltruck_cng_p4_toll  ,light,congested,toll,4
+ltruck_congested_skims.omx,mf612_ltruck_cng_p5_time  ,light,congested,time,5
+ltruck_congested_skims.omx,mf613_ltruck_cng_p5_dist  ,light,congested,dist,5
+ltruck_congested_skims.omx,mf616_ltruck_cng_p5_toll  ,light,congested,toll,5
+ltruck_congested_skims.omx,mf639_ltruck_cng_p6_time  ,light,congested,time,6
+ltruck_congested_skims.omx,mf640_ltruck_cng_p6_dist  ,light,congested,dist,6
+ltruck_congested_skims.omx,mf643_ltruck_cng_p6_toll  ,light,congested,toll,6
+ltruck_congested_skims.omx,mf666_ltruck_cng_p7_time  ,light,congested,time,7
+ltruck_congested_skims.omx,mf667_ltruck_cng_p7_dist  ,light,congested,dist,7
+ltruck_congested_skims.omx,mf670_ltruck_cng_p7_toll  ,light,congested,toll,7
+ltruck_congested_skims.omx,mf693_ltruck_cng_p8_time  ,light,congested,time,8
+ltruck_congested_skims.omx,mf694_ltruck_cng_p8_dist  ,light,congested,dist,8
+ltruck_congested_skims.omx,mf697_ltruck_cng_p8_toll  ,light,congested,toll,8
+ltruck_free-flow_skims.omx,mf502_ltruck_ff_gc_p1_time  ,light,free flow,time,1
+ltruck_free-flow_skims.omx,mf503_ltruck_ff_gc_p1_dist  ,light,free flow,dist,1
+ltruck_free-flow_skims.omx,mf507_ltruck_ff_gc_p1_toll  ,light,free flow,toll,1
+ltruck_free-flow_skims.omx,mf529_ltruck_ff_gc_p2_time  ,light,free flow,time,2
+ltruck_free-flow_skims.omx,mf530_ltruck_ff_gc_p2_dist  ,light,free flow,dist,2
+ltruck_free-flow_skims.omx,mf534_ltruck_ff_gc_p2_toll  ,light,free flow,toll,2
+ltruck_free-flow_skims.omx,mf556_ltruck_ff_gc_p3_time  ,light,free flow,time,3
+ltruck_free-flow_skims.omx,mf557_ltruck_ff_gc_p3_dist  ,light,free flow,dist,3
+ltruck_free-flow_skims.omx,mf561_ltruck_ff_gc_p3_toll  ,light,free flow,toll,3
+ltruck_free-flow_skims.omx,mf583_ltruck_ff_gc_p4_time  ,light,free flow,time,4
+ltruck_free-flow_skims.omx,mf584_ltruck_ff_gc_p4_dist  ,light,free flow,dist,4
+ltruck_free-flow_skims.omx,mf588_ltruck_ff_gc_p4_toll  ,light,free flow,toll,4
+ltruck_free-flow_skims.omx,mf610_ltruck_ff_gc_p5_time  ,light,free flow,time,5
+ltruck_free-flow_skims.omx,mf611_ltruck_ff_gc_p5_dist  ,light,free flow,dist,5
+ltruck_free-flow_skims.omx,mf615_ltruck_ff_gc_p5_toll  ,light,free flow,toll,5
+ltruck_free-flow_skims.omx,mf637_ltruck_ff_gc_p6_time  ,light,free flow,time,6
+ltruck_free-flow_skims.omx,mf638_ltruck_ff_gc_p6_dist  ,light,free flow,dist,6
+ltruck_free-flow_skims.omx,mf642_ltruck_ff_gc_p6_toll  ,light,free flow,toll,6
+ltruck_free-flow_skims.omx,mf664_ltruck_ff_gc_p7_time  ,light,free flow,time,7
+ltruck_free-flow_skims.omx,mf665_ltruck_ff_gc_p7_dist  ,light,free flow,dist,7
+ltruck_free-flow_skims.omx,mf669_ltruck_ff_gc_p7_toll  ,light,free flow,toll,7
+ltruck_free-flow_skims.omx,mf691_ltruck_ff_gc_p8_time  ,light,free flow,time,8
+ltruck_free-flow_skims.omx,mf692_ltruck_ff_gc_p8_dist  ,light,free flow,dist,8
+ltruck_free-flow_skims.omx,mf696_ltruck_ff_gc_p8_toll  ,light,free flow,toll,8
