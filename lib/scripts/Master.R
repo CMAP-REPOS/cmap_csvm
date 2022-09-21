@@ -67,7 +67,6 @@ if (SCENARIO_RUN_CVTM) {
   
   # Run simuation
   cat("Running Commercial Vehicle Touring Simulation", "\n")
-  cv_sim_results <- list()
   cv_sim_results <- suppressMessages(run_sim(FUN = cv_sim, data = ScenarioFirms,
                                                       k = USER_PROCESSOR_CORES, 
                                                       packages = SYSTEM_PKGS, 
@@ -128,7 +127,8 @@ if (SCENARIO_RUN_TT) {
   
   # Clean up workspace
   rm(tt_list,
-     tt_inputs)
+     tt_inputs,
+     cv_trips)
 
   gc(verbose = FALSE)
 
