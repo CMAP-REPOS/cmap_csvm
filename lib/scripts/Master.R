@@ -101,12 +101,12 @@ if (SCENARIO_RUN_TT) {
   
   # Load executive functions
   source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
-  source(file.path(SYSTEM_SCRIPTS_PATH, "tt_process_inputs.R"))
+  source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build_process_inputs.R"))
 
   # Process inputs
   cat("Processing Commercial Vehicle Trip Tables Inputs", "\n")
   tt_inputs <- new.env()
-  cv_trips <- tt_process_inputs(envir = tt_inputs)
+  cv_trips <- tt_build_process_inputs(envir = tt_inputs)
 
   # Create trip tables
   cat("Writing Commercial Vehicle Trip Tables to OMX Files", "\n")
