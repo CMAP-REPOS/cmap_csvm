@@ -208,12 +208,23 @@ firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
                                    cv_service_model = cv_service_model)
 gc()
 
+
 # Simulate vehicle choice
 firmStopsVeh <- cv_sim_vehicle(database = firmStops, 
                                firms = firms,
                                skims = skims_tod[, .(OTAZ, DTAZ, dist = dist.avg)],
                                model = cv_vehicle_model)
 gc()
+###
+#will this model allow for heavy vehicles? Given there were none in the GPS data?
+#-RICKY 9/19/22
+
+#modify code for no heavy vehicles - Colin 9/20/2022
+#via constants
+
+###
+
+
 
 # Simulate stop duration
 firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh, 
@@ -222,6 +233,7 @@ firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh,
 gc()
 
 # Simulate tours and routing
+#ERROR EMPCATNAME not found
 firmTourSequence <- cv_sim_tours(firmStopsVehDur = firmStopsVehDur,
                                  firms = firms,
                                  branch.limit = branch.limit,

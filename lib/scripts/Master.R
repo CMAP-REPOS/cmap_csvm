@@ -97,15 +97,19 @@ if (SCENARIO_RUN_CVTM) {
 
 if (SCENARIO_RUN_TT) {
 
+  cat("Producing Commercial Vehicle Trip Tables", "\n")
+  
   # Load executive functions
   source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
   source(file.path(SYSTEM_SCRIPTS_PATH, "tt_process_inputs.R"))
 
   # Process inputs
+  cat("Processing Commercial Vehicle Trip Tables Inputs", "\n")
   tt_inputs <- new.env()
   cv_trips <- tt_process_inputs(envir = tt_inputs)
 
   # Create trip tables
+  cat("Writing Commercial Vehicle Trip Tables to OMX Files", "\n")
   tt_list <- suppressMessages(
     run_sim(
       FUN = tt_build,
@@ -117,10 +121,12 @@ if (SCENARIO_RUN_TT) {
   )
 
   # Save inputs and results
+  cat("Saving Commercial Vehicle Trip Tables Database", "\n")
   save(tt_list,
        file = file.path(SCENARIO_OUTPUT_PATH,
                         SYSTEM_TT_OUTPUTNAME))
-
+  
+  # Clean up workspace
   rm(tt_list,
      tt_inputs)
 
