@@ -282,7 +282,7 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
     
     # Get skims to possible intermediate zones
     tempDT <- merge(tempDT, 
-                    skims_tod[!DTAZ %in% BASE_TAZ_EXTERNAL & dist.avg <= min.distance, 
+                    skims_tod[DTAZ %in% BASE_TAZ_INTERNAL & dist.avg <= min.distance, 
                               .(OTAZ, DTAZ, T_ik = time.avg, D_ik = dist.avg)],
                     by = "OTAZ", allow.cartesian = TRUE)
     
@@ -512,7 +512,7 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
   tidyDataTable(allTrips, select = c("BusID", "Vehicle", "TourID", "TripID",
                                      "Scheduled", "OTAZ", "DTAZ", "Activity",
                                      "MAMDepart", "MAMArrive", "TravelTime",
-                                     "Distance", "StopDuration",
+                                     "Distance", "StopDuration", "TOD",
                                      "TourType", "TourStartEndLoc"),
                 key = c("BusID", "Vehicle", "TourID", "TripID"))
   
