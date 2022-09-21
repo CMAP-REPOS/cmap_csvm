@@ -28,16 +28,12 @@ tt_build <- function(cv_trips) {
   
   outputMatrices[, matrix_description := paste(SCENARIO_NAME, tod, vehicletype, "CV matrix")]
   
-  outputMatrices[, omxoutputpath := rep(c(file.path(SCENARIO_ASSIGN_PATH, paste0("OD_", c(todlabels, "DY"), ".OMX"))), length(vehicletypes))]
-  
-  outputMatrices[, matname_short := paste(rep(vehicletypes, each = length(todlabels)+1),"Truck")]
-  
   # Write the CV trip tables to an OMX file in the scenario output folder
   cat("Write Commercial Vehicle Trips Tables to OMX File", "\n")
     
-  write_triptables_to_omx(omxoutputpath = rep(file.path(SCENARIO_OUTPUT_PATH, "CV_Trip_Tables.omx"),
+  tt_list <- write_triptables_to_omx(omxoutputpath = rep(file.path(SCENARIO_OUTPUT_PATH, "CV_Trip_Tables.omx"),
                                                 nrow(outputMatrices)),
-                            tazids = c(BASE_TAZ_MODEL_REGION, BASE_TAZ_EXTERNAL),
+                            tazids = zone_number,
                             triptable = TripTable,
                             matnames = outputMatrices$matname,
                             matdescriptions = outputMatrices$matrix_description,
