@@ -317,6 +317,12 @@ rm(cv_trips,
 gc(verbose = FALSE)
 
 
+# load(file = file.path(SCENARIO_OUTPUT_PATH,
+#                       SYSTEM_TT_OUTPUTNAME))
+# 
+# names(tt_list)
+# sum(tt_list$TripTable$trips)
+
 # ### DASHBOARD ==================================================================
 # SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
 # 
