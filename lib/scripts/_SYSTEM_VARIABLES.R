@@ -9,7 +9,7 @@ SYSTEM_DEV_PKGS <- c("sf", "lwgeom", "dplyr", "ggrepel",
                      "ggspatial", "bookdown", "leaps", "openxlsx")
 
 # combine lists so all install if needed on call to initializeApp
-SYSTEM_PKGS <- c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS[!SYSTEM_REPORT_PKGS %in% SYSTEM_PKGS])
+# SYSTEM_PKGS <- c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS[!SYSTEM_REPORT_PKGS %in% SYSTEM_PKGS])
 
 SYSTEM_APP_PATH       <- getwd()
 SYSTEM_RFREIGHT_PATH  <- file.path(SYSTEM_APP_PATH, "lib", "rFreight_0.1-33.zip")

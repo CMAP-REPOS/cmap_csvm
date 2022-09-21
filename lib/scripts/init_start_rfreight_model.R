@@ -17,6 +17,6 @@ suppressWarnings(suppressMessages(library(rFreight,
 initializeApp(rFreight.path = SYSTEM_RFREIGHT_PATH,
               output.path = SCENARIO_OUTPUT_PATH,
               lib = SYSTEM_PKGS_PATH,
-              packages = c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS),
+              packages = c(SYSTEM_PKGS),
               reload.rFreight = FALSE)
 
