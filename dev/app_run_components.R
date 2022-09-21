@@ -178,7 +178,8 @@ source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_process_inputs.R"))
 
 # Process inputs
 cv_inputs <- new.env()
-firms <- cv_sim_process_inputs(envir = cv_inputs)
+ScenarioFirms <- cv_sim_process_inputs(envir = cv_inputs)
+firms <- ScenarioFirms
 
 # For scratch only, bring model component input environment variables into the
 # global environment
@@ -224,8 +225,6 @@ gc()
 
 ###
 
-
-
 # Simulate stop duration
 firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh, 
                                        model = cv_stopduration_model,
@@ -233,7 +232,6 @@ firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh,
 gc()
 
 # Simulate tours and routing
-#ERROR EMPCATNAME not found
 firmTourSequence <- cv_sim_tours(firmStopsVehDur = firmStopsVehDur,
                                  firms = firms,
                                  branch.limit = branch.limit,
@@ -276,38 +274,49 @@ rm(cv_sim_results, cv_inputs)
 gc(verbose = FALSE)
 
 
-# ### TRIP TABLES ================================================================
-# # Load executive functions
-# source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
-# source(file.path(SYSTEM_SCRIPTS_PATH, "tt_process_inputs.R"))
-# 
-# # Process inputs
-# tt_inputs <- new.env()
-# tt_process_inputs(envir = tt_inputs)
-# 
-# # For scratch only, bring model component input environment variables into the
-# # global environment
-# for(n in ls(tt_inputs, all.names=TRUE)) assign(n, get(n, tt_inputs), environment())
-# 
-# # Create trip tables
-# tt_list <- tt_build()
-# 
-# # Save raw results
-# save(tt_list, file = file.path(SCENARIO_OUTPUT_PATH, SYSTEM_TT_OUTPUTNAME))
-# 
-# lapply(1:length(tt_list), 
-#        function(x) if(is.data.table(tt_list[[x]])) fwrite(tt_list[[x]], 
-#                           file = file.path(SCENARIO_OUTPUT_PATH, 
-#                                            paste(SYSTEM_TT_OUTPUTNAME, 
-#                                                  names(tt_list)[x],
-#                                                  SCENARIO_ITERATION,
-#                                                  "csv",
-#                                                  sep = "."))))
-# 
-# rm(list = names(tt_inputs)) # For scratch only, remove variables that were added from model component environment
-# rm(tt_list, tt_inputs)
-# gc(verbose = FALSE)
-# 
+### TRIP TABLES ================================================================
+
+cat("Producing Commercial Vehicle Trip Tables", "\n")
+
+# Load executive functions
+source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build.R"))
+source(file.path(SYSTEM_SCRIPTS_PATH, "tt_build_process_inputs.R"))
+
+# Process inputs
+cat("Processing Commercial Vehicle Trip Tables Inputs", "\n")
+tt_inputs <- new.env()
+cv_trips <- tt_build_process_inputs(envir = tt_inputs)
+
+# For scratch only, bring model component input environment variables into the
+# global environment
+for(n in ls(tt_inputs, all.names=TRUE)) assign(n, get(n, tt_inputs), environment())
+
+# Create trip tables
+cat("Writing Commercial Vehicle Trip Tables to OMX Files", "\n")
+tt_list <- suppressMessages(
+  run_sim(
+    FUN = tt_build,
+    data = cv_trips,
+    packages = SYSTEM_PKGS,
+    lib = SYSTEM_PKGS_PATH,
+    inputEnv = tt_inputs
+  )
+)
+
+# Save inputs and results
+cat("Saving Commercial Vehicle Trip Tables Database", "\n")
+save(tt_list,
+     file = file.path(SCENARIO_OUTPUT_PATH,
+                      SYSTEM_TT_OUTPUTNAME))
+
+# Clean up workspace
+rm(list = names(tt_inputs)) # For scratch only, remove variables that were added from model component environment
+rm(cv_trips, 
+   tt_list,
+   tt_inputs)
+gc(verbose = FALSE)
+
+
 # ### DASHBOARD ==================================================================
 # SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
 # 
