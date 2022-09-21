@@ -322,6 +322,7 @@ gc(verbose = FALSE)
 # 
 # names(tt_list)
 # sum(tt_list$TripTable$trips)
+# listOMX("./scenarios/base/outputs/CV_Trip_Tables.omx")
 
 # ### DASHBOARD ==================================================================
 # SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
