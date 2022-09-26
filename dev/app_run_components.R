@@ -7,7 +7,9 @@ rm(list = ls())
 
 # Define which scenario/year to run
 # Base scenario, called in the style of batch file
-SYSTEM_COMMAND_ARGS <- c("base", 2015)
+SYSTEM_COMMAND_ARGS <- c("base_freeflow", 2015)
+# Alternative base using the freeflow skims (need to set skim condition variable in BASE_VARIABLES)
+# SYSTEM_COMMAND_ARGS <- c("base_freeflow", 2015)
 
 ### Initialize Application -------------------------------------------------------------------
 
@@ -219,9 +221,7 @@ gc()
 ###
 #will this model allow for heavy vehicles? Given there were none in the GPS data?
 #-RICKY 9/19/22
-
-#modify code for no heavy vehicles - Colin 9/20/2022
-#via constants
+#modify code for no heavy vehicles via the mode specific constants - Colin 9/20/2022
 
 ###
 
