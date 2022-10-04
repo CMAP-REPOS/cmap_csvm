@@ -102,13 +102,6 @@ cv_sim <- function(firms) {
   if(USER_RUN_MODE == "Calibration"){
     return(get(submodel_results_name))
   } else {
-    
-    return(list(cv_trips = allTrips,
-      firmActivities = firmActivities,
-      firmStops = firmStops,
-      firmStopsVeh = firmStopsVeh,
-      firmStopsVehDur = firmStopsVehDur,
-      firmTourSequence = firmTourSequence,
-      scheduledTrips = scheduledTrips))
+    return(cv_trips = allTrips)
   }
 }
