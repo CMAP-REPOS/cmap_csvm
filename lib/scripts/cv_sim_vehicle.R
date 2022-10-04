@@ -20,13 +20,15 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
   
   # Recode employment categories
   database[, industry_retail := 1 * (EmpCatGroupedName %in% c('Retail'))]
-  database[, industry_industrial := 1 * (EmpCatGroupedName %in% c("Industrial"))]
-  database[, industry_production := 1 * (EmpCatGroupedName %in% c("Production"))]
-  database[, industry_ed_pub_other_ser := 1 * (EmpCatGroupedName %in% c("Ed_Pub_Other_Ser"))]
-  database[, industry_transportation := 1 * (EmpCatGroupedName %in% c("Transportation"))]
-  database[, industry_info_fire_prof := 1 * (EmpCatGroupedName %in% c("Info_FIRE_Prof"))]
-  database[, industry_medical_services := 1 * (EmpCatGroupedName %in% c("Medical_Services"))]
-  database[, industry_leisure := 1 * (EmpCatGroupedName %in% c("Leisure"))]
+  database[, industry_wholesale := 1 * (EmpCatGroupedName %in% c('Wholesale'))]
+  database[, industry_construction := 1 * (EmpCatGroupedName %in% c("Construction"))]
+  database[, industry_transport_industry := 1 * (EmpCatGroupedName %in% c("Transport_Industry"))]
+  database[, industry_admin_support_waste := 1 * (EmpCatGroupedName %in% c("Admin_Support_Waste"))]
+  database[, industry_ed_health_socialservices := 1 * (EmpCatGroupedName %in% c("Ed_Health_SocialServices"))]
+  database[, industry_service_other := 1 * (EmpCatGroupedName %in% c("Service_Other"))]
+  database[, industry_service_public := 1 * (EmpCatGroupedName %in% c("Service_Public"))]
+  database[, industry_office_professional := 1 * (EmpCatGroupedName %in% c("Office_Professional"))]
+  database[, industry_service_foodDrink := 1 * (EmpCatGroupedName %in% c("Service_FoodDrink"))]
   
   # Recode activity categories
   database[, activity_deliver_pickup := 1 * (Activity == "Goods")]
@@ -82,13 +84,16 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
       V[['light']]  = 
         asc_light + CAL_asc_light + 
         beta_v1_industry_retail *	industry_retail +
-        beta_v1_industry_industrial *	industry_industrial +
-        beta_v1_industry_production *	industry_production +
-        beta_v1_industry_ed_pub_other_ser *	industry_ed_pub_other_ser +
-        beta_v1_industry_transportation *	industry_transportation +
-        beta_v1_industry_info_fire_prof *	industry_info_fire_prof +
-        beta_v1_industry_medical_services *	industry_medical_services + 
-        beta_v1_industry_leisure * industry_leisure + 
+        beta_v1_industry_wholesale * industry_wholesale +
+        beta_v1_industry_construction *	industry_construction +
+        beta_v1_industry_transport_industry *	industry_transport_industry +
+        beta_v1_industry_admin_support_waste * industry_admin_support_waste +
+        beta_v1_industry_ed_health_socialservices *	industry_ed_health_socialservices +
+        beta_v1_industry_service_other * industry_service_other + 
+        #beta_v1_industry_service_public *	industry_service_public + 
+        #Dont think well need it, but I left it just to be clear we could at some point
+        beta_v1_industry_office_professional *	industry_office_professional +
+        beta_v1_industry_service_foodDrink * industry_service_foodDrink + 
         beta_v1_activity_deliver_pickup * activity_deliver_pickup +
         beta_v1_activity_service * activity_service +
         beta_v1_dist_00_02 * dist_00_02 * CAL_beta_v1_dist_00_02 + 
@@ -100,13 +105,15 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
       V[['medium']] = 
         asc_medium + CAL_asc_medium +
         beta_v2_industry_retail *	industry_retail +
-        beta_v2_industry_industrial *	industry_industrial +
-        beta_v2_industry_production *	industry_production +
-        beta_v2_industry_ed_pub_other_ser *	industry_ed_pub_other_ser +
-        beta_v2_industry_transportation *	industry_transportation +
-        beta_v2_industry_info_fire_prof *	industry_info_fire_prof +
-        beta_v2_industry_medical_services *	industry_medical_services + 
-        beta_v2_industry_leisure * industry_leisure +  
+        beta_v2_industry_wholesale * industry_wholesale +
+        beta_v2_industry_construction *	industry_construction +
+        beta_v2_industry_transport_industry *	industry_transport_industry +
+        beta_v2_industry_admin_support_waste * industry_admin_support_waste +
+        beta_v2_industry_ed_health_socialservices *	industry_ed_health_socialservices +
+        beta_v2_industry_service_other * industry_service_other + 
+        #beta_v2_industry_service_public *	industry_service_public +
+        beta_v2_industry_office_professional *	industry_office_professional +
+        beta_v2_industry_service_foodDrink * industry_service_foodDrink +
         beta_v2_activity_deliver_pickup * activity_deliver_pickup +
         beta_v2_activity_service * activity_service +
         beta_v2_dist_00_02 * dist_00_02 * CAL_beta_v2_dist_00_02 + 

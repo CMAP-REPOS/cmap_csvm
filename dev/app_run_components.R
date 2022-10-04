@@ -7,7 +7,7 @@ rm(list = ls())
 
 # Define which scenario/year to run
 # Base scenario, called in the style of batch file
-SYSTEM_COMMAND_ARGS <- c("base_freeflow", 2015)
+SYSTEM_COMMAND_ARGS <- c("base", 2015)
 # Alternative base using the freeflow skims (need to set skim condition variable in BASE_VARIABLES)
 # SYSTEM_COMMAND_ARGS <- c("base_freeflow", 2015)
 
