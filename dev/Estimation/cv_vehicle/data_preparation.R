@@ -2,17 +2,16 @@ library(data.table)
 library(readxl)
 library(magrittr)
 
-setwd("./dev/Estimation/cv_vehicle")
 # locations of data files
 # it is all relative
-base_loc = "../../Data_Processed"
+base_loc = "dev/Data_Processed/SEMCOG_Data"
 
-cvs_location  = file.path("updated_semcog","SEMCOG_CV_20181128_Submitted_ForDistribution.xlsx")
-skim_location = file.path("updated_semcog","skims_avg.RDS")
-taz_centroids_location = file.path("updated_semcog","TAZ_Centroids.csv") # not used
-zip_centroids_locations = file.path("updated_semcog", "CVS_Unique_Stop_ZIP_Centroids.csv") # not used
-emp_cats_loc = "NAICS3_SEMCOGEmpCats_CMAP.csv"
-taz_system_location = "updated_semcog/TAZ_System.csv"
+cvs_location  = file.path(base_loc,"SEMCOG_CV_20181128_Submitted_ForDistribution.xlsx")
+skim_location = file.path(base_loc,"skims_avg.RDS")
+taz_centroids_location = file.path(base_loc, "TAZ_Centroids.csv") # not used
+zip_centroids_locations = file.path(base_loc, "CVS_Unique_Stop_ZIP_Centroids.csv") # not used
+emp_cats_loc = file.path(base_loc, "NAICS3_SEMCOGEmpCats_CMAP.csv")
+taz_system_location = file.path(base_loc, "TAZ_System.csv")
 
 # load data
 cvs_establishment = read_xlsx(cvs_location, sheet = "ESTABLISHMENT")
@@ -219,7 +218,8 @@ choice_data[, dist_10_20 := 1 * (dist >= 10 & dist < 20)]
 choice_data[, dist_20_p  := 1 * (dist >= 20)]
 
 # save the table before simplyfying 
-saveRDS(choice_data[order(SITEID, STOP_SEQ)], "cv_vehicle_processed_data_test.rds")
+model_loc = "dev/Estimation/cv_vehicle/"
+saveRDS(choice_data[order(SITEID, STOP_SEQ)], file.path(model_loc,"cv_vehicle_processed_data.rds"))
 
 names(choice_data)
 
@@ -244,7 +244,8 @@ choice_data = choice_data[, names_to_keep, with = FALSE]
 
 choice_data = choice_data[order(SITEID, STOP_SEQ)]
 
-saveRDS(choice_data, "estimation_data_test.rds")
+
+saveRDS(choice_data, file.path(model_loc, "estimation_data.rds"))
 
 
 

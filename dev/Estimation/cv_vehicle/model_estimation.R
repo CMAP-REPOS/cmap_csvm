@@ -11,11 +11,13 @@ apollo_control = list(
   indivID    = "ID"
 )
 
+base = 'dev/Estimation/cv_vehicle'
+
 # ################################################################# #
 #### LOAD DATA AND APPLY ANY TRANSFORMATIONS                     ####
 # ################################################################# #
-setwd("dev/Estimation/cv_vehicle/")
-database = readRDS("estimation_data_test.rds")
+
+database = readRDS(file.path(base, "estimation_data.rds"))
 
 database[, ID := SITEID]
 
@@ -200,6 +202,6 @@ apollo_modelOutput(model)
 # ----------------------------------------------------------------- #
 #---- FORMATTED OUTPUT (TO FILE, using model name)               ----
 # ----------------------------------------------------------------- #
-
-saveRDS(model, "cv_vehicle_model.rds")
+model_loc = 'dev/Estimation/cv_vehicle'
+saveRDS(model, file.path(model_loc, "final_model","cv_vehicle_model.rds"))
 
