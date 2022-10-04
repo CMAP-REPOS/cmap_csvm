@@ -16,11 +16,8 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
                                      BusID + Activity + TAZ + EmpCatGroupedName + TOTAL_EMPLOYEES ~ EmpCatGroupedName,
                                      fun.aggregate = length, 
                                      fill = 0)
-  ### TEMP add some placeholders to match naming in model objects until updates
-  firmActivities[, c("Ed_Pub_Other_Ser", "Industrial", "Info_FIRE_Prof", 
-                     "Leisure", "Medical_Services", "Production", "Transportation") := 
-                   .(Ed_Health_SocialServices, Construction, Office_Professional, Service_FoodDrink,
-                     Ed_Health_SocialServices, 0, 0)]
+  # Manually add any missing employment variable levels where there are no firms
+  firmActivities[, Transport_Industry := 0]
   
   progressUpdate(subtaskprogress = 0.2, subtask = "Stop Generation", prop = 1/7, dir = SCENARIO_LOG_PATH)
   

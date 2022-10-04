@@ -91,7 +91,6 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v1_industry_ed_health_socialservices *	industry_ed_health_socialservices +
         beta_v1_industry_service_other * industry_service_other + 
         #beta_v1_industry_service_public *	industry_service_public + 
-        #Dont think well need it, but I left it just to be clear we could at some point
         beta_v1_industry_office_professional *	industry_office_professional +
         beta_v1_industry_service_foodDrink * industry_service_foodDrink + 
         beta_v1_activity_deliver_pickup * activity_deliver_pickup +

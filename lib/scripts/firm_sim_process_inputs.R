@@ -37,28 +37,20 @@ firm_sim_process_inputs <- function(envir) {
                                   envir[["emp_control"]][Mesozone >= 150])
   
   # Create a summarized version of the employment data with employment grouping categories in wide format
-  envir[["TAZLandUseCVTM"]] <- dcast.data.table(merge(envir[["emp_control_taz"]][, .(TAZ = Zone17, Mesozone, CountyFIPS, 
+  envir[["TAZLandUseCVTM"]] <- add_totals(dcast.data.table(merge(envir[["emp_control_taz"]][, .(TAZ = Zone17, Mesozone, CountyFIPS, 
                                                          EmpCatName = NAICS, Employment)],
                                      envir[["UEmpCats"]],
                                      by = "EmpCatName"),
                                      TAZ + Mesozone + CountyFIPS ~ EmpCatGroupedName,
                                      fun.aggregate = sum,
-                                     value.var = "Employment")
-  
-  ### TEMP add HH field and add temp names for the employment variables
-  ### TODO add a total employment field -- update the code using the rFreight summarizeTAZLandUse that includes this
-  
+                                     value.var = "Employment"),
+                                     idcols = 3L,
+                                     coltotal = FALSE)
+  setnames(envir[["TAZLandUseCVTM"]], 
+           names(envir[["TAZLandUseCVTM"]])[4:ncol(envir[["TAZLandUseCVTM"]])],
+           paste("NEmp", names(envir[["TAZLandUseCVTM"]])[4:ncol(envir[["TAZLandUseCVTM"]])], sep = "_"))
+                                     
   envir[["TAZLandUseCVTM"]][envir[["data_hh"]][,.(TAZ = Zone17, HH)], HH := i.HH, on = "TAZ"]
-  
-  # Ensure that naming in TAZLandUsCVTM is consistent with estimated model parameters
-  envir[["TAZLandUseCVTM"]][, c("NEmp_Ed_Pub_Other_Ser", "NEmp_Industrial", 
-                                "NEmp_Info_FIRE_Prof", "NEmp_Leisure", "NEmp_Medical_Services", 
-                                "NEmp_Production", "NEmp_Retail", "NEmp_Total", 
-                                "NEmp_Transportation") := .(Ed_Health_SocialServices, Construction,
-                                                            Office_Professional, Service_FoodDrink,
-                                                            Ed_Health_SocialServices, Transport_Industry,
-                                                            Retail, Service_FoodDrink + Service_Other + Office_Professional,
-                                                            Transport_Industry)]
   
   ### Define additional variables
   
