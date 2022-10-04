@@ -8,16 +8,15 @@ library(foreach)
 library(doParallel)
 library(DHARMa)
 
-setwd("dev/Estimation/cv_stops/")
-
 ##########################
 # Estimate Models
 
+model_loc = 'dev/Estimation/cv_stops/'
 # Load data
-load("Stop_Counts_Goods_test.RData")
+load(file.path(model_loc, "Stop_Counts_Goods_test.RData"))
 # load("Counts_Meeting.RData")
 # load("Counts_Service.RData")
-source("0 helper functions.R")
+source(file.path(model_loc, "0 helper functions.R"))
 
 # Code employment size category
 good_stop_counts[,Size:=cut(TOTAL_EMPLOYEES, c(0, 5, 15, 25, 50, 100, Inf), 
@@ -298,15 +297,15 @@ goods.fit.copy <- goods.fit
 
 # Calibration trick: estimate with separate time parameters but use the shared value from the previous model
 # Copy population level estimate to hurdle model for prediction
-coef_names <- names(goods.fit$coefficients$count)
-count_par <- length(goods.fit$coefficients$count)
-goods.fit$coefficients$count <- final_model$fit$par[seq_len(count_par)]
-names(goods.fit$coefficients$count) <- coef_names
-
-coef_names <- names(goods.fit$coefficients$zero)
-zero_par <- length(goods.fit$coefficients$zero)
-goods.fit$coefficients$zero <- -final_model$fit$par[(count_par+seq_len(zero_par))]
-names(goods.fit$coefficients$zero) <- coef_names
+# coef_names <- names(goods.fit$coefficients$count)
+# count_par <- length(goods.fit$coefficients$count)
+# goods.fit$coefficients$count <- final_model$fit$par[seq_len(count_par)]
+# names(goods.fit$coefficients$count) <- coef_names
+# 
+# coef_names <- names(goods.fit$coefficients$zero)
+# zero_par <- length(goods.fit$coefficients$zero)
+# goods.fit$coefficients$zero <- -final_model$fit$par[(count_par+seq_len(zero_par))]
+# names(goods.fit$coefficients$zero) <- coef_names
 # Only works when passing newdata to predict function.
 
 summary(goods.fit)
@@ -324,11 +323,11 @@ attr(finalModel$terms$zero, ".Environment") <- NULL
 attr(finalModel$terms$full, ".Environment") <- NULL
 
 # Save final model
-saveRDS(finalModel, file = "new_models/goods/cv_goods_model.RDS")
+saveRDS(finalModel, file = file.path(model_loc, "new_models/goods/cv_goods_model.RDS"))
 
 # Write results to csv
 options(width = 10000)
-sink(file = "final_models/goods/goods_model_results.txt")
+sink(file = fiel.path(model_loc, "new_models/goods/goods_model_results.txt"))
 print(summary(goods.fit.copy))
 print(summary(final_model))
 sink()

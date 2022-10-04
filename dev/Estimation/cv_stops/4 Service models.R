@@ -5,16 +5,15 @@ library(glmmTMB)
 library(foreach)
 library(doParallel)
 library(DHARMa)
-setwd("dev/Estimation/cv_stops/")
+
+model_loc = 'dev/Estimation/cv_stops/'
 
 ##########################
 # Estimate Models
 
 # Load data
-# load("Stop_Counts_Goods_test.RData")
-# load("Counts_Meeting.RData")
-load("Stop_Counts_Service_test.RData")
-source("0 helper functions.R")
+load(file.path(model_loc, "Stop_Counts_Service.RData"))
+source(file.path(model_loc, "0 helper functions.R"))
 
 # Code employment size category
 service_stop_counts[,Size:=cut(TOTAL_EMPLOYEES, c(0, 5, 15, 25, 50, 100, Inf), 
@@ -438,15 +437,15 @@ service.fit.copy <- service.fit
 
 # Calibration trick: estimate with separate time parameters but use the shared value from the previous model
 # Copy population level estimate to hurdle model for prediction
-coef_names <- names(service.fit$coefficients$zero)
-zero_par <- length(service.fit$coefficients$zero)
-service.fit$coefficients$zero <- -final_model$fit$par[(seq_len(zero_par))]
-names(service.fit$coefficients$zero) <- coef_names
-
-coef_names <- names(service.fit$coefficients$count)
-count_par <- length(service.fit$coefficients$count)
-service.fit$coefficients$count <- final_model$fit$par[(count_par + seq_len(count_par))]
-names(service.fit$coefficients$count) <- coef_names
+# coef_names <- names(service.fit$coefficients$zero)
+# zero_par <- length(service.fit$coefficients$zero)
+# service.fit$coefficients$zero <- -final_model$fit$par[(seq_len(zero_par))]
+# names(service.fit$coefficients$zero) <- coef_names
+# 
+# coef_names <- names(service.fit$coefficients$count)
+# count_par <- length(service.fit$coefficients$count)
+# service.fit$coefficients$count <- final_model$fit$par[(count_par + seq_len(count_par))]
+# names(service.fit$coefficients$count) <- coef_names
 # Only works when passing newdata to predict function.
 
 summary(service.fit)
@@ -463,11 +462,11 @@ attr(finalModel$terms$zero, ".Environment") <- NULL
 attr(finalModel$terms$full, ".Environment") <- NULL
 
 # Save final model
-saveRDS(finalModel, file = "new_models/services/cv_service_model.RDS")
+saveRDS(finalModel, file = file.path(model_loc, "new_models/services/cv_service_model.RDS"))
 
 # Write results to csv
 options(width = 10000)
-sink(file = "final_models/service/Service Model Results.txt")
+sink(file = file.path(model_loc, "final_models/services/Service Model Results.txt"))
 print(summary(service.fit.copy))
 print(summary(final_model))
 sink()

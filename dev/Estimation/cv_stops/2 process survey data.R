@@ -5,18 +5,16 @@ library(foreign)
 library(data.table)
 library(pscl)
 
-setwd("./dev/Estimation/cv_stops")
 
-base_loc = "../../Data_Processed"
+base_loc = "dev/Data_Processed/SEMCOG_Data/"
 
-cvs_location  = file.path("updated_semcog", "SEMCOG_CV_20181128_Submitted_ForDistribution.xlsx")
-skim_location = file.path("updated_semcog", "skims_avg.RDS") # not used
-taz_centroids_location = file.path("updated_semcog", "TAZ_Centroids.csv")
-zip_centroids_locations = file.path("updated_semcog", "CVS_Unique_Stop_ZIP_Centroids.csv")
-emp_cats_loc = file.path("updated_semcog","NAICS3_to_EmpCats.csv")
-taz_se_loc = file.path("updated_semcog","TAZSocioEconomics.csv")
-taz_system_location = file.path("updated_semcog", "TAZ_System.csv")
-new_empcats_location = file.path("NAICS3_SEMCOGEmpCats_CMAP.csv")
+cvs_location  = file.path(base_loc, "SEMCOG_CV_20181128_Submitted_ForDistribution.xlsx")
+skim_location = file.path(base_loc, "skims_avg.RDS") # not used
+taz_centroids_location = file.path(base_loc, "TAZ_Centroids.csv")
+zip_centroids_locations = file.path(base_loc, "CVS_Unique_Stop_ZIP_Centroids.csv")
+taz_se_loc = file.path(base_loc,"TAZSocioEconomics.csv")
+taz_system_location = file.path(base_loc, "TAZ_System.csv")
+new_empcats_location = file.path(base_loc, "NAICS3_SEMCOGEmpCats_CMAP.csv")
 
 # load data
 cvs_establishment = read_xlsx(cvs_location, sheet = "ESTABLISHMENT")
@@ -30,8 +28,8 @@ taz_se[,c(grep("e\\d{2}", names(taz_se), value = TRUE)):=lapply(.SD,
                                                                 function(x) ifelse(is.na(x), 0, x)),
        .SDcols=c(grep("e\\d{2}", names(taz_se), value = TRUE))]
 
-emp_cats = fread(emp_cats_loc)
-emp_cats_cmap = fread(new_empcats_location)
+emp_cats = fread(new_empcats_location)
+
 
 # exclude any long distance trips that will be modeled elsewhere
 buffer_zips = unique(taz_system[TAZ_TYPE == "BUFFER", ZCTA5CE10])
@@ -279,7 +277,7 @@ intermediate_stop_counts[, straight_dist := straight_dist / 1609.34] # convertin
 
 
 # var_names_by_cat = emp_cats[,.N,.(EmpCatName, EmpCatGroupedName)][order(EmpCatName)] #the semcog version
-var_names_by_cat = emp_cats_cmap[,.N,.(EmpCatName, CMAPGroup)][order(EmpCatName)] #new cmap version
+var_names_by_cat = emp_cats[,.N,.(EmpCatName, CMAPGroup)][order(EmpCatName)] #new cmap version
 
 for(model_empcat in unique(var_names_by_cat[,CMAPGroup])){
   cat(model_empcat, "\n")
@@ -310,13 +308,13 @@ intermediate_stop_counts[, c(var_names_by_cat$EmpCatName):=NULL]
 
 
 # Assign Industry category
-setkey(emp_cats_cmap, NAICSn2n3)
-good_stop_counts[,IndustryCat:=emp_cats_cmap[.(NAICS2),CMAPGroup]]
-good_stop_counts[is.na(IndustryCat),IndustryCat:=emp_cats_cmap[.(NAICS3),CMAPGroup]]
-service_stop_counts[,IndustryCat:=emp_cats_cmap[.(NAICS2),CMAPGroup]]
-service_stop_counts[is.na(IndustryCat),IndustryCat:=emp_cats_cmap[.(NAICS3),CMAPGroup]]
-intermediate_stop_counts[,IndustryCat:=emp_cats_cmap[.(NAICS2),CMAPGroup]]
-intermediate_stop_counts[is.na(IndustryCat),IndustryCat:=emp_cats_cmap[.(NAICS3),CMAPGroup]]
+setkey(emp_cats, NAICSn2n3)
+good_stop_counts[,IndustryCat:=emp_cats[.(NAICS2),CMAPGroup]]
+good_stop_counts[is.na(IndustryCat),IndustryCat:=emp_cats[.(NAICS3),CMAPGroup]]
+service_stop_counts[,IndustryCat:=emp_cats[.(NAICS2),CMAPGroup]]
+service_stop_counts[is.na(IndustryCat),IndustryCat:=emp_cats[.(NAICS3),CMAPGroup]]
+intermediate_stop_counts[,IndustryCat:=emp_cats[.(NAICS2),CMAPGroup]]
+intermediate_stop_counts[is.na(IndustryCat),IndustryCat:=emp_cats[.(NAICS3),CMAPGroup]]
 
 drop_var = c("FULL_TIME_EMPLOYEES", "AVG_EMPLOYEES_ON_WEEKDAY", "EMPLOYEES_WORK_HOME_ONCE_PER_WEEK", 
              "OWNED_SINGLE_UNIT", "OWNED_COMBO_TRACTOR_TRAILER", "OWNED_PASSENGER_CAR_OR_SUV", 
@@ -328,580 +326,581 @@ good_stop_counts[, c(drop_var):=NULL]
 service_stop_counts[, c(drop_var):=NULL]
 intermediate_stop_counts[, c(drop_var):=NULL]
 
+model_loc  = 'dev/Estimation/cv_stops/'
 # Count data sets
-save(good_stop_counts, file = "Stop_Counts_Goods_test.RData")
-save(service_stop_counts, file = "Stop_Counts_Service_test.RData")
-save(intermediate_stop_counts, file = "Stop_Counts_Intermediate.RData")
+save(good_stop_counts, file = file.path(model_loc, "Stop_Counts_Goods.RData"))
+save(service_stop_counts, file = file.path(model_loc, "Stop_Counts_Service.RData"))
+save(intermediate_stop_counts, file = file.path(model_loc, "Stop_Counts_Intermediate.RData"))
 
 
 # Stop Generation Model =========================================================
-cv_stop_desc_path = file.path("dev", "Estimation", "cv_stops", "desc_summaries")
-cv_output_path = file.path("dev", "Estimation", "cv_stops", "eda_plots")
-load("dev/Estimation/cv_stops/Stop_Counts_Goods.RData")
-load("dev/Estimation/cv_stops/Stop_Counts_Service.RData")
-
-# Descriptive Summaries
-good_stop_counts[empcats,EmpCat:=i.EmpCatName,on=.(NAICS2=NAICSn2n3)]
-good_stop_counts[empcats,EmpCat:=ifelse(is.na(EmpCat),i.EmpCatName,EmpCat),on=.(NAICS3=NAICSn2n3)]
-service_stop_counts[empcats,EmpCat:=i.EmpCatName,on=.(NAICS2=NAICSn2n3)]
-service_stop_counts[empcats,EmpCat:=ifelse(is.na(EmpCat),i.EmpCatName,EmpCat),on=.(NAICS3=NAICSn2n3)]
-
-# Sample Size by Model Employment Category
-goods_stop_ss <- good_stop_counts[,.(NEst=length(unique(SITEID)),
-                                     StopsRecords=sum(STOPS>0), 
-                                     NoStopsRecords=sum(STOPS==0),
-                                     TotalRecords=.N,
-                                     MinStops=min(STOPS[STOPS>0]),
-                                     AvgStops=mean(STOPS[STOPS>0]),
-                                     MaxStops=max(STOPS[STOPS>0])),.(EmpCat)][order(-StopsRecords)]
-service_stop_ss <- service_stop_counts[,.(NEst=length(unique(SITEID)),
-                                          StopsRecords=sum(STOPS>0), 
-                                          NoStopsRecords=sum(STOPS==0),
-                                          TotalRecords=.N,
-                                          MinStops=min(STOPS[STOPS>0]),
-                                          AvgStops=mean(STOPS[STOPS>0]),
-                                          MaxStops=max(STOPS[STOPS>0])),.(EmpCat)][order(-StopsRecords)]
-
-fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_model_empcat_samplesize.csv"))
-fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_model_empcat_samplesize.csv"))
-
-# Sample Size by Grouped Employment Category
-goods_stop_ss <- good_stop_counts[,.(NEst=length(unique(SITEID)),
-                                     StopsRecords=sum(STOPS>0), 
-                                     NoStopsRecords=sum(STOPS==0),
-                                     TotalRecords=.N,
-                                     MinStops=min(STOPS[STOPS>0]),
-                                     AvgStops=mean(STOPS[STOPS>0]),
-                                     MaxStops=max(STOPS[STOPS>0])),.(IndustryCat)][order(-StopsRecords)]
-service_stop_ss <- service_stop_counts[,.(NEst=length(unique(SITEID)),
-                                          StopsRecords=sum(STOPS>0), 
-                                          NoStopsRecords=sum(STOPS==0),
-                                          TotalRecords=.N,
-                                          MinStops=min(STOPS[STOPS>0]),
-                                          AvgStops=mean(STOPS[STOPS>0]),
-                                          MaxStops=max(STOPS[STOPS>0])),.(IndustryCat)][order(-StopsRecords)]
-
-fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_grouped_empcat_samplesize.csv"))
-fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_grouped_empcat_samplesize.csv"))
-
-dist_cut = c(seq(0,50,2),Inf)
-ndist_bin = length(dist_cut)
-dist_cut_label = paste0(dist_cut[-ndist_bin], " - ", dist_cut[-1])
-dist_cut_label[(ndist_bin-1)] = paste0("> ", dist_cut[(ndist_bin-1)])
-
-good_stop_counts[,dist_bin:=cut(dist, dist_cut, labels = dist_cut_label)]
-service_stop_counts[,dist_bin:=cut(dist, dist_cut, labels = dist_cut_label)]
-
-goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                              StopsRecords=.N,
-                                              MinStops=min(STOPS),
-                                              AvgStops=mean(STOPS),
-                                              MaxStops=max(STOPS)),.(EmpCat, dist_bin)][order(EmpCat, dist_bin)]
-service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                                   StopsRecords=.N,
-                                                   MinStops=min(STOPS),
-                                                   AvgStops=mean(STOPS),
-                                                   MaxStops=max(STOPS)),.(EmpCat, dist_bin)][order(EmpCat, dist_bin)]
-
-fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_model_empcat_dist_summaries.csv"))
-fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_model_empcat_dist_summaries.csv"))
-
-goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                              StopsRecords=.N,
-                                              MinStops=min(STOPS),
-                                              AvgStops=mean(STOPS),
-                                              MaxStops=max(STOPS)),.(IndustryCat, dist_bin)][order(IndustryCat, dist_bin)]
-service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                                   StopsRecords=.N,
-                                                   MinStops=min(STOPS),
-                                                   AvgStops=mean(STOPS),
-                                                   MaxStops=max(STOPS)),.(IndustryCat, dist_bin)][order(IndustryCat, dist_bin)]
-
-fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_grouped_empcat_dist_summaries.csv"))
-fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_grouped_empcat_dist_summaries.csv"))
-
-
-time_cut = c(seq(0,50,2),Inf)
-ntime_bin = length(time_cut)
-time_cut_label = paste0(time_cut[-ntime_bin], " - ", time_cut[-1])
-time_cut_label[(ntime_bin-1)] = paste0("> ", time_cut[(ntime_bin-1)])
-
-good_stop_counts[,time_bin:=cut(time, time_cut, labels = time_cut_label)]
-service_stop_counts[,time_bin:=cut(time, time_cut, labels = time_cut_label)]
-
-goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                              StopsRecords=.N,
-                                              MinStops=min(STOPS),
-                                              AvgStops=mean(STOPS),
-                                              MaxStops=max(STOPS)),.(EmpCat, time_bin)][order(EmpCat, time_bin)]
-service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                                   StopsRecords=.N,
-                                                   MinStops=min(STOPS),
-                                                   AvgStops=mean(STOPS),
-                                                   MaxStops=max(STOPS)),.(EmpCat, time_bin)][order(EmpCat, time_bin)]
-
-fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_model_empcat_time_summaries.csv"))
-fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_model_empcat_time_summaries.csv"))
-
-goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                              StopsRecords=.N,
-                                              MinStops=min(STOPS),
-                                              AvgStops=mean(STOPS),
-                                              MaxStops=max(STOPS)),.(IndustryCat, time_bin)][order(IndustryCat, time_bin)]
-service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
-                                                   StopsRecords=.N,
-                                                   MinStops=min(STOPS),
-                                                   AvgStops=mean(STOPS),
-                                                   MaxStops=max(STOPS)),.(IndustryCat, time_bin)][order(IndustryCat, time_bin)]
-
-fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_grouped_empcat_time_summaries.csv"))
-fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_grouped_empcat_time_summaries.csv"))
-
-
-# Plots
-good_stop_counts[, IndName:=IndustryCats[INDUSTRY]]
-service_stop_counts[, IndName:=IndustryCats[INDUSTRY]]
-
-# Number of sample points by industry
-# Goods
-goods_stops_ind_ss <- ggplot(data = good_stop_counts[STOPS > 0], aes(x = reorder(IndName, STOPS, length))) +
-  geom_bar() + coord_flip() +
-  labs(title = "Sample Size of Goods Stops", subtitle = "Number of samples, Unweighted", caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("Industry Category") + scale_y_continuous(name = "Sample Size", labels = scales::comma) 
-
-
-ggsave(goods_stops_ind_ss, filename = file.path(cv_output_path, "goods_stops_ind_ss.png"), width = 6.5, height = 4) 
-
-# Service
-service_stops_ind_ss <- ggplot(data = service_stop_counts[STOPS > 0], aes(x = reorder(IndName, STOPS, length))) +
-  geom_bar() + coord_flip() +
-  labs(title = "Sample Size of Goods Stops", subtitle = "Number of samples, Unweighted", caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("Industry Category") + scale_y_continuous(name = "Sample Size", labels = scales::comma) 
-ggsave(service_stops_ind_ss, filename = file.path(cv_output_path, "service_stops_ind_ss.png"), width = 6.5, height = 4) 
-
-
-goods_industry = c(8,9,5,7,4,3)
-service_industry = c(9,3,8,5,7,4)
-
-# Distribution by Establishment employees
-# Goods
-good_stop_counts[STOPS > 0,SITEIDG:=as.integer(reorder(factor(SITEID),TOTAL_EMPLOYEES,unique)),.(IndName)]
-goods_stops_ind_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(SITEID=SITEIDG,TOTAL_EMPLOYEES,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = SITEID)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x, lwd=.5)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log(TOTAL_EMPLOYEES), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Total Employees",
-                                         labels = exp,
-                                         breaks = c(0,log(2^c(1:10))))) +
-  labs(title = "Goods Stops and Business Employment Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Business Employment", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("Business Index")
-ggsave(goods_stops_ind_emp, filename = file.path(cv_output_path, "goods_stops_ind_emp.png"), width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,SITEIDS:=as.integer(reorder(factor(SITEID),TOTAL_EMPLOYEES,unique)),.(IndName)]
-service_stops_ind_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(SITEID=SITEIDS,TOTAL_EMPLOYEES,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = SITEID)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log(TOTAL_EMPLOYEES), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Total Employees",
-                                         labels = exp,
-                                         breaks = c(0,log(2^c(1:10))))) +
-  labs(title = "Service Stops and Business Employment Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Business Employment", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("Business Index")
-ggsave(service_stops_ind_emp, filename = file.path(cv_output_path, "service_stops_ind_emp.png"), width = 13, height = 8) 
-
-# Distribution by Households at Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),HH,unique)),.(IndName)]
-goods_stops_taz_hh = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,HH,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(HH), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Households",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Goods Stops and Household Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Households at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_hh, filename = file.path(cv_output_path, "goods_stops_taz_hh.png"), width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),HH,unique)),.(IndName)]
-service_stops_taz_hh = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,HH,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(HH), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Households",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Service Stops and Household Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Households at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_hh, 
-       filename = file.path(cv_output_path, "service_stops_taz_hh.png"), 
-       width = 13, height = 8) 
-
-# Distribution by Industrial Employment at Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Industrial,unique)),.(IndName)]
-goods_stops_taz_ind_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Industrial,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Industrial), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Industrial Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Goods Stops and Industrial Employment Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Industrial Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_ind_emp, 
-       filename = file.path(cv_output_path, "goods_stops_taz_ind_emp.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Industrial,unique)),.(IndName)]
-service_stops_taz_ind_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Industrial,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Industrial), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Industrial Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Service Stops and Industrial Employment Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Industrial Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_ind_emp, 
-       filename = file.path(cv_output_path, "service_stops_taz_ind_emp.png"), 
-       width = 13, height = 8) 
-
-# Distribution by Retail Employment at Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Retail,unique)),.(IndName)]
-goods_stops_taz_ret_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Retail,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Retail), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Retail Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Goods Stops and Retail Employment Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Retail Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_ret_emp, 
-       filename = file.path(cv_output_path, "goods_stops_taz_ret_emp.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Retail,unique)),.(IndName)]
-service_stops_taz_ret_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Retail,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Retail), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Retail Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Service Stops and Retail Employment Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Retail Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_ret_emp, 
-       filename = file.path(cv_output_path, "service_stops_taz_ret_emp.png"), 
-       width = 13, height = 8) 
-
-# Distribution by Office Employment at Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Office,unique)),.(IndName)]
-goods_stops_taz_off_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Office,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Office), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Office Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Goods Stops and Office Employment Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Office Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_off_emp, 
-       filename = file.path(cv_output_path, "goods_stops_taz_off_emp.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Office,unique)),.(IndName)]
-service_stops_taz_off_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Office,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Office), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Office Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Service Stops and Office Employment Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Office Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_off_emp, 
-       filename = file.path(cv_output_path, "service_stops_taz_off_emp.png"), 
-       width = 13, height = 8) 
-
-# Distribution by Education Employment at Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Education,unique)),.(IndName)]
-goods_stops_taz_edu_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Education,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Education), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Education Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Goods Stops and Education Employment Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Education Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_edu_emp, 
-       filename = file.path(cv_output_path, "goods_stops_taz_edu_emp.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Education,unique)),.(IndName)]
-service_stops_taz_edu_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Education,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Education), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Education Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Service Stops and Education Employment Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Education Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_edu_emp, 
-       filename = file.path(cv_output_path, "service_stops_taz_edu_emp.png"), 
-       width = 13, height = 8) 
-
-# Distribution by Medical Services Employment at Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Medical_Services,unique)),.(IndName)]
-goods_stops_taz_med_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Medical_Services,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Medical_Services), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Medical Services Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Goods Stops and Medical Services Employment Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Medical Services Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_med_emp, 
-       filename = file.path(cv_output_path, "goods_stops_taz_med_emp.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Medical_Services,unique)),.(IndName)]
-service_stops_taz_med_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=mean(STOPS), MinStops=min(STOPS),
-     MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Medical_Services,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_line(aes(y=log1p(NEmp_Medical_Services), group=1)) +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Medical Services Employment",
-                                         labels = function(x) round(expm1(x)),
-                                         breaks = c(0,log(2^c(1:14))))) +
-  labs(title = "Service Stops and Medical Services Employment Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Medical Services Employment at Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_med_emp, 
-       filename = file.path(cv_output_path, "service_stops_taz_med_emp.png"), 
-       width = 13, height = 8) 
-
-# Distribution by Averate Distance to Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),dist,mean)),.(IndName)]
-goods_stops_taz_dist = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=weighted.mean(STOPS, w = 1/dist), MinStops=min(STOPS),
-     MaxStops=max(STOPS), dist=mean(dist), MinDist=min(dist), MaxDist=max(dist)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_pointrange(aes(y=log(dist), ymin=log(MinDist), ymax=log(MaxDist), group=1),
-                  size=.2, shape=21, fill="black", color="grey") +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Distance (miles)",
-                                         labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
-                                         breaks = c(log(2^c(-4:14))))) +
-  labs(title = "Goods Stops and Distance Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Distance to Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_dist, 
-       filename = file.path(cv_output_path, "goods_stops_taz_dist.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),dist,mean)),.(IndName)]
-service_stops_taz_dist = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=weighted.mean(STOPS, w = 1/dist), MinStops=min(STOPS),
-     MaxStops=max(STOPS), dist=mean(dist), MinDist=min(dist), MaxDist=max(dist)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_pointrange(aes(y=log(dist), ymin=log(MinDist), ymax=log(MaxDist), group=1),
-                  size=.2, shape=21, fill="black", color="grey") +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Distance (miles)",
-                                         labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
-                                         breaks = c(log(2^c(-4:14))))) +
-  labs(title = "Service Stops and Distance Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Distance to Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_dist, 
-       filename = file.path(cv_output_path, "service_stops_taz_dist.png"), 
-       width = 13, height = 8) 
-
-
-# Distribution by Averate Time to Stop Zone
-# Goods
-good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),time,mean)),.(IndName)]
-goods_stops_taz_time = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
-  ,.(Stops=weighted.mean(STOPS, w = 1/time), MinStops=min(STOPS),
-     MaxStops=max(STOPS), time=mean(time), MinDist=min(time), MaxDist=max(time)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_pointrange(aes(y=log(time), ymin=log(MinDist), ymax=log(MaxDist), group=1),
-                  size=.2, shape=21, fill="black", color="grey") +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Distance (miles)",
-                                         labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
-                                         breaks = c(log(2^c(-4:14))))) +
-  labs(title = "Goods Stops and Distance Distribution", 
-       subtitle = "Number of Goods Stops, Unweighted, and Distance to Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(goods_stops_taz_time, 
-       filename = file.path(cv_output_path, "goods_stops_taz_time.png"), 
-       width = 13, height = 8) 
-
-# Service
-service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),time,mean)),.(IndName)]
-service_stops_taz_time = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
-  ,.(Stops=weighted.mean(STOPS, w = 1/time), MinStops=min(STOPS),
-     MaxStops=max(STOPS), time=mean(time), MinDist=min(time), MaxDist=max(time)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
-  aes(x = STOPTAZ)) +
-  geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
-  geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
-                  size=.3, shape=21, fill="red") + 
-  geom_pointrange(aes(y=log(time), ymin=log(MinDist), ymax=log(MaxDist), group=1),
-                  size=.2, shape=21, fill="black", color="grey") +
-  facet_wrap(~IndName, scales="free", ncol = 3) +
-  scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
-                     sec.axis = sec_axis(~., name = "Distance (miles)",
-                                         labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
-                                         breaks = c(log(2^c(-4:14))))) +
-  labs(title = "Service Stops and Distance Distribution", 
-       subtitle = "Number of Service Stops, Unweighted, and Distance to Stop Zones", 
-       caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
-  xlab("TAZ Index")
-ggsave(service_stops_taz_time, 
-       filename = file.path(cv_output_path, "service_stops_taz_time.png"), 
-       width = 13, height = 8) 
+# cv_stop_desc_path = file.path("dev", "Estimation", "cv_stops", "desc_summaries")
+# cv_output_path = file.path("dev", "Estimation", "cv_stops", "eda_plots")
+# load("dev/Estimation/cv_stops/Stop_Counts_Goods.RData")
+# load("dev/Estimation/cv_stops/Stop_Counts_Service.RData")
+# 
+# # Descriptive Summaries
+# good_stop_counts[empcats,EmpCat:=i.EmpCatName,on=.(NAICS2=NAICSn2n3)]
+# good_stop_counts[empcats,EmpCat:=ifelse(is.na(EmpCat),i.EmpCatName,EmpCat),on=.(NAICS3=NAICSn2n3)]
+# service_stop_counts[empcats,EmpCat:=i.EmpCatName,on=.(NAICS2=NAICSn2n3)]
+# service_stop_counts[empcats,EmpCat:=ifelse(is.na(EmpCat),i.EmpCatName,EmpCat),on=.(NAICS3=NAICSn2n3)]
+# 
+# # Sample Size by Model Employment Category
+# goods_stop_ss <- good_stop_counts[,.(NEst=length(unique(SITEID)),
+#                                      StopsRecords=sum(STOPS>0), 
+#                                      NoStopsRecords=sum(STOPS==0),
+#                                      TotalRecords=.N,
+#                                      MinStops=min(STOPS[STOPS>0]),
+#                                      AvgStops=mean(STOPS[STOPS>0]),
+#                                      MaxStops=max(STOPS[STOPS>0])),.(EmpCat)][order(-StopsRecords)]
+# service_stop_ss <- service_stop_counts[,.(NEst=length(unique(SITEID)),
+#                                           StopsRecords=sum(STOPS>0), 
+#                                           NoStopsRecords=sum(STOPS==0),
+#                                           TotalRecords=.N,
+#                                           MinStops=min(STOPS[STOPS>0]),
+#                                           AvgStops=mean(STOPS[STOPS>0]),
+#                                           MaxStops=max(STOPS[STOPS>0])),.(EmpCat)][order(-StopsRecords)]
+# 
+# fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_model_empcat_samplesize.csv"))
+# fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_model_empcat_samplesize.csv"))
+# 
+# # Sample Size by Grouped Employment Category
+# goods_stop_ss <- good_stop_counts[,.(NEst=length(unique(SITEID)),
+#                                      StopsRecords=sum(STOPS>0), 
+#                                      NoStopsRecords=sum(STOPS==0),
+#                                      TotalRecords=.N,
+#                                      MinStops=min(STOPS[STOPS>0]),
+#                                      AvgStops=mean(STOPS[STOPS>0]),
+#                                      MaxStops=max(STOPS[STOPS>0])),.(IndustryCat)][order(-StopsRecords)]
+# service_stop_ss <- service_stop_counts[,.(NEst=length(unique(SITEID)),
+#                                           StopsRecords=sum(STOPS>0), 
+#                                           NoStopsRecords=sum(STOPS==0),
+#                                           TotalRecords=.N,
+#                                           MinStops=min(STOPS[STOPS>0]),
+#                                           AvgStops=mean(STOPS[STOPS>0]),
+#                                           MaxStops=max(STOPS[STOPS>0])),.(IndustryCat)][order(-StopsRecords)]
+# 
+# fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_grouped_empcat_samplesize.csv"))
+# fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_grouped_empcat_samplesize.csv"))
+# 
+# dist_cut = c(seq(0,50,2),Inf)
+# ndist_bin = length(dist_cut)
+# dist_cut_label = paste0(dist_cut[-ndist_bin], " - ", dist_cut[-1])
+# dist_cut_label[(ndist_bin-1)] = paste0("> ", dist_cut[(ndist_bin-1)])
+# 
+# good_stop_counts[,dist_bin:=cut(dist, dist_cut, labels = dist_cut_label)]
+# service_stop_counts[,dist_bin:=cut(dist, dist_cut, labels = dist_cut_label)]
+# 
+# goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                               StopsRecords=.N,
+#                                               MinStops=min(STOPS),
+#                                               AvgStops=mean(STOPS),
+#                                               MaxStops=max(STOPS)),.(EmpCat, dist_bin)][order(EmpCat, dist_bin)]
+# service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                                    StopsRecords=.N,
+#                                                    MinStops=min(STOPS),
+#                                                    AvgStops=mean(STOPS),
+#                                                    MaxStops=max(STOPS)),.(EmpCat, dist_bin)][order(EmpCat, dist_bin)]
+# 
+# fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_model_empcat_dist_summaries.csv"))
+# fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_model_empcat_dist_summaries.csv"))
+# 
+# goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                               StopsRecords=.N,
+#                                               MinStops=min(STOPS),
+#                                               AvgStops=mean(STOPS),
+#                                               MaxStops=max(STOPS)),.(IndustryCat, dist_bin)][order(IndustryCat, dist_bin)]
+# service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                                    StopsRecords=.N,
+#                                                    MinStops=min(STOPS),
+#                                                    AvgStops=mean(STOPS),
+#                                                    MaxStops=max(STOPS)),.(IndustryCat, dist_bin)][order(IndustryCat, dist_bin)]
+# 
+# fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_grouped_empcat_dist_summaries.csv"))
+# fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_grouped_empcat_dist_summaries.csv"))
+# 
+# 
+# time_cut = c(seq(0,50,2),Inf)
+# ntime_bin = length(time_cut)
+# time_cut_label = paste0(time_cut[-ntime_bin], " - ", time_cut[-1])
+# time_cut_label[(ntime_bin-1)] = paste0("> ", time_cut[(ntime_bin-1)])
+# 
+# good_stop_counts[,time_bin:=cut(time, time_cut, labels = time_cut_label)]
+# service_stop_counts[,time_bin:=cut(time, time_cut, labels = time_cut_label)]
+# 
+# goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                               StopsRecords=.N,
+#                                               MinStops=min(STOPS),
+#                                               AvgStops=mean(STOPS),
+#                                               MaxStops=max(STOPS)),.(EmpCat, time_bin)][order(EmpCat, time_bin)]
+# service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                                    StopsRecords=.N,
+#                                                    MinStops=min(STOPS),
+#                                                    AvgStops=mean(STOPS),
+#                                                    MaxStops=max(STOPS)),.(EmpCat, time_bin)][order(EmpCat, time_bin)]
+# 
+# fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_model_empcat_time_summaries.csv"))
+# fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_model_empcat_time_summaries.csv"))
+# 
+# goods_stop_ss <- good_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                               StopsRecords=.N,
+#                                               MinStops=min(STOPS),
+#                                               AvgStops=mean(STOPS),
+#                                               MaxStops=max(STOPS)),.(IndustryCat, time_bin)][order(IndustryCat, time_bin)]
+# service_stop_ss <- service_stop_counts[STOPS > 0,.(NEst=length(unique(SITEID)),
+#                                                    StopsRecords=.N,
+#                                                    MinStops=min(STOPS),
+#                                                    AvgStops=mean(STOPS),
+#                                                    MaxStops=max(STOPS)),.(IndustryCat, time_bin)][order(IndustryCat, time_bin)]
+# 
+# fwrite(goods_stop_ss, file = file.path(cv_stop_desc_path, "good_stop_grouped_empcat_time_summaries.csv"))
+# fwrite(service_stop_ss, file = file.path(cv_stop_desc_path, "service_stop_grouped_empcat_time_summaries.csv"))
+# 
+# 
+# # Plots
+# good_stop_counts[, IndName:=IndustryCats[INDUSTRY]]
+# service_stop_counts[, IndName:=IndustryCats[INDUSTRY]]
+# 
+# # Number of sample points by industry
+# # Goods
+# goods_stops_ind_ss <- ggplot(data = good_stop_counts[STOPS > 0], aes(x = reorder(IndName, STOPS, length))) +
+#   geom_bar() + coord_flip() +
+#   labs(title = "Sample Size of Goods Stops", subtitle = "Number of samples, Unweighted", caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("Industry Category") + scale_y_continuous(name = "Sample Size", labels = scales::comma) 
+# 
+# 
+# ggsave(goods_stops_ind_ss, filename = file.path(cv_output_path, "goods_stops_ind_ss.png"), width = 6.5, height = 4) 
+# 
+# # Service
+# service_stops_ind_ss <- ggplot(data = service_stop_counts[STOPS > 0], aes(x = reorder(IndName, STOPS, length))) +
+#   geom_bar() + coord_flip() +
+#   labs(title = "Sample Size of Goods Stops", subtitle = "Number of samples, Unweighted", caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("Industry Category") + scale_y_continuous(name = "Sample Size", labels = scales::comma) 
+# ggsave(service_stops_ind_ss, filename = file.path(cv_output_path, "service_stops_ind_ss.png"), width = 6.5, height = 4) 
+# 
+# 
+# goods_industry = c(8,9,5,7,4,3)
+# service_industry = c(9,3,8,5,7,4)
+# 
+# # Distribution by Establishment employees
+# # Goods
+# good_stop_counts[STOPS > 0,SITEIDG:=as.integer(reorder(factor(SITEID),TOTAL_EMPLOYEES,unique)),.(IndName)]
+# goods_stops_ind_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(SITEID=SITEIDG,TOTAL_EMPLOYEES,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = SITEID)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x, lwd=.5)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log(TOTAL_EMPLOYEES), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Total Employees",
+#                                          labels = exp,
+#                                          breaks = c(0,log(2^c(1:10))))) +
+#   labs(title = "Goods Stops and Business Employment Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Business Employment", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("Business Index")
+# ggsave(goods_stops_ind_emp, filename = file.path(cv_output_path, "goods_stops_ind_emp.png"), width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,SITEIDS:=as.integer(reorder(factor(SITEID),TOTAL_EMPLOYEES,unique)),.(IndName)]
+# service_stops_ind_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(SITEID=SITEIDS,TOTAL_EMPLOYEES,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = SITEID)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log(TOTAL_EMPLOYEES), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Total Employees",
+#                                          labels = exp,
+#                                          breaks = c(0,log(2^c(1:10))))) +
+#   labs(title = "Service Stops and Business Employment Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Business Employment", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("Business Index")
+# ggsave(service_stops_ind_emp, filename = file.path(cv_output_path, "service_stops_ind_emp.png"), width = 13, height = 8) 
+# 
+# # Distribution by Households at Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),HH,unique)),.(IndName)]
+# goods_stops_taz_hh = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,HH,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(HH), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Households",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Goods Stops and Household Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Households at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_hh, filename = file.path(cv_output_path, "goods_stops_taz_hh.png"), width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),HH,unique)),.(IndName)]
+# service_stops_taz_hh = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,HH,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(HH), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Households",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Service Stops and Household Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Households at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_hh, 
+#        filename = file.path(cv_output_path, "service_stops_taz_hh.png"), 
+#        width = 13, height = 8) 
+# 
+# # Distribution by Industrial Employment at Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Industrial,unique)),.(IndName)]
+# goods_stops_taz_ind_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Industrial,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Industrial), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Industrial Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Goods Stops and Industrial Employment Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Industrial Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_ind_emp, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_ind_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Industrial,unique)),.(IndName)]
+# service_stops_taz_ind_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Industrial,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Industrial), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Industrial Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Service Stops and Industrial Employment Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Industrial Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_ind_emp, 
+#        filename = file.path(cv_output_path, "service_stops_taz_ind_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Distribution by Retail Employment at Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Retail,unique)),.(IndName)]
+# goods_stops_taz_ret_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Retail,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Retail), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Retail Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Goods Stops and Retail Employment Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Retail Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_ret_emp, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_ret_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Retail,unique)),.(IndName)]
+# service_stops_taz_ret_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Retail,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Retail), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Retail Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Service Stops and Retail Employment Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Retail Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_ret_emp, 
+#        filename = file.path(cv_output_path, "service_stops_taz_ret_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Distribution by Office Employment at Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Office,unique)),.(IndName)]
+# goods_stops_taz_off_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Office,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Office), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Office Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Goods Stops and Office Employment Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Office Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_off_emp, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_off_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Office,unique)),.(IndName)]
+# service_stops_taz_off_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Office,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Office), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Office Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Service Stops and Office Employment Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Office Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_off_emp, 
+#        filename = file.path(cv_output_path, "service_stops_taz_off_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Distribution by Education Employment at Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Education,unique)),.(IndName)]
+# goods_stops_taz_edu_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Education,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Education), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Education Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Goods Stops and Education Employment Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Education Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_edu_emp, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_edu_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Education,unique)),.(IndName)]
+# service_stops_taz_edu_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Education,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Education), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Education Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Service Stops and Education Employment Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Education Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_edu_emp, 
+#        filename = file.path(cv_output_path, "service_stops_taz_edu_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Distribution by Medical Services Employment at Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Medical_Services,unique)),.(IndName)]
+# goods_stops_taz_med_emp = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Medical_Services,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Medical_Services), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Medical Services Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Goods Stops and Medical Services Employment Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Medical Services Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_med_emp, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_med_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),NEmp_Medical_Services,unique)),.(IndName)]
+# service_stops_taz_med_emp = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=mean(STOPS), MinStops=min(STOPS),
+#      MaxStops=max(STOPS)),.(STOPTAZ,NEmp_Medical_Services,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_line(aes(y=log1p(NEmp_Medical_Services), group=1)) +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Medical Services Employment",
+#                                          labels = function(x) round(expm1(x)),
+#                                          breaks = c(0,log(2^c(1:14))))) +
+#   labs(title = "Service Stops and Medical Services Employment Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Medical Services Employment at Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_med_emp, 
+#        filename = file.path(cv_output_path, "service_stops_taz_med_emp.png"), 
+#        width = 13, height = 8) 
+# 
+# # Distribution by Averate Distance to Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),dist,mean)),.(IndName)]
+# goods_stops_taz_dist = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=weighted.mean(STOPS, w = 1/dist), MinStops=min(STOPS),
+#      MaxStops=max(STOPS), dist=mean(dist), MinDist=min(dist), MaxDist=max(dist)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_pointrange(aes(y=log(dist), ymin=log(MinDist), ymax=log(MaxDist), group=1),
+#                   size=.2, shape=21, fill="black", color="grey") +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Distance (miles)",
+#                                          labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
+#                                          breaks = c(log(2^c(-4:14))))) +
+#   labs(title = "Goods Stops and Distance Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Distance to Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_dist, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_dist.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),dist,mean)),.(IndName)]
+# service_stops_taz_dist = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=weighted.mean(STOPS, w = 1/dist), MinStops=min(STOPS),
+#      MaxStops=max(STOPS), dist=mean(dist), MinDist=min(dist), MaxDist=max(dist)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_pointrange(aes(y=log(dist), ymin=log(MinDist), ymax=log(MaxDist), group=1),
+#                   size=.2, shape=21, fill="black", color="grey") +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Distance (miles)",
+#                                          labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
+#                                          breaks = c(log(2^c(-4:14))))) +
+#   labs(title = "Service Stops and Distance Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Distance to Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_dist, 
+#        filename = file.path(cv_output_path, "service_stops_taz_dist.png"), 
+#        width = 13, height = 8) 
+# 
+# 
+# # Distribution by Averate Time to Stop Zone
+# # Goods
+# good_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),time,mean)),.(IndName)]
+# goods_stops_taz_time = ggplot(data = good_stop_counts[STOPS > 0 & INDUSTRY %in% goods_industry][
+#   ,.(Stops=weighted.mean(STOPS, w = 1/time), MinStops=min(STOPS),
+#      MaxStops=max(STOPS), time=mean(time), MinDist=min(time), MaxDist=max(time)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_pointrange(aes(y=log(time), ymin=log(MinDist), ymax=log(MaxDist), group=1),
+#                   size=.2, shape=21, fill="black", color="grey") +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Goods Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Distance (miles)",
+#                                          labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
+#                                          breaks = c(log(2^c(-4:14))))) +
+#   labs(title = "Goods Stops and Distance Distribution", 
+#        subtitle = "Number of Goods Stops, Unweighted, and Distance to Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(goods_stops_taz_time, 
+#        filename = file.path(cv_output_path, "goods_stops_taz_time.png"), 
+#        width = 13, height = 8) 
+# 
+# # Service
+# service_stop_counts[STOPS > 0,STOPTAZ:=as.integer(reorder(factor(TAZ),time,mean)),.(IndName)]
+# service_stops_taz_time = ggplot(data = service_stop_counts[STOPS > 0 & INDUSTRY %in% service_industry][
+#   ,.(Stops=weighted.mean(STOPS, w = 1/time), MinStops=min(STOPS),
+#      MaxStops=max(STOPS), time=mean(time), MinDist=min(time), MaxDist=max(time)),.(STOPTAZ,IndName = reorder(IndName, -STOPS, mean))], 
+#   aes(x = STOPTAZ)) +
+#   geom_smooth(aes(y=log(Stops), group=1), method="lm", se=FALSE, formula = y~x)+
+#   geom_pointrange(aes(y=log(Stops), ymin=log(MinStops), ymax=log(MaxStops), group=1),
+#                   size=.3, shape=21, fill="red") + 
+#   geom_pointrange(aes(y=log(time), ymin=log(MinDist), ymax=log(MaxDist), group=1),
+#                   size=.2, shape=21, fill="black", color="grey") +
+#   facet_wrap(~IndName, scales="free", ncol = 3) +
+#   scale_y_continuous(name = "Service Stops", labels = exp, breaks = c(0,log(2^c(1:4))),
+#                      sec.axis = sec_axis(~., name = "Distance (miles)",
+#                                          labels = function(x) ifelse(exp(x)<1, round(exp(x),2), round(exp(x))),
+#                                          breaks = c(log(2^c(-4:14))))) +
+#   labs(title = "Service Stops and Distance Distribution", 
+#        subtitle = "Number of Service Stops, Unweighted, and Distance to Stop Zones", 
+#        caption = "Source: SEMCOG 2017 Commercial Vehicle Survey") +
+#   xlab("TAZ Index")
+# ggsave(service_stops_taz_time, 
+#        filename = file.path(cv_output_path, "service_stops_taz_time.png"), 
+#        width = 13, height = 8) 
 
