@@ -26,10 +26,10 @@ apollo_modelOutput(vehicle)
 # # Stop Duration
 # stopdur <- readRDS("./dev/Estimation/cv_duration/cv_duration.rds")
 # apollo_modelOutput(stopdur)
-# 
-# # Tour typology
-# tourtype <- readRDS("./dev/Estimation/cv_tours/cv_tours_model.rds")
-# apollo_modelOutput(tourtype)
+ 
+# Tour typology
+tourtype <- readRDS("./dev/Estimation/cv_tours/cv_tours_model.rds")
+apollo_modelOutput(tourtype)
 # 
 # # Arrival 
 # arrival <- readRDS("./dev/Estimation/cv_arrival/cv_arrival_model.rds")
@@ -40,8 +40,8 @@ apollo_modelOutput(vehicle)
 # apollo_modelOutput(interm)
 # 
 # intermdev <- readRDS("./dev/Estimation/cv_intermediate/cv_intermediate_deviations.rds")
-# intermattr <- readRDS("./dev/Estimation/cv_intermediate/cv_intermediate_model_attraction.rds")
-# apollo_modelOutput(intermattr)
+intermattr <- readRDS("./dev/Estimation/cv_intermediate/cv_intermediate_model_attraction.rds")
+apollo_modelOutput(intermattr)
 
 ### Copy the estimated model components over to the lib/data folder for use in applcation
 
@@ -57,13 +57,13 @@ apollo_modelOutput(vehicle)
 paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_model.RDS",
                                                    "cv_stops/new_models/goods/cv_goods_model.RDS",
                                                    "cv_stops/new_models/services/cv_service_model.RDS",
-                                                   "cv_vehicle/final_model/cv_vehicle_model.rds"))
+                                                   "cv_vehicle/final_model/cv_vehicle_model.rds",
                                                    # "cv_duration/cv_stopduration_model.rds",
-                                                   # "cv_tours/cv_tours_model.rds",
+                                                   "cv_tours/cv_tours_model.rds",
                                                    # "cv_arrival/cv_arrival_model.rds",
                                                    # "cv_intermediate/cv_intermediate_model.rds",
                                                    # "cv_intermediate/cv_intermediate_deviations.rds",
-                                                   # "cv_intermediate/cv_intermediate_model_attraction.rds"))
+                                                   "cv_intermediate/cv_intermediate_model_attraction.rds"))
 
 file.copy(from = paths_to_models,
           to = "./lib/data",
