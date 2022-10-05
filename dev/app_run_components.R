@@ -114,6 +114,7 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   FirmsDomestic <- firm_synthesis_enumerate(cbp = cbp,
                                             c_cbp_mz = c_cbp_mz,
                                             EmpBounds = EmpBounds,
+                                            emp_control_taz = emp_control_taz,
                                             cbp_ag = cbp_ag)
   
   # Allocate from counties to mesozones

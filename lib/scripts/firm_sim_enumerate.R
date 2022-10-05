@@ -1,6 +1,6 @@
 
 #Enumerate firms and merge with correspondenses
-firm_synthesis_enumerate <- function(cbp, c_cbp_mz, EmpBounds, cbp_ag = NULL){
+firm_synthesis_enumerate <- function(cbp, c_cbp_mz, EmpBounds, emp_control_taz, cbp_ag = NULL){
 
   # Clean the input data, combine with Ag data if needed
   if(!is.null(cbp_ag)){
@@ -33,7 +33,24 @@ firm_synthesis_enumerate <- function(cbp, c_cbp_mz, EmpBounds, cbp_ag = NULL){
 
   # Convert esizecat to an integer (1:8)
   FirmsDomestic[, esizecat := as.integer(esizecat)]
-
+  
+  # Synthesize data for missing NAICS/county category 92
+  emp_cty_n2 <- emp_control_taz[,.(Emp = sum(Employment)), keyby = .(n2 = NAICS, CBPZONE = CountyFIPS)]
+  emp_cty_n2[FirmsDomestic[,.(Est = sum(est)), by = .(n2 = as.integer(n2))], Est := i.Est, on = c("n2")]
+  emp_cty_n2[is.na(Est), Est := 0]
+  emp_cty_n2_public <- emp_cty_n2[n2 == 92]
+  emp_cty_n2_public[emp_cty_n2[n2 != 92, .(Emp = sum(Emp)), by = CBPZONE], EmpOther := i.Emp, on = "CBPZONE"]
+  emp_cty_n2_public[, PctPublic := Emp/EmpOther]
+  
+  FirmsDomesticMiss <- FirmsDomestic[, .(est = sum(est)), by = .(CBPZONE, esizecat)]
+  FirmsDomesticMiss[emp_cty_n2_public, PctPublic := i.PctPublic, on = "CBPZONE"]
+  FirmsDomesticMiss[, estPublic := est * PctPublic]
+  FirmsDomesticMiss[, estPublic := bucketRound(estPublic)]
+  
+  FirmsDomestic <- rbind(FirmsDomestic,
+                         FirmsDomesticMiss[, .(Industry_NAICS6_CBP = 920000, CBPZONE, 
+                                               n2 = 92, esizecat, est = estPublic)])
+  
   # Enumerates the agent businesses using the est variable.
   FirmsDomestic <- FirmsDomestic[rep(seq_len(FirmsDomestic[, .N]), est),]
 

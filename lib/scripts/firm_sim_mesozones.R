@@ -8,8 +8,7 @@ firm_synthesis_mesozones <- function(Firms){
   FirmsCMAP[n2 %in% c("31","32","33"), n2 := "3133"]
   FirmsCMAP[n2 %in% c("44","45"), n2 := "4445"]
   FirmsCMAP[n2 %in% c("48","49"), n2 := "4849"]
-  FirmsCMAP[n2 %in% c("S0"), n2 := "92"]
-
+  
   # Convert the ranking table to long format
   mzemp <- melt.data.table(mzemp,
                 id.vars = c("COUNTY", "MESOZONE"),
@@ -44,6 +43,7 @@ firm_synthesis_mesozones <- function(Firms){
   FirmsCMAP <- FirmsCMAP[candidate == 1,]
 
   # Generate a random number based on which one of the candidate tazs would be selected
+  set.seed(BASE_SEED_VALUE)
   FirmsCMAP[, u := runif(.N)]
 
   # Assign the taz for which the random number generated is the highest among all candidate tazs
@@ -51,9 +51,7 @@ firm_synthesis_mesozones <- function(Firms){
 
   # Assign MESOZONES for all firms
   Firms[FirmsCMAP, MESOZONE := i.MESOZONE, on = "BusID"]
-  Firms[CBPZONE <= 123, MESOZONE := CBPZONE + 150L]
-  Firms[CBPZONE %in% 801:808, MESOZONE := CBPZONE]
-
+  
   # Return the processed cbp table
   return(Firms)
 
