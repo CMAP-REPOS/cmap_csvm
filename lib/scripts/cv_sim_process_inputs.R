@@ -10,7 +10,6 @@ cv_sim_process_inputs <- function(envir) {
                         cv_sim_tours             = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_tours.R"),
                         cv_sim_scheduledtrips    = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_scheduledtrips.R"),
                         cv_sim_intermediatestops = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_intermediatestops.R"),
-                        cv_sim_externalstations  = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_externalstations.R"),
                         cv_activities_model       = file.path(SYSTEM_DATA_PATH, "cv_activities_model.RDS"),
                         cv_goods_model            = file.path(SYSTEM_DATA_PATH, "cv_goods_model.RDS"),
                         cv_service_model          = file.path(SYSTEM_DATA_PATH, "cv_service_model.RDS"),
