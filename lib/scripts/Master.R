@@ -20,14 +20,14 @@ if (SCENARIO_RUN_FIRMSYN) {
   # Process inputs
   cat("Processing Firm Synthesis Inputs", "\n")
   firm_inputs <- new.env()
-  cbp <- firm_sim_process_inputs(envir = firm_inputs)
+  Establishments <- firm_sim_process_inputs(envir = firm_inputs)
 
   # Run simulation
   cat("Running Firm Synthesis Simulation", "\n")
   firm_sim_results <- suppressMessages(
     run_sim(
       FUN = firm_sim,
-      data = cbp,
+      data = Establishments,
       packages = SYSTEM_PKGS,
       lib = SYSTEM_PKGS_PATH,
       inputEnv = firm_inputs
@@ -43,7 +43,7 @@ if (SCENARIO_RUN_FIRMSYN) {
   
   rm(firm_sim_results, 
      firm_inputs,
-     cbp)
+     Establishments)
   
   gc(verbose = FALSE)
   

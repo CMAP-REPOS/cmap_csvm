@@ -3,13 +3,9 @@
 firm_sim_process_inputs <- function(envir) {
   
   ### Load project input files
-  project.files <- c( c_n6_n6io_sctg       = file.path(SYSTEM_DATA_PATH, "corresp_naics6_n6io_sctg.csv"),  #Correspondence between NAICS 6-digit, I/O NAICS, and SCTG
-                      c_cbp_faf            = file.path(SYSTEM_DATA_PATH, "corresp_fafzone_cbpzone.csv"),   #Correspondence between CBP and FAF zone systems
-                      c_cbp_mz             = file.path(SYSTEM_DATA_PATH, "corresp_mesozone_cbpzone.csv"),  #Correspondence between CBP and Mesozone zone systems
-                      c_mz_faf_reg         = file.path(SYSTEM_DATA_PATH, "corresp_meso_faf3_region.csv"),  #Correspondence between Mesozones, FAF3, and census regions for summaries
-                      c_n6_labels          = file.path(SYSTEM_DATA_PATH, "corresp_naics2007_labels.csv"),  #Correspondence NAICS 2007 at different levels of detail and industry name labels
+  project.files <- c( c_cbp_mz             = file.path(SYSTEM_DATA_PATH, "corresp_mesozone_cbpzone.csv"),  #Correspondence between CBP and Mesozone zone systems
                       c_n2_empcats         = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),    #Correspondence between NAICS2 groups and aggregated employment groups
-                      cbp                  = file.path(SYSTEM_DATA_PATH, "data_emp_cbp_2017.csv"),         #CBP data file
+                      cbp                  = file.path(SYSTEM_DATA_PATH, "data_emp_cbp.csv"),         #CBP data file
                       cbp_ag               = file.path(SYSTEM_DATA_PATH, "data_emp_cbp_ag.csv"),           #CBP data file -- Agriculture records generated seperately
                       mzemp                = file.path(SYSTEM_DATA_PATH, "data_mesozone_emprankings.csv"), #Industry rankings data by mesozone based on employment
                       firm_sim_commodities       = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_commodities.R"),
@@ -23,18 +19,15 @@ firm_sim_process_inputs <- function(envir) {
   envir[["UEmpCats"]]  <- unique(envir[["c_n2_empcats"]][,.(EmpCatID, EmpCatName, EmpCatDesc, EmpCatGroupedName)])
   
   ### Load scenario input files
-  scenario.files <- c(emp_control          = file.path(SCENARIO_INPUT_PATH, "data_emp_control_mz.csv"),       #Control totals for emmployment by Mesozone
-                      emp_control_taz      = file.path(SCENARIO_INPUT_PATH, "data_emp_control_2017.csv"),
+  scenario.files <- c(emp_control_taz      = file.path(SCENARIO_INPUT_PATH, "data_emp_control_taz.csv"),     # Control totals for emmployment by TAZ
                       data_hh              = file.path(SCENARIO_INPUT_PATH, "data_hh.csv"))                   # HHs summarized at the TAZ level
-                                          
   
   loadInputs(files = scenario.files, envir = envir)
   
   ### Process scenario input files
   
   # Employment targets: replace the within CMAP portion in MZ with values rolled up from TAZ
-  envir[["emp_control"]] <- rbind(envir[["emp_control_taz"]][,.(Employment = sum(Employment, na.rm = TRUE)), keyby = .(Mesozone, NAICS)],
-                                  envir[["emp_control"]][Mesozone >= 150])
+  envir[["emp_control"]] <- rbind(envir[["emp_control_taz"]][,.(Employment = sum(Employment, na.rm = TRUE)), keyby = .(Mesozone, NAICS)])
   
   # Create a summarized version of the employment data with employment grouping categories in wide format
   envir[["TAZLandUseCVTM"]] <- add_totals(dcast.data.table(merge(envir[["emp_control_taz"]][, .(TAZ = Zone17, Mesozone, CountyFIPS, 

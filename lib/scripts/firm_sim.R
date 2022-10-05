@@ -74,22 +74,12 @@ firm_sim <- function(cbp) {
     }
   }
   
-  cat("Saving Regional Establishment List", "\n")
-  
-  # Extract regional firms
-  RegionFirms <- FirmsDomestic[MESOZONE < 150]
+  cat("Adding Employment Group Variables", "\n")
   
   # Add employment classifications
   RegionFirms[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
                  EmpCatGroupedName := i.EmpCatGroupedName,
                  on = "n2"]
-  
-  save(RegionFirms, file = file.path(SCENARIO_OUTPUT_PATH, "RegionFirms.Rdata"))
-  
-  # save warehouse list for use in truck touring model
-  # NAICS 481 air, 482 rail, 483 water, 493 warehouse and storage
-  warehouses <- RegionFirms[substr(Industry_NAICS6_Make, 1, 3) %in% c(481, 482, 483, 493)]
-  save(warehouses, file = file.path(SCENARIO_OUTPUT_PATH, "warehouses.Rdata"))
   
   # End progress tracking
   progressEnd(dir = SCENARIO_LOG_PATH)
