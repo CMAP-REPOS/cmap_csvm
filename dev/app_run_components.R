@@ -46,132 +46,149 @@ SCENARIO_RUN_START   <- Sys.time()
 
 ### FIRM SYNTHESIS =============================================================
 
-if (SCENARIO_RUN_FIRMSYN) {
+# if (SCENARIO_RUN_FIRMSYN) {
+#   
+#   cat("Starting Firm Synthesis Step", "\n")
+#   
+#   # Load executive functions (process inputs and simulation)
+#   source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_process_inputs.R"))
+#   source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim.R"))
+#   
+#   # Process inputs
+#   cat("Processing Firm Synthesis Inputs", "\n")
+#   firm_inputs <- new.env()
+#   cbp <- firm_sim_process_inputs(envir = firm_inputs)
+#   
+#   # Run simulation
+#   cat("Running Firm Synthesis Simulation", "\n")
+#   firm_sim_results <- suppressMessages(
+#     run_sim(
+#       FUN = firm_sim,
+#       data = cbp,
+#       packages = SYSTEM_PKGS,
+#       lib = SYSTEM_PKGS_PATH,
+#       inputEnv = firm_inputs
+#     )
+#   )
+#   
+#   # Save inputs and results
+#   cat("Saving Firm Synthesis Database", "\n")
+#   save(firm_sim_results, 
+#        firm_inputs, 
+#        file = file.path(SCENARIO_OUTPUT_PATH,
+#                         SYSTEM_FIRMSYN_OUTPUTNAME))
+#   
+#   rm(firm_sim_results, 
+#      firm_inputs,
+#      cbp)
+#   
+#   gc(verbose = FALSE)
+#   
+# }
+
+
+# Load executive functions (process inputs and simulation)
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_process_inputs.R"))
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim.R"))
+
+# Process inputs
+firm_inputs <- new.env()
+Establishments <- firm_sim_process_inputs(envir = firm_inputs)
+
+# For scratch only, bring model component input environment variables into the
+# global environment
+for(n in ls(firm_inputs, all.names=TRUE)) assign(n, get(n, firm_inputs), environment())
+cbp <- Establishments
+
+# Begin progress tracking
+progressStart(action = "Simulating...", task = "Firms", dir = SCENARIO_LOG_PATH, subtasks = FALSE)
+
+# Different approach in base and future scenarios: base year start from start,
+# future year build on base year scaled firm list
+if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   
-  cat("Starting Firm Synthesis Step", "\n")
+  cat("Creating Base Year Establishment List", "\n")
   
-  # Load executive functions (process inputs and simulation)
-  source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_process_inputs.R"))
-  source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim.R"))
+  # Process and enumerate the CBP data
+  progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
+  FirmsDomestic <- firm_synthesis_enumerate(cbp = cbp,
+                                            c_cbp_mz = c_cbp_mz,
+                                            EmpBounds = EmpBounds,
+                                            cbp_ag = cbp_ag)
   
-  # Process inputs
-  cat("Processing Firm Synthesis Inputs", "\n")
-  firm_inputs <- new.env()
-  cbp <- firm_sim_process_inputs(envir = firm_inputs)
+  # Allocate from counties to mesozones
+  progressUpdate(prop = 2/4, dir = SCENARIO_LOG_PATH)
+  FirmsDomestic <- firm_synthesis_mesozones(Firms = FirmsDomestic)
+ 
+  # Scale the employment to TAZ controls
+  progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
+  FirmsDomestic <- firm_synthesis_scaling(Firms = FirmsDomestic,
+                                          emp_control_taz = emp_control_taz,
+                                          c_cbp_mz = c_cbp_mz,
+                                          c_taz_mz = c_taz_mz,
+                                          EmpBounds = EmpBounds)
   
-  # Run simulation
-  cat("Running Firm Synthesis Simulation", "\n")
-  firm_sim_results <- suppressMessages(
-    run_sim(
-      FUN = firm_sim,
-      data = cbp,
-      packages = SYSTEM_PKGS,
-      lib = SYSTEM_PKGS_PATH,
-      inputEnv = firm_inputs
-    )
-  )
+} else {
   
-  # Save inputs and results
-  cat("Saving Firm Synthesis Database", "\n")
-  save(firm_sim_results, 
-       firm_inputs, 
-       file = file.path(SCENARIO_OUTPUT_PATH,
-                        SYSTEM_FIRMSYN_OUTPUTNAME))
-  
-  rm(firm_sim_results, 
-     firm_inputs,
-     cbp)
-  
-  gc(verbose = FALSE)
-  
+  # Future year/alternative scenario
+  if(file.exists(SCENARIO_BASEFIRMS)){
+    
+    cat("Updating Base Year Establishment List with Future Control Data", "\n")
+    
+    # Load the output from the base year firm synthesis model
+    progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
+    
+    load(SCENARIO_BASEFIRMS)
+    FirmsDomestic <- firm_sim_results$ScenarioFirms
+    rm(firm_sim_results)
+    
+    # Scale the emplyoment
+    progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
+    FirmsDomestic <- firm_synthesis_scaling(Firms = FirmsDomestic,
+                                            emp_control_taz = emp_control_taz,
+                                            c_cbp_mz = c_cbp_mz,
+                                            c_taz_mz = c_taz_mz,
+                                            EmpBounds = EmpBounds)
+    
+  } else {
+    
+    stop("No Base Scenario outputs available. Please run the Base Scenario first.")
+    
+  }
 }
 
+# Add employment classifications
+progressUpdate(prop = 4/4, dir = SCENARIO_LOG_PATH)
+cat("Adding Employment Group Variables", "\n")
 
-# # Load executive functions (process inputs and simulation)
-# source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_process_inputs.R"))
-# source(file = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim.R"))
-# 
-# # Process inputs
-# firm_inputs <- new.env()
-# Establishments <- firm_sim_process_inputs(envir = firm_inputs)
-# 
-# # For scratch only, bring model component input environment variables into the
-# # global environment
-# for(n in ls(firm_inputs, all.names=TRUE)) assign(n, get(n, firm_inputs), environment())
-# 
-# # Begin progress tracking
-# progressStart(action = "Simulating...", task = "Firms", dir = SCENARIO_LOG_PATH, subtasks = TRUE)
-# 
-# # Different approach in base and future scenarios: base year start from start,
-# # future year build on base year scaled firm list
-# 
-# if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME | SCENARIO_NAME == "2015_Test"){
-#   
-#   cat("Creating Base Year Establishment List", "\n")
-#   
-#   # Add a business ID variable
-#   Establishments[, BusID := .I]
-#   
-#   # Add employment classifications
-#   Establishments[UEmpCats, 
-#                  c("EmpCatName", "EmpCatGroupedName") := .(i.EmpCatName, i.EmpCatGroupedName),
-#                  on = c("EmpCatID")]
-#   
-#   # Scale firms to TAZ employment forecasts
-#   cat("Scaling Base Year Establishments to Match Base Year TAZ Emplyoment", "\n")
-#   ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = Establishments, 
-#                                                     TAZEmployment = TAZEmployment[TAZ %in% BASE_TAZ_INTERNAL], 
-#                                                     NewFirmsProportion = BASE_NEW_FIRMS_PROP,
-#                                                     MaxBusID = max(Establishments$BusID),
-#                                                     EstSizeCategories = EstSizeCategories)
-#   
-#   BaseYearFirms <- copy(ScenarioFirms)
-#   
-#   # Future year
-# } else {
-#   if(file.exists(SCENARIO_BASEFIRMS)){
-#     # Load the output from the base year firm synthesis model
-#     cat("Loading Base Year Establishment List", "\n")
-#     load(SCENARIO_BASEFIRMS)
-#     BaseYearFirms <- firm_sim_results$BaseYearFirms
-#     
-#     # Scale firms to TAZ employment forecasts
-#     cat("Scaling Base Year Establishment List to Match TAZ Employment Forecasts", "\n")
-#     ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = BaseYearFirms, 
-#                                                       TAZEmployment = TAZEmployment[TAZ %in% BASE_TAZ_INTERNAL], 
-#                                                       NewFirmsProportion = BASE_NEW_FIRMS_PROP,
-#                                                       MaxBusID = max(BaseYearFirms$BusID),
-#                                                       EstSizeCategories = EstSizeCategories)
-#     
-#   } else {
-#     
-#     stop("No Base Scenario outputs available. Please run the Base Scenario first.")
-#     
-#   }
-# }
-# 
-# # Return results
-# firm_sim_results <- list(ScenarioFirms = ScenarioFirms, 
-#                          BaseYearFirms = BaseYearFirms, 
-#                          TAZLandUseCVTM = TAZLandUseCVTM)
-# 
-# # End progress tracking
-# progressEnd(dir = SCENARIO_LOG_PATH)
-# 
-# # Save inputs and results
-# save(firm_sim_results, firm_inputs, file = file.path(SCENARIO_OUTPUT_PATH, 
-#                                                      SYSTEM_FIRMSYN_OUTPUTNAME))
-# lapply(1:length(firm_sim_results), 
-#        function(x) fwrite(firm_sim_results[[x]], 
-#                           file = file.path(SCENARIO_OUTPUT_PATH, 
-#                                            paste(SYSTEM_FIRMSYN_OUTPUTNAME, 
-#                                                  names(firm_sim_results)[x],
-#                                                  "csv",
-#                                                  sep = "."))))
-# 
-# rm(list = names(firm_inputs)) # For scratch only, remove variables that were added from model component environment
-# rm(firm_sim_results, firm_inputs, Establishments)
-# gc(verbose = FALSE)
+FirmsDomestic[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
+            EmpCatGroupedName := i.EmpCatGroupedName,
+            on = "n2"]
+
+# End progress tracking
+progressEnd(dir = SCENARIO_LOG_PATH)
+
+# Return results
+firm_sim_results <- list(ScenarioFirms = FirmsDomestic, 
+            TAZLandUseCVTM = TAZLandUseCVTM)
+
+# End progress tracking
+progressEnd(dir = SCENARIO_LOG_PATH)
+
+# Save inputs and results
+save(firm_sim_results, firm_inputs, file = file.path(SCENARIO_OUTPUT_PATH,
+                                                     SYSTEM_FIRMSYN_OUTPUTNAME))
+lapply(1:length(firm_sim_results),
+       function(x) fwrite(firm_sim_results[[x]],
+                          file = file.path(SCENARIO_OUTPUT_PATH,
+                                           paste(SYSTEM_FIRMSYN_OUTPUTNAME,
+                                                 names(firm_sim_results)[x],
+                                                 "csv",
+                                                 sep = "."))))
+
+rm(list = names(firm_inputs)) # For scratch only, remove variables that were added from model component environment
+rm(firm_sim_results, firm_inputs, Establishments)
+gc(verbose = FALSE)
 
 ### Commercial Vehicle Touring Model ===========================================
 # Load executive functions (process inputs and simulation)

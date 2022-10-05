@@ -1,6 +1,6 @@
 
 #Enumerate firms and merge with correspondenses
-firm_synthesis_enumerate <- function(cbp, EmpBounds, cbp_ag = NULL){
+firm_synthesis_enumerate <- function(cbp, c_cbp_mz, EmpBounds, cbp_ag = NULL){
 
   # Clean the input data, combine with Ag data if needed
   if(!is.null(cbp_ag)){
@@ -9,6 +9,10 @@ firm_synthesis_enumerate <- function(cbp, EmpBounds, cbp_ag = NULL){
     cbp <- rbind(cbp[Industry_NAICS6_CBP >= 113110],
                  cbp_ag)
   }
+  
+  # Extract just the region data for the 21 county CMAP region
+  # For the 21 counties, CBPZONE == county FIPS code
+  cbp <- cbp[CBPZONE %in% unique(c_cbp_mz$COUNTY)]
 
   # Aggregate the employment data by zones, NAICS, and firm size category
   # 1='1-19',2='20-99',3='100-249',4='250-499',5='500-999',6='1,000-2,499',7='2,500-4,999',8='Over 5,000'
@@ -16,7 +20,7 @@ firm_synthesis_enumerate <- function(cbp, EmpBounds, cbp_ag = NULL){
   FirmsDomestic <- cbp[!is.na(CBPZONE) & !is.na(FAFZONE) & !is.na(Industry_NAICS6_CBP),
                        .(e1 = sum(e1), e2 = sum(e2), e3 = sum(e3), e4 = sum(e4),
                          e5 = sum(e5), e6 = sum(e6), e7 = sum(e7), e8 = sum(e8)),
-                       by = .(Industry_NAICS6_CBP, CBPZONE, FAFZONE)]
+                       by = .(Industry_NAICS6_CBP, CBPZONE)]
 
   # Add 2 digit NAICS
   FirmsDomestic[, n2 := substr(Industry_NAICS6_CBP, 1, 2)]
