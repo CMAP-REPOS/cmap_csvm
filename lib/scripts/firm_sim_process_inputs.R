@@ -25,9 +25,6 @@ firm_sim_process_inputs <- function(envir) {
   
   ### Process scenario input files
   
-  # Employment targets: replace the within CMAP portion in MZ with values rolled up from TAZ
-  envir[["emp_control"]] <- rbind(envir[["emp_control_taz"]][,.(Employment = sum(Employment, na.rm = TRUE)), keyby = .(Mesozone, NAICS)])
-  
   # Create a summarized version of the employment data with employment grouping categories in wide format
   envir[["TAZLandUseCVTM"]] <- add_totals(dcast.data.table(merge(envir[["emp_control_taz"]][, .(TAZ = Zone17, Mesozone, CountyFIPS, 
                                                          EmpCatName = NAICS, Employment)],
