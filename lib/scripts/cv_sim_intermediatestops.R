@@ -305,8 +305,8 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
     tempDT <- tempDT[below_dev_thresh == 1 | num_below_dev_thresh == 0]
     
     # Get zone attributes
-    tempDT[TAZLandUseCVTM[,.(DTAZ = TAZ, NEmp_Leisure, NEmp_Retail, NEmp_Total)],
-           c("Leisure", "Retail", "TotalEmp") := .(i.NEmp_Leisure, i.NEmp_Retail, i.NEmp_Total),
+    tempDT[TAZLandUseCVTM[,.(DTAZ = TAZ, NEmp_Service_FoodDrink, NEmp_Retail, NEmp_Total)],
+           c("Service_FoodDrink", "Retail", "TotalEmp") := .(i.NEmp_Service_FoodDrink, i.NEmp_Retail, i.NEmp_Total),
            on = "DTAZ"]
     
     # Calculate attraction factor
@@ -317,7 +317,7 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
                   (intStop.attr["b_dist"] + 
                      intStop.attr["b_dist_vs"] * (Activity == "Vehicle Service")) * DeltaD_k/0.25 + 
                   intStop.attr["b_retail"] * Retail/1000 +
-                  intStop.attr["b_leisure_ot"] * (Activity == "Other") * Leisure/1000]
+                  intStop.attr["b_foodDrink_ot"] * (Activity == "Other") * Service_FoodDrink/1000]
     tempDT[, eu := exp(u)]
     tempDT[, p := eu/sum(eu), by = .(BusID, Vehicle, TourID, TripID, IntID)]
     

@@ -229,7 +229,6 @@ firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
                                    cv_service_model = cv_service_model)
 gc()
 
-
 # Simulate vehicle choice
 firmStopsVeh <- cv_sim_vehicle(database = firmStops, 
                                firms = firms,
