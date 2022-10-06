@@ -16,12 +16,13 @@ tt_build <- function(cv_trips) {
   # Currently there are commercial vehicle trip tables for each combination of
   # light, medium, heavy trucks and the eight time periods plus daily totals, for 27 tables
   vehicletypes <- c("Light", "Medium", "Heavy")
+  vehicletypes_lc <- c("l", "m", "h")
   todlabels <- names(BASE_TOD_RANGES)
+  todlabels_lc <- tolower(todlabels)
   
-  matnames <- paste(rep(c(todlabels, "Daily"), length(vehicletypes)),
-                    rep(vehicletypes, each = length(todlabels)+1),
-                    "Truck")
-  
+  matnames <- paste0(rep(vehicletypes_lc, each = length(todlabels_lc)+1),"truck_",
+              rep(c(todlabels_lc, "daily"), length(vehicletypes_lc)))
+                   
   outputMatrices <- data.table(matname = matnames,
                                vehicletype = rep(vehicletypes, each = length(todlabels)+1),
                                tod = rep(c(todlabels, "all"), length(vehicletypes)))
