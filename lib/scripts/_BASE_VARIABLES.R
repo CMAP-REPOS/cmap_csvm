@@ -28,3 +28,22 @@ BASE_TOD_RANGES <- list(P1 = list(c(0,360), c(1200,1440)),
                         P7 = list(c(960, 1080)),
                         P8 = list(c(1080, 1200))
                         )
+
+# 4. Define settings used in Dashboard/spreadsheet report
+# Column name from TAZ_System.csv that labels each TAZ with the desired group
+# names for use in the dashboard. This also determines how TAZs will be grouped
+# into larger regions for display in the dashboard.
+BASE_DASHBOARD_GEOGRAPHY <- "CountyName"
+
+# Unit used for display in dashboard
+BASE_DASHBOARD_LENGTH_UNIT <- "miles"
+
+# Default scenario to use for refence comparisons in the Dashboard/spreadsheet report
+# The SCENARIO_REFERENCE_NAME can also be passed as a command argument 
+# A command argument will which takes precendence over the value entered, see run_cmap_csvm.R
+# Valid settings: 
+# "Validation" - (quoted string) this will compare the current scenario to observed data for validation purposes
+# "<scenario name>" - (quoted string, case sensitive) this will the current scenario to another scenario
+#                     the scenario name is the directory name for the scenario, and the scenario must have 
+#                     been run to completion already
+BASE_SCENARIO_REFERENCE_NAME <- "Validation"
