@@ -1,5 +1,9 @@
 # 1. Define TAZ ranges for different elements of the model region.
-BASE_TAZ_INTERNAL <- 1L:3632L #range of TAZs that covers the CMAP model region 
+TAZ_System <- read.csv(file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"))
+BASE_TAZ_INTERNAL <- TAZ_System$TAZ #range of TAZs that covers the CMAP model region 
+BASE_MZ_INTERNAL <- sort(unique(TAZ_System$Mesozone)) #range of mesozones that covers the CMAP model region 
+BASE_FIPS_INTERNAL <- sort(unique(TAZ_System$FIPS)) #range of county fips code that covers the CMAP model region 
+rm(TAZ_System)
 
 # 2. Define other application parameters
 BASE_SCENARIO_BASE_NAME <- "base" #base year scenario name
@@ -33,7 +37,7 @@ BASE_TOD_RANGES <- list(P1 = list(c(0,360), c(1200,1440)),
 # Column name from TAZ_System.csv that labels each TAZ with the desired group
 # names for use in the dashboard. This also determines how TAZs will be grouped
 # into larger regions for display in the dashboard.
-BASE_DASHBOARD_GEOGRAPHY <- "CountyName"
+BASE_DASHBOARD_GEOGRAPHY <- "county_state"
 
 # Unit used for display in dashboard
 BASE_DASHBOARD_LENGTH_UNIT <- "miles"

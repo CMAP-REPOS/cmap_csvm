@@ -3,11 +3,11 @@
 firm_sim_process_inputs <- function(envir) {
   
   ### Load project input files
-  project.files <- c( c_cbp_mz             = file.path(SYSTEM_DATA_PATH, "corresp_mesozone_cbpzone.csv"),  #Correspondence between CBP and Mesozone zone systems
-                      c_n2_empcats         = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),    #Correspondence between NAICS2 groups and aggregated employment groups
+  project.files <- c( c_n2_empcats         = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),    #Correspondence between NAICS2 groups and aggregated employment groups
                       cbp                  = file.path(SYSTEM_DATA_PATH, "data_emp_cbp.csv"),         #CBP data file
                       cbp_ag               = file.path(SYSTEM_DATA_PATH, "data_emp_cbp_ag.csv"),           #CBP data file -- Agriculture records generated seperately
                       mzemp                = file.path(SYSTEM_DATA_PATH, "data_mesozone_emprankings.csv"), #Industry rankings data by mesozone based on employment
+                      TAZ_System           = file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"), # TAZ system 
                       firm_sim_enumerate         = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_enumerate.R"),
                       firm_sim_mesozones         = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_mesozones.R"),
                       firm_sim_scaling           = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_scaling.R"))
@@ -42,9 +42,6 @@ firm_sim_process_inputs <- function(envir) {
   envir[["TAZLandUseCVTM"]][envir[["data_hh"]][,.(TAZ = Zone17, HH)], HH := i.HH, on = "TAZ"]
   
   ### Define additional variables
-  
-  # Correspondence between TAZ and MZ based on employment data
-  envir[["c_taz_mz"]] <- unique(envir$emp_control_taz[,.(TAZ = Zone17, Mesozone)])
   
   # Employment ranges: assume upper bound for the largest size (>5000) is 10,000 
   # to conform to earlier assumption of midpoint being 7,500
