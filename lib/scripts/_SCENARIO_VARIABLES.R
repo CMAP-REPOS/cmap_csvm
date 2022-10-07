@@ -25,3 +25,9 @@ SCENARIO_OUTPUT_PATH <- file.path(SYSTEM_APP_PATH, "scenarios", SCENARIO_NAME, "
 SCENARIO_BASE_OUTPUT_PATH <- file.path(SYSTEM_APP_PATH, "scenarios", BASE_SCENARIO_BASE_NAME, "outputs")
 SCENARIO_LOG_PATH    <- file.path(SCENARIO_OUTPUT_PATH, "log")
 SCENARIO_BASEFIRMS <- file.path(SCENARIO_BASE_OUTPUT_PATH, SYSTEM_FIRMSYN_OUTPUTNAME)
+
+# Switches for the Dashboard components: TRUE and the content for that model step is rendered in the dashboard
+SCENARIO_DB_FIRMSYN <- TRUE
+SCENARIO_DB_CVTM <- TRUE
+SCENARIO_DB_TT <- TRUE
+SCENARIO_DB_SPREADSHEET <- FALSE

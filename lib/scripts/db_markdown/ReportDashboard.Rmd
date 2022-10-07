@@ -1,5 +1,5 @@
 ---
-title: "<b><i>SEMCOG</i></b> | Commercial Vehicle Model | `r paste(SCENARIO_NAME, 'Scenario')`"
+title: "<b><i>CMAP</i></b> | Commercial Services Vehicle Model | `r paste(SCENARIO_NAME, 'Scenario')`"
 date: "`r format(SCENARIO_RUN_START, '%Y-%m-%d')`"
 output: 
   flexdashboard::flex_dashboard:
@@ -27,20 +27,13 @@ Highlights {data-width=150}
 
 **Overview**
 
-Firms, employment, and commercial vehicle trip totals for the SEMCOG region (does not include the buffer region)
+Firms, employment, and commercial vehicle trip totals for the CMAP region
 
 ```{r highlights_build_firm_sim, results='asis', eval=SCENARIO_DB_FIRMSYN}
 highlights_firm_sim <- knitr::knit_child('highlights_firm_sim.Rmd',
                               envir = environment(),
                               quiet = TRUE)
 cat(unlist(highlights_firm_sim), sep = '\n')
-```
-
-```{r highlights_build_ld_sim, results='asis', eval=SCENARIO_DB_LDM}
-highlights_ld_sim <- knitr::knit_child('highlights_ld_sim.Rmd',
-                              envir = environment(),
-                              quiet = TRUE)
-cat(unlist(highlights_ld_sim), sep = '\n')
 ```
 
 ```{r highlights_build_cv_sim, results='asis', eval=SCENARIO_DB_CVTM}
@@ -74,17 +67,12 @@ div#about-this-document.section.level3.chart-wrapper.chart-wrapper-flex {
 }
 </style>
 
-The SEMCOG Commercial Vehicle Model simulates truck trips within, to, from, and through the seven county SEMCOG model region. This dashboard presents the results from a scenario run of the model, indicated by the scenario name and year indicated in the header above.
+The CMAP Commercial Services Vehicle Model simulates truck trips within the 21 county CMAP model region. This dashboard presents the results from a scenario run of the model, indicated by the scenario name and year indicated in the header above.
 
-The model comprises three components; the outputs from each one are shown in the other tabs of the dashboard:
+The model comprises two components; the outputs from each one are shown in the other tabs of the dashboard:
 
-1. Firm Synthesis Model: a list of businesses establishments in the SEMCOG region and the "buffer" region immediately around the SEMCOG region
-2. Long Distance Model: simulation of long haul truck travel to, from. and though the SEMCOG region
-3. Commercial Vehicle Touring Model: simulation of commercial vehicle travel within the SEMCOG region and between the SEMCOG region and the "buffer" around the SEMCOG region
-
-The Commercial Vehicle Touring Model simulates short haul truck travel to and from a "buffer" region of locations close to, but outside of, the SEMCOG region, in addition to travel within the SEMCOG region. The results presented in the dashboard are generally for the SEMCOG region only (with explanations provided where some summaries may include portions of travel outside of the SEMCOG region). The complete model results do include results for travel to, from, and within the buffer, which is necessary for the accurate simulate of travel between those locations and the SEMCOG region.
-
-Summaries of assignment results for the commercial vehicle model are included in the standard SEMCOG travel demand model reports along with results from the personal travel segment of the travel demand model.
+1. Firm Synthesis Model: a list of businesses establishments in the CMAP region
+2. Commercial Vehicle Touring Model: simulation of commercial vehicle travel within the CMAP region
 
 ### About this Document
 
@@ -106,37 +94,14 @@ Summary Results {data-width=300, .tabset}
 ```{r Summary_Table_Trips}
 
 # Summarize the tmh_vtods table for trips
-dat_source_vehicle <- add_totals(dcast.data.table(tmh_vtods[,.(Trips = sum(Trips)), 
-                                         keyby = .(Source, Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "Trips"), 
-                 idcols = 2L, 
-                 coltotal = FALSE)
-
-dat_vehicle <- add_totals(dcast.data.table(tmh_vtods[,.(Source = "All (CV+LD)", Trips = sum(Trips)), 
+dat <- add_totals(dcast.data.table(tmh_vtods[,.(Trips = sum(Trips)), 
                                          keyby = .(Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
-                     value.var = "Trips"), 
-                 idcols = 2L,
-                 coltotal = FALSE)
+                     value.var = "Trips"))
 
-dat_source <- add_totals(dcast.data.table(tmh_vtods[,.(Vehicle = "All (L+M+H)", Trips = sum(Trips)), 
-                                         keyby = .(Source, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "Trips"), 
-                 idcols = 2L)
-
-dat <- rbind(dat_source_vehicle,
-             dat_vehicle,
-             dat_source)
-
-cols <- names(dat)[3:ncol(dat)]
+cols <- names(dat)[2:ncol(dat)]
 dat[, (cols) := lapply(.SD, format, digits = 0, big.mark = ",", scientific = FALSE), .SDcols = cols]
-dat[is.na(Source), Source := ""]
-
 
 kable(dat, escape=FALSE, align = "llrrrrr") %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
@@ -145,43 +110,21 @@ kable(dat, escape=FALSE, align = "llrrrrr") %>%
 
 ```
 
-> Units in the table is number of daily trips within, to, from, and through the SEMCOG region (i.e., trips within the buffer that do not traverse the SEMCOG region are excluded from the trip counts). LD is the long distance model, CV is the commerial vehicle touring model.
+> Units in the table is number of daily trips within, to, from, and through the CMAP region.
 
 ### Vehicle Miles Traveled
 
 ```{r Summary_Table_VMT}
 
 # Summarize the tmh_vtods table for VMT
-dat_source_vehicle <- add_totals(dcast.data.table(tmh_vtods[,.(VMT = sum(VMT)), 
-                                         keyby = .(Source, Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "VMT"), 
-                 idcols = 2L, 
-                 coltotal = FALSE)
-
-dat_vehicle <- add_totals(dcast.data.table(tmh_vtods[,.(Source = "All (CV+LD)", VMT = sum(VMT)), 
+dat <- add_totals(dcast.data.table(tmh_vtods[,.(VMT = sum(VMT)), 
                                          keyby = .(Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
-                     value.var = "VMT"), 
-                 idcols = 2L,
-                 coltotal = FALSE)
+                     value.var = "VMT"))
 
-dat_source <- add_totals(dcast.data.table(tmh_vtods[,.(Vehicle = "All (L+M+H)", VMT = sum(VMT)), 
-                                         keyby = .(Source, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "VMT"), 
-                 idcols = 2L)
-
-dat <- rbind(dat_source_vehicle,
-             dat_vehicle,
-             dat_source)
-
-cols <- names(dat)[3:ncol(dat)]
+cols <- names(dat)[2:ncol(dat)]
 dat[, (cols) := lapply(.SD, format, digits = 0, big.mark = ",", scientific = FALSE), .SDcols = cols]
-dat[is.na(Source), Source := ""]
 
 kable(dat, escape=FALSE, align = "llrrrrr") %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
@@ -190,44 +133,21 @@ kable(dat, escape=FALSE, align = "llrrrrr") %>%
 
 ```
 
-> Units in the table is vehicle miles traveled within, to, from, and through the SEMCOG region (i.e., trips within the buffer that do not traverse the SEMCOG region are excluded from the count and distances for all external trips are clipped at SEMCOG network external stations. Calculation is based on CV model trip tables and skimmed distance, not on final assignment results). LD is the long distance model, CV is the commerial vehicle touring model.
-
+> Units in the table is vehicle miles traveled within, to, from, and through the CMAP region
 
 ### Vehicle Hours Traveled
 
 ```{r Summary_Table_VHT}
 
 # Summarize the tmh_vtods table for VHT
-dat_source_vehicle <- add_totals(dcast.data.table(tmh_vtods[,.(VHT = sum(VHT)), 
-                                         keyby = .(Source, Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "VHT"), 
-                 idcols = 2L, 
-                 coltotal = FALSE)
-
-dat_vehicle <- add_totals(dcast.data.table(tmh_vtods[,.(Source = "All (CV+LD)", VHT = sum(VHT)), 
+dat <- add_totals(dcast.data.table(tmh_vtods[,.(VHT = sum(VHT)), 
                                          keyby = .(Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
-                     value.var = "VHT"), 
-                 idcols = 2L,
-                 coltotal = FALSE)
+                     value.var = "VHT"))
 
-dat_source <- add_totals(dcast.data.table(tmh_vtods[,.(Vehicle = "All (L+M+H)", VHT = sum(VHT)), 
-                                         keyby = .(Source, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "VHT"), 
-                 idcols = 2L)
-
-dat <- rbind(dat_source_vehicle,
-             dat_vehicle,
-             dat_source)
-
-cols <- names(dat)[3:ncol(dat)]
+cols <- names(dat)[2:ncol(dat)]
 dat[, (cols) := lapply(.SD, format, digits = 0, big.mark = ",", scientific = FALSE), .SDcols = cols]
-dat[is.na(Source), Source := ""]
 
 kable(dat, escape=FALSE, align = "llrrrrr") %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
@@ -236,52 +156,33 @@ kable(dat, escape=FALSE, align = "llrrrrr") %>%
 
 ```
 
-> Units in the table is vehicle hours traveled within, to, from, and through the SEMCOG region (i.e., trips within the buffer that do not traverse the SEMCOG region are excluded from the count and travel times for all external trips are clipped at SEMCOG network external stations. Calculation is based on CV model trip tables and skimmed travel times, not on final assignment results). LD is the long distance model, CV is the commerial vehicle touring model.
+> Units in the table is vehicle hours traveled within, to, from, and through the CMAP region.
 
 ### Average Trip Distance
 
 ```{r Summary_Table_MeanDistance}
 
 # Summarize the tmh_vtods table for mean distance
-dat_source_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(MeanDist = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source, Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+dat_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(MeanDist = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
+                                         keyby = .(Vehicle, ODSegment)],
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
                      value.var = "MeanDist"),
                      tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source, Vehicle)][,.(Total)])
-
-dat_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(Source = "All (CV+LD)", MeanDist = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "MeanDist"), 
-                 tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
                                          keyby = .(Vehicle)][,.(Total)])
 
-dat_source <- cbind(dcast.data.table(tmh_vtods[,.(Vehicle = "All (L+M+H)", MeanDist = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "MeanDist"), 
-                 tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source)][,.(Total)])
-
-dat_total <- cbind(dcast.data.table(tmh_vtods[,.(Source = "", Vehicle = "Total", MeanDist = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
+dat_total <- cbind(dcast.data.table(tmh_vtods[,.(Vehicle = "Total", MeanDist = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
                                          keyby = .(ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
                      value.var = "MeanDist"), 
                  tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(Trips, na.rm = TRUE))])
 
-dat <- rbind(dat_source_vehicle,
-             dat_vehicle,
-             dat_source,
+dat <- rbind(dat_vehicle,
              dat_total)
 
-dat[is.na(Source), Source := ""]
 dat[is.na(dat)] <- 0
-cols <- names(dat)[3:ncol(dat)]
+cols <- names(dat)[2:ncol(dat)]
 dat[, (cols) := lapply(.SD, format, digits = 3, big.mark = ",", scientific = FALSE), .SDcols = cols]
 
 kable(dat, escape=FALSE, align = "llrrrrr") %>%
@@ -291,53 +192,33 @@ kable(dat, escape=FALSE, align = "llrrrrr") %>%
 
 ```
 
-> Units in the table is average trip distance in miles, for trips within, to, from, and through the SEMCOG region (i.e., trips within the buffer that do not traverse the SEMCOG region are excluded from the count and distances for all external trips are clipped at SEMCOG network external stations. Calculation is based on CV model trip tables and skimmed distance, not on final assignment results). LD is the long distance model, CV is the commerial vehicle touring model.
-
+> Units in the table is average trip distance in miles, for trips within, to, from, and through the CMAP region.
 
 ### Average Trip Time
 
 ```{r Summary_Table_MeanTime}
 
 # Summarize the tmh_vtods table for mean time
-dat_source_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(MeanTime = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source, Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+dat_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(MeanTime = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
+                                         keyby = .(Vehicle, ODSegment)],
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
                      value.var = "MeanTime"),
                      tmh_vtods[,.(Total = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source, Vehicle)][,.(Total)])
-
-dat_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(Source = "All (CV+LD)", MeanTime = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "MeanTime"), 
-                 tmh_vtods[,.(Total = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
                                          keyby = .(Vehicle)][,.(Total)])
 
-dat_source <- cbind(dcast.data.table(tmh_vtods[,.(Vehicle = "All (L+M+H)", MeanTime = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "MeanTime"), 
-                 tmh_vtods[,.(Total = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
-                                         keyby = .(Source)][,.(Total)])
-
-dat_total <- cbind(dcast.data.table(tmh_vtods[,.(Source = "", Vehicle = "Total", MeanTime = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
+dat_total <- cbind(dcast.data.table(tmh_vtods[,.(Vehicle = "Total", MeanTime = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE)), 
                                          keyby = .(ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
                      value.var = "MeanTime"), 
                  tmh_vtods[,.(Total = sum(VHT * 60, na.rm = TRUE)/sum(Trips, na.rm = TRUE))])
 
-dat <- rbind(dat_source_vehicle,
-             dat_vehicle,
-             dat_source,
+dat <- rbind(dat_vehicle,
              dat_total)
 
-dat[is.na(Source), Source := ""]
 dat[is.na(dat)] <- 0
-cols <- names(dat)[3:ncol(dat)]
+cols <- names(dat)[2:ncol(dat)]
 dat[, (cols) := lapply(.SD, format, digits = 3, big.mark = ",", scientific = FALSE), .SDcols = cols]
 
 kable(dat, escape=FALSE, align = "llrrrrr") %>%
@@ -347,52 +228,33 @@ kable(dat, escape=FALSE, align = "llrrrrr") %>%
 
 ```
 
-> Units in the table is average trip travel time in minutes, for trips within, to, from, and through the SEMCOG region (i.e., trips within the buffer that do not traverse the SEMCOG region are excluded from the count and travel times for all external trips are clipped at SEMCOG network external stations. Calculation is based on CV model trip tables and skimmed travel time, not on final assignment results). LD is the long distance model, CV is the commerial vehicle touring model.
+> Units in the table is average trip travel time in minutes, for trips within, to, from, and through the CMAP region.
 
 ### Average Speed
 
 ```{r Summary_Table_MeanSpeed}
 
 # Summarize the tmh_vtods table for mean speed
-dat_source_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
-                                         keyby = .(Source, Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+dat_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
+                                         keyby = .(Vehicle, ODSegment)],
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
                      value.var = "MeanSpeed"),
                      tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
-                                         keyby = .(Source, Vehicle)][,.(Total)])
-
-dat_vehicle <- cbind(dcast.data.table(tmh_vtods[,.(Source = "All (CV+LD)", MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
-                                         keyby = .(Vehicle, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "MeanSpeed"), 
-                 tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
                                          keyby = .(Vehicle)][,.(Total)])
 
-dat_source <- cbind(dcast.data.table(tmh_vtods[,.(Vehicle = "All (L+M+H)", MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
-                                         keyby = .(Source, ODSegment)],
-                     Source + Vehicle ~ ODSegment,
-                     fun.aggregate = sum,
-                     value.var = "MeanSpeed"), 
-                 tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
-                                         keyby = .(Source)][,.(Total)])
-
-dat_total <- cbind(dcast.data.table(tmh_vtods[,.(Source = "", Vehicle = "Total", MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
+dat_total <- cbind(dcast.data.table(tmh_vtods[,.(Vehicle = "Total", MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE)), 
                                          keyby = .(ODSegment)],
-                     Source + Vehicle ~ ODSegment,
+                     Vehicle ~ ODSegment,
                      fun.aggregate = sum,
                      value.var = "MeanSpeed"), 
                  tmh_vtods[,.(Total = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE))])
 
-dat <- rbind(dat_source_vehicle,
-             dat_vehicle,
-             dat_source,
+dat <- rbind(dat_vehicle,
              dat_total)
 
-dat[is.na(Source), Source := ""]
 dat[is.na(dat)] <- 0
-cols <- names(dat)[3:ncol(dat)]
+cols <- names(dat)[2:ncol(dat)]
 dat[, (cols) := lapply(.SD, format, digits = 3, big.mark = ",", scientific = FALSE), .SDcols = cols]
 
 kable(dat, escape=FALSE, align = "llrrrrr") %>%
@@ -402,7 +264,7 @@ kable(dat, escape=FALSE, align = "llrrrrr") %>%
 
 ```
 
-> Units in the table is average trip speed in miles per hour, for trips within, to, from, and through the SEMCOG region (i.e., trips within the buffer that do not traverse the SEMCOG region are excluded from the count and distances and travel times for all external trips are clipped at SEMCOG network external stations. Calculation is based on CV model trip tables and skimmed distance and travel time, not on final assignment results). LD is the long distance model, CV is the commerial vehicle touring model.
+> Units in the table is average trip speed in miles per hour, for trips within, to, from, and through the CMAP region.
 
 Model Region Map and Glossary {data-width=300, .tabset}
 --------------------------------------------
@@ -434,8 +296,8 @@ map <- leaflet() %>%
   }"))
 map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
 var map = this;
-var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
-    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+var corner1 = new L.LatLng(",CMAP_BBOX["y", "min"],", ",CMAP_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",CMAP_BBOX["y", "max"],", ",CMAP_BBOX["x", "max"],"),
     bounds = new L.LatLngBounds(corner1, corner2);
 map.fitBounds(bounds);
 }")))
@@ -443,10 +305,10 @@ map.fitBounds(bounds);
 
 ### Employment Categories
 
-```{r NAICS3_To_Employment_Category}
+```{r n2_To_Employment_Category}
 # Show table
 
-kable(NAICS3_TO_EMPCATS, escape=FALSE, col.names = c("Employment Category",
+kable(c_n2_empcats, escape=FALSE, col.names = c("Employment Category",
                                                "Employment Cateogry Description",
                                                "Employment Group")) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("striped"))
@@ -467,31 +329,24 @@ kable(activities_table, escape=FALSE) %>%
 ```
 
 
-```{r section_build_firm_sim, results='asis', eval=SCENARIO_DB_FIRMSYN}
-section_firm_sim <- knitr::knit_child('section_firm_sim.Rmd',
-                              envir = environment(),
-                              quiet = TRUE)
-cat(unlist(section_firm_sim), sep = '\n')
-```
+<!-- ```{r section_build_firm_sim, results='asis', eval=SCENARIO_DB_FIRMSYN} -->
+<!-- section_firm_sim <- knitr::knit_child('section_firm_sim.Rmd', -->
+<!--                               envir = environment(), -->
+<!--                               quiet = TRUE) -->
+<!-- cat(unlist(section_firm_sim), sep = '\n') -->
+<!-- ``` -->
 
-```{r section_build_ld_sim, results='asis', eval=SCENARIO_DB_LDM}
-section_ld_sim <- knitr::knit_child('section_ld_sim.Rmd',
-                              envir = environment(),
-                              quiet = TRUE)
-cat(unlist(section_ld_sim), sep = '\n')
-```
+<!-- ```{r section_build_cv_sim, results='asis', eval=SCENARIO_DB_CVTM} -->
+<!-- section_cv_sim <- knitr::knit_child('section_cv_sim.Rmd', -->
+<!--                               envir = environment(), -->
+<!--                               quiet = TRUE) -->
+<!-- cat(unlist(section_cv_sim), sep = '\n') -->
+<!-- ``` -->
 
-```{r section_build_cv_sim, results='asis', eval=SCENARIO_DB_CVTM}
-section_cv_sim <- knitr::knit_child('section_cv_sim.Rmd',
-                              envir = environment(),
-                              quiet = TRUE)
-cat(unlist(section_cv_sim), sep = '\n')
-```
-
-```{r section_build_tt, results='asis', eval=SCENARIO_DB_TT}
-section_tt <- knitr::knit_child('section_tt.Rmd',
-                              envir = environment(),
-                              quiet = TRUE)
-cat(unlist(section_tt), sep = '\n')
-```
+<!-- ```{r section_build_tt, results='asis', eval=SCENARIO_DB_TT} -->
+<!-- section_tt <- knitr::knit_child('section_tt.Rmd', -->
+<!--                               envir = environment(), -->
+<!--                               quiet = TRUE) -->
+<!-- cat(unlist(section_tt), sep = '\n') -->
+<!-- ``` -->
 

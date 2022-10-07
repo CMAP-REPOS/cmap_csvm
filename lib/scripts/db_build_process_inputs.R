@@ -8,42 +8,28 @@ db_build_process_inputs <- function(envir){
                         db_build_render                = file.path(SYSTEM_SCRIPTS_PATH, "db_build_render.R"),
                         db_build_spreadsheet           = file.path(SYSTEM_SCRIPTS_PATH, "db_build_spreadsheet.R"),
                         db_build_spreadsheet_functions = file.path(SYSTEM_SCRIPTS_PATH, "db_build_spreadsheet_functions.R"),
-                        counts_daily_class             = file.path(SYSTEM_DATA_PATH, "counts_daily_class.csv"),
-                        counts_time_period             = file.path(SYSTEM_DATA_PATH, "counts_time_period.csv"),
-                        NAICS3_TO_EMPCATS              = file.path(SYSTEM_DATA_PATH, "NAICS3_to_EmpCats.csv"),
+                        c_n2_empcats                   = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),
                         TAZ_System                     = file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"))
   
   loadInputs(files = project.files, envir = envir)
   
   ### Load inputs/outputs from earlier steps
   # Preparations for all loadings
-  if(any(SCENARIO_DB_FIRMSYN, SCENARIO_DB_LDM, SCENARIO_DB_CVTM, SCENARIO_DB_TT)) {
+  if(any(SCENARIO_DB_FIRMSYN, SCENARIO_DB_CVTM, SCENARIO_DB_TT)) {
     TAZ_System <- envir[["TAZ_System"]]
     if(!(BASE_DASHBOARD_GEOGRAPHY %in% colnames(TAZ_System))){
       stop("BASE_DASHBOARD_GEOGRAPHY must be a column name from the TAZ_System dataset!")
     }
     
-    # Adjust the CountyName  field for buffer
-    TAZ_System[COUNTRY == "Canada", CountyName := "Canada"]
-    TAZ_System[FIPS %in% 39000:39999, CountyName := "Ohio"]
-    TAZ_System[TAZ_TYPE == "BUFFER" & FIPS %in% 26000:26999, CountyName := "Michigan (not SEMCOG)"]
-    county_order <- TAZ_System[,.N,.(CountyCode, CountyName)][,setNames(CountyCode,CountyName)]
-    county_order["Michigan (not SEMCOG)"] = 9
-    county_order["Ohio"] = 10
-    county_order["Canada"] = 11
-    county_order <- sort(county_order)
-    TAZ_System[,CountyName:=factor(CountyName, levels = names(county_order))]
-    
-    summary_geog_order <- sort(TAZ_System[TAZ %in% BASE_TAZ_MODEL_REGION,.N,
-                                     .(CountyCode, SummaryGeog)][,setNames(CountyCode,SummaryGeog)])
-    summary_geog_order <- c(names(summary_geog_order), 
-                            unique(TAZ_System$SummaryGeog)[!unique(TAZ_System$SummaryGeog) %in% names(summary_geog_order)]) 
-    TAZ_System[,SummaryGeog := factor(SummaryGeog, levels = summary_geog_order)]
+    # Adjust the order of the counties
+    county_order <- unique(TAZ_System[,.(county_state, CountyFIPS, cmap)])[order(-cmap, CountyFIPS)]
+    county_order_vec <- unique(county_order$county_state)
+    TAZ_System[, CountyName:=factor(county_state, levels = county_order_vec)]
     
     #Transform the NAICS3 to employment category mapping
-    envir[["NAICS3_TO_EMPCATS"]] <- unique(envir[["NAICS3_TO_EMPCATS"]][,.(EmpCatName, EmpCatDesc,
+    envir[["c_n2_empcats"]] <- unique(envir[["c_n2_empcats"]][,.(EmpCatName, EmpCatDesc,
                                                                            EmpCatGroupedName)])
-    setorder(envir[["NAICS3_TO_EMPCATS"]],EmpCatName)
+    setorder(envir[["c_n2_empcats"]],EmpCatName)
     
     # Load the skims
     envir[["skims"]] <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
@@ -59,8 +45,7 @@ db_build_process_inputs <- function(envir){
     ScenarioFirms <- firm_sim_results$ScenarioFirms
     
     # Add dashboard geography
-    ScenarioFirms <- merge(ScenarioFirms, TAZ_System[,.(TAZ, TAZ_TYPE, 
-                                                        Region = get(BASE_DASHBOARD_GEOGRAPHY))],
+    ScenarioFirms <- merge(ScenarioFirms, TAZ_System[,.(TAZ, Region = get(BASE_DASHBOARD_GEOGRAPHY))],
                            by.x = "TAZ", by.y = "TAZ")
     
     
@@ -68,56 +53,7 @@ db_build_process_inputs <- function(envir){
     envir[["ScenarioFirms"]] <- ScenarioFirms
     
     # SE data for validation of firm synthesis
-    envir[["TAZSocioEconomics"]] <- firm_inputs$TAZSocioEconomics
-    
-  }
-  
-  if(SCENARIO_DB_LDM){
-    load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_LDM_OUTPUTNAME))
-    
-    zoneProdsAttrs <- ld_sim_results[["zoneProdsAttrs"]]
-    ld_trips <- ld_sim_results[["ld_trips"]]
-    Facilities <- ld_inputs$Facilities
-    
-    # Long Distance model just model region and external TAZs, not buffer
-    zoneProdsAttrs <- zoneProdsAttrs[TAZ %in% c(BASE_TAZ_MODEL_REGION, BASE_TAZ_EXTERNAL)]
-    
-    ld_trips <- ld_trips[OTAZ %in% c(BASE_TAZ_MODEL_REGION, BASE_TAZ_EXTERNAL) & 
-                           DTAZ %in% c(BASE_TAZ_MODEL_REGION, BASE_TAZ_EXTERNAL)]
-    
-    # Add zone type
-    zoneProdsAttrs[, INTERNAL := (TAZ %in% BASE_TAZ_MODEL_REGION)]
-    
-    # Add dashboard geography
-    ld_trips <- merge(ld_trips, TAZ_System[,.(TAZ, Region.Origin = get(BASE_DASHBOARD_GEOGRAPHY))],
-                      by.x = "OTAZ", by.y = "TAZ")
-    ld_trips <- merge(ld_trips, TAZ_System[,.(TAZ, Region.Destination = get(BASE_DASHBOARD_GEOGRAPHY))],
-                      by.x = "DTAZ", by.y = "TAZ")
-    
-    # Add movement type (II, IX, XI, XX)
-    ld_trips[, Movement.Type := add_od_segment(origins = OTAZ,
-                                               destinations = DTAZ,
-                                               external_taz = BASE_TAZ_EXTERNAL)]
-
-    # Add trip length
-    ld_trips[skims.long, 
-             dist := i.dist,
-             on = c("OTAZ", "DTAZ", "TOD")]
-    ld_trips[is.na(dist), dist := 0]
-    
-    # Add external station descriptors
-    ld_trips <- add_od_fields(ld_trips, TAZ_System,  
-                               fieldsToAdd = c("StationName", "StationGroup", "StationType"))
-    
-    # Convert TOD to a factor
-    ld_trips[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
-    
-    # Beautify names for graphing
-    setnames(ld_trips, c("trips", "dist"), c("Trips", "Distance"))
-    
-    envir[["zoneProdsAttrs"]] <- zoneProdsAttrs
-    envir[["ld_trips"]] <- ld_trips
-    envir[["Facilities"]] <- Facilities
+    envir[["TAZLandUseCVTM"]] <- firm_inputs$TAZLandUseCVTM
     
   }
   
@@ -136,7 +72,7 @@ db_build_process_inputs <- function(envir){
     # add od segment, with external defined as the buffer
     cv_trips[, Movement.Type := add_od_segment(origins = OTAZ, 
                                                destinations = DTAZ, 
-                                               external_taz = BASE_TAZ_BUFFER)]
+                                               external_taz = NULL)]
     
     envir[["cv_trips"]] <- cv_trips
     
@@ -147,20 +83,19 @@ db_build_process_inputs <- function(envir){
     load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_TT_OUTPUTNAME))
     
     # Create a trip gen summary table for use in the dashboard and main model report
-    # extent is internal SEMCOG TAZs and external TAZs, no buffer 
-    # (TripTable already has already dealt with breaking buffer trips at external stations)
-    tab_template <- data.table(ID = rep(BASE_TAZ_REGION_EXTERNAL,6),
+    # extent is internal CMAP TAZs
+    tab_template <- data.table(ID = rep(BASE_TAZ_INTERNAL,6),
                                Vehicle = rep(c("Light", "Medium", "Heavy"), 
-                                             each = length(BASE_TAZ_REGION_EXTERNAL) * 2),
-                               Direction = rep(c(rep("O",length(BASE_TAZ_REGION_EXTERNAL)), 
-                                                 rep("D", length(BASE_TAZ_REGION_EXTERNAL))),3))
+                                             each = length(BASE_TAZ_INTERNAL) * 2),
+                               Direction = rep(c(rep("O",length(BASE_TAZ_INTERNAL)), 
+                                                 rep("D", length(BASE_TAZ_INTERNAL))),3))
     
     tab_template[, Vehicle := factor(Vehicle, levels = c("Light", "Medium", "Heavy"))]
     
-    truck_trip_gen <- rbind(tt_list$TripTable[OTAZ %in% BASE_TAZ_REGION_EXTERNAL,
+    truck_trip_gen <- rbind(tt_list$TripTable[OTAZ %in% BASE_TAZ_INTERNAL,
                                               .(trips = sum(trips), Direction = "O"), 
                                               keyby = .(ID = OTAZ, Vehicle)],
-                            tt_list$TripTable[DTAZ %in% BASE_TAZ_REGION_EXTERNAL,
+                            tt_list$TripTable[DTAZ %in% BASE_TAZ_INTERNAL,
                                               .(trips = sum(trips), Direction = "D"), 
                                               keyby = .(ID = DTAZ, Vehicle)])
     
@@ -175,7 +110,6 @@ db_build_process_inputs <- function(envir){
     envir[["truck_trip_gen"]] <- truck_trip_gen
     
     # write a wide version of this table
-    # make the naming consistent with the HTML report
     truck_trip_gen[, PA := factor(Direction, labels = c("p", "a"))]
     
     truck_trip_gen_wide <- dcast.data.table(truck_trip_gen,
@@ -191,15 +125,12 @@ db_build_process_inputs <- function(envir){
     fwrite(truck_trip_gen_wide,
            file.path(SCENARIO_OUTPUT_PATH, "CV_Trip_Generation_Summary.csv"))
     
-    # Create a trip and VMT by OD segment, geography, source (LD, CV) summary
-    # TripTable includes trips from CV and LD model
-    # Create a SEMCOG only version based on the trip table 
-    # Create a buffer version with more detail for valibration/analysis purposes
+    # Create a trip and VMT by OD segment, geography, summary
     
     # Extract TripTable and add time, distance
     TripTable <- tt_list$TripTable[,.(trips = sum(trips)), 
-                                   by = .(OTAZ, DTAZ, Vehicle, TOD, Source)]
-    setkey(TripTable, OTAZ, DTAZ, Vehicle, TOD, Source)
+                                   by = .(OTAZ, DTAZ, Vehicle, TOD)]
+    setkey(TripTable, OTAZ, DTAZ, Vehicle, TOD)
     
     TripTable[skims.long, 
               c("dist", "time") := .(i.dist, i.time), 
@@ -208,34 +139,33 @@ db_build_process_inputs <- function(envir){
     # Calculate VMT and VHT
     TripTable[, c("VMT", "VHT") := .(trips * dist, trips * time / 60)]
     
-    # Add grouping variabes (ODSegment, Summary Geography, External Station Names and Groups)
-    TripTable[, ODSegment := add_od_segment(OTAZ, DTAZ, external_taz = BASE_TAZ_EXTERNAL)]
+    # Add grouping variabes (ODSegment, Summary Geography)
+    TripTable[, ODSegment := add_od_segment(OTAZ, DTAZ, external_taz = NULL)]
     
     TripTable <- add_od_fields(TripTable, TAZ_System,  
-                               fieldsToAdd = c("SummaryGeog", "StationName", "StationGroup", "StationType"))
+                               fieldsToAdd = c("county_state"))
     
     envir[["TripTable"]] <- TripTable
               
-    # Trips, VMT, VHT by Vehicle, TOD, ODSegment, and Source
+    # Trips, VMT, VHT by Vehicle, TOD, ODSegment
     tmh_vtods <- TripTable[,.(Trips = sum(trips, na.rm = TRUE), 
                               MeanDist = sum(VMT, na.rm = TRUE)/sum(trips, na.rm = TRUE), 
                               MeanTime = (sum(VHT, na.rm = TRUE) * 60)/sum(trips, na.rm = TRUE), # in minutes
                               MeanSpeed = sum(VMT, na.rm = TRUE)/sum(VHT, na.rm = TRUE), # in miles/hour
                               VMT = sum(VMT, na.rm = TRUE), 
                               VHT = sum(VHT, na.rm = TRUE)),
-                           keyby = .(Vehicle, TOD, ODSegment, Source)]
+                           keyby = .(Vehicle, TOD, ODSegment)]
     
     tab_template <- data.table(expand.grid(Vehicle = c("Light", "Medium", "Heavy"),
                                            TOD = names(BASE_TOD_RANGES),
-                                           ODSegment = c("II", "IX", "XI", "XX"),
-                                           Source = c("CV", "LD")))
+                                           ODSegment = c("II", "IX", "XI", "XX")))
     
     tab_template[, Vehicle := factor(Vehicle, levels = c("Light", "Medium", "Heavy"))]
     tab_template[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
     
     tmh_vtods <- merge(tab_template, 
                        tmh_vtods,
-                       by = c("Vehicle", "TOD", "ODSegment", "Source"),
+                       by = c("Vehicle", "TOD", "ODSegment"),
                        all = TRUE)
     
     tmh_vtods[is.na(Trips), c("Trips", "MeanDist", "MeanTime", "MeanSpeed", "VMT", "VHT") := 0]
@@ -243,19 +173,12 @@ db_build_process_inputs <- function(envir){
     envir[["tmh_vtods"]] <- tmh_vtods
     
     # Write a wide version of this table
+    # Filtered to just II
     tmh_vtods_wide <- dcast.data.table(tmh_vtods,
-                                      Vehicle + TOD + ODSegment ~ Source,
+                                      Vehicle + TOD + ODSegment ~ .,
                                       fun.aggregate = sum,
                                       value.var = c("Trips", "VMT", "VHT", "MeanDist", "MeanTime", "MeanSpeed"),
-                                      fill = 0)
-    
-    tmh_vtods_wide[, c("Trips", "VMT", "VHT", "MeanDist", "MeanTime", "MeanSpeed") := 
-                     .(Trips_CV + Trips_LD, 
-                       VMT_CV + VMT_LD, 
-                       VHT_CV + VHT_LD,
-                       (VMT_CV + VMT_LD)/(Trips_CV + Trips_LD),
-                       ((VHT_CV + VHT_LD)*60)/(Trips_CV + Trips_LD),
-                       (VHT_CV + VHT_LD)/(VMT_CV + VMT_LD))]
+                                      fill = 0)[ODSegment == "II"]
     
     envir[["tmh_vtods_wide"]] <- tmh_vtods_wide
     
@@ -289,29 +212,24 @@ db_build_process_inputs <- function(envir){
   
   ### Create files for mapping
   # Open geographic file of TAZs
-  shp <- readOGR(file.path(SYSTEM_DATA_PATH, "TAZ_System_Shape.shp"), layer = "TAZ_System_Shape", verbose = FALSE)
-  shp <- shp[shp$TAZ %in% BASE_TAZ_INTERNAL, ]
+  shp <- readOGR(file.path(SYSTEM_DATA_PATH, "zones17.shp"), layer = "zones17", verbose = FALSE)
   
-  # Adjust the CountyName  field for buffer
-  names(shp@data) <- names(TAZ_System) # shapefile names are truncated
-  shp$CountyName <- as.character(shp$CountyName)
-  shp$CountyName[shp$COUNTRY == "Canada"] <- "Canada"
-  shp$CountyName[shp$FIPS %in% 39000:39999] <- "Ohio"
-  shp$CountyName[shp$TAZ_TYPE == "BUFFER" & shp$FIPS %in% 26000:26999] <- "Michigan (not SEMCOG)"
-  shp$CountyName <- factor(shp$CountyName)
-  
+  # Adjust the field names
+  shp$TAZ <- shp$zone17
+  shp$county_state <- paste(shp$county_nam, shp$state, sep = ", ")
+  shp$county_state <- factor(shp$county_state, levels = county_order_vec)
   envir[["shp"]] <- shp
   
   # Generate the bounding box for SEMCOG region
-  envir[["SEMCOG_BBOX"]] <- shp[shp@data$TAZ_TYPE=="SEMCOG",] %>% bbox()
+  envir[["CMAP_BBOX"]] <- shp %>% bbox()
   
   ### Generate basemaps
   prepTAZPolygons <- envir[["prepTAZPolygons"]]
   prepTAZList <- prepTAZPolygons(shp = shp, group.by = BASE_DASHBOARD_GEOGRAPHY)
   envir[["TAZ.polys"]] <- prepTAZList$shp
-  if(exists("county_order")){
-    envir[["TAZ.polys"]]$CountyName <- factor(envir[["TAZ.polys"]]$CountyName, levels=names(county_order))
-    envir[["TAZ.polys"]]$Group <- factor(envir[["TAZ.polys"]]$Group, levels=names(county_order))
+  if(exists("county_order_vec")){
+    envir[["TAZ.polys"]]$county_state <- factor(envir[["TAZ.polys"]]$county_state, levels=county_order_vec)
+    envir[["TAZ.polys"]]$Group <- factor(envir[["TAZ.polys"]]$Group, levels=names(county_order_vec))
   }
   envir[["colorFun"]] <- prepTAZList$colorFun
 

@@ -11,13 +11,13 @@ editor_options:
 ### Synthesized Firms
 
 ```{r Synthesized_Firms_ValueBox}
-value <- format(ScenarioFirms[TAZ_TYPE == "SEMCOG", .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
-valueBox(value, caption = "Synthesized Firms (SEMCOG)", icon = "fa-building-o")
+value <- format(ScenarioFirms[, .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Synthesized Firms", icon = "fa-building-o")
 ```
 
 ### Employment
 
 ```{r Employment_ValueBox}
-value <- format(ScenarioFirms[TAZ_TYPE == "SEMCOG", sum(Employees)], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
-valueBox(value, caption = "Employment (SEMCOG)", icon = "fa-building-o")
+value <- format(ScenarioFirms[, sum(Employees)], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Employment", icon = "fa-building-o")
 ```

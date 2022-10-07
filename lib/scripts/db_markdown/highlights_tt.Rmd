@@ -12,5 +12,5 @@ editor_options:
 
 ```{r Trip_Table_Trips_ValueBox}
 value <- format(TripTable[, sum(trips)], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
-valueBox(value, caption = "Total Trips (SEMCOG)", icon = "fa-truck")
+valueBox(value, caption = "Total Trips", icon = "fa-truck")
 ```

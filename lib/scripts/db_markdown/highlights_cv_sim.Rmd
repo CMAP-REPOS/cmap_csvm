@@ -12,7 +12,7 @@ editor_options:
 ### Commercial Vehicle Trips
 
 ```{r Total_Stops_ValueBox}
-value <- format(cv_trips[SKIMTYPE != "Buffer no traverse", .N],
+value <- format(cv_trips[, .N],
                 big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
-valueBox(value, caption = "Commercial Vehicle Trips (SEMCOG)", icon = "fa-truck")
+valueBox(value, caption = "Commercial Vehicle Trips", icon = "fa-truck")
 ```

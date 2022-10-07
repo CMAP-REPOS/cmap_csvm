@@ -154,7 +154,7 @@ if (SCENARIO_RUN_DB) {
   cat("Rendering Commercial Vehicle Dashboard and Spreadsheet", "\n")
   dashboardFileLoc <- suppressWarnings(suppressMessages(
     run_sim(FUN = db_build, data = NULL,
-            packages = SYSTEM_REPORT_PKGS, lib = SYSTEM_PKGS_PATH,
+            packages = SYSTEM_PKGS, lib = SYSTEM_PKGS_PATH,
             inputEnv = db_inputs
     )
   ))
