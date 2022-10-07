@@ -40,7 +40,7 @@ BASE_DASHBOARD_LENGTH_UNIT <- "miles"
 
 # Default scenario to use for refence comparisons in the Dashboard/spreadsheet report
 # The SCENARIO_REFERENCE_NAME can also be passed as a command argument 
-# A command argument will which takes precendence over the value entered, see run_cmap_csvm.R
+# A command argument can takes precendence over the value entered, see run_cmap_csvm.R
 # Valid settings: 
 # "Validation" - (quoted string) this will compare the current scenario to observed data for validation purposes
 # "<scenario name>" - (quoted string, case sensitive) this will the current scenario to another scenario

@@ -1,0 +1,364 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+Daily Trips {data-navmenu="Trip Tables"}
+============================================
+
+Highlights {data-width=150}
+--------------------------------------------
+
+**Trip Tables: Daily Trips**
+
+Daily trip tables combining trips from the long distance and commercial vehicle touring models for the SEMCOG region (does not include trips wholly within the buffer region).
+
+### Long Distance Model Trips
+
+```{r Trip_Table_LD_Trips_ValueBox_SEMCOG}
+value <- format(sum(tmh_vtods[Source == "LD"]$Trips, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Long Distance<br>Model Trips</br>", icon = "fa-cube")
+```
+
+### Commercial Vehicle Touring Model Trips
+
+```{r Trip_Table_CV_Trips_ValueBox_SEMCOG}
+value <- format(sum(tmh_vtods[Source == "CV"]$Trips, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "CVTM Trips<br>(SEMCOG Region)</br>", icon = "fa-wrench")
+```
+
+### Total Trips within, to, from, and through SEMCOG Region
+
+```{r Trip_Table_Total_Trips_ValueBox_SEMCOG}
+value <- format(sum(tmh_vtods$Trips, na.rm = TRUE), 
+                digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Total Trips<br>(SEMCOG Region)</br>", icon = "fa-map-marker")
+```
+
+### Long Distance Model VMT
+
+```{r Trip_Table_LD_VMT_ValueBox_SEMCOG}
+value <- format(sum(tmh_vtods[Source == "LD"]$VMT, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Long Distance<br>Model VMT</br>", icon = "fa-cube")
+```
+
+### Commercial Vehicle Touring Model VMT
+
+```{r Trip_Table_CV_VMT_ValueBox_SEMCOG}
+value <- format(sum(tmh_vtods[Source == "CV"]$VMT, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "CVTM VMT<br>(SEMCOG Region)</br>", icon = "fa-wrench")
+```
+
+### Total VMT in SEMCOG Region
+
+```{r Trip_Table_Total_VMT_ValueBox_SEMCOG}
+value <- format(sum(tmh_vtods$VMT, na.rm = TRUE), 
+                digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Total VMT<br>(SEMCOG Region)</br>", icon = "fa-map-marker")
+```
+
+Column {data-width=600, .tabset}
+--------------------------------------------
+
+### Total Trips by Vehicle, Segment, and TOD 
+
+```{r Chart_Total_Trips_By_Vehicle_Segment_TOD}
+# Organize
+dat_vot <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), keyby = .(Vehicle, ODSegment, TOD)]
+dat_vot[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vot <- add_totals(dcast.data.table(dat_vot,
+                                  Vehicle + ODSegment ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"),
+                      idcols = 2L, coltotal = FALSE)
+
+dat_vt <- TripTable[, .(Trips = sum(trips, na.rm = TRUE), ODSegment = "All Segments"), keyby = .(Vehicle, TOD)]
+dat_vt[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vt <- add_totals(dcast.data.table(dat_vt,
+                                  Vehicle + ODSegment ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"),
+                      idcols = 2L, coltotal = FALSE)
+
+dat_vo <- TripTable[, .(Trips = sum(trips, na.rm = TRUE), Vehicle = "All CVs (L+M+H)"), keyby = .(ODSegment, TOD)]
+dat_vo[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vo <- add_totals(dcast.data.table(dat_vo,
+                                  Vehicle + ODSegment ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"),
+                      idcols = 2L)
+
+dat <- rbind(dat_vot, dat_vt, dat_vo)
+dat[is.na(Vehicle), Vehicle  := ""]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_by_Vehicle_Segment_TOD.csv"))
+assign("db_tab_tt_trips_veh_seg_tod", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 0) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+
+### Total Trips by County OD 
+
+```{r Chart_Total_Trips_By_County_OD}
+# Organize
+dat <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_by_County_OD.csv"))
+assign("db_tab_tt_trips_county_od", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 0) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Light Vehice Trips by County OD 
+
+```{r Chart_Light_Trips_By_County_OD}
+# Organize
+dat <- TripTable[Vehicle == "Light", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Light_Trips_by_County_OD.csv"))
+assign("db_tab_tt_trips_county_od_light", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 0) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Medium Truck Trips by County OD 
+
+```{r Chart_Medium_Trips_By_County_OD}
+# Organize
+dat <- TripTable[Vehicle == "Medium", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Medium_Trips_by_County_OD.csv"))
+assign("db_tab_tt_trips_county_od_medium", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 0) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Heavy Truck Trips by County OD 
+
+```{r Chart_Heavy_Trips_By_County_OD}
+# Organize
+dat <- TripTable[Vehicle == "Heavy", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Heavy_Trips_by_County_OD.csv"))
+assign("db_tab_tt_trips_county_od_heavy", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 0) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+```
+
+### Percent Trips by County OD 
+
+```{r Chart_Percent_Trips_By_County_OD}
+# Organize
+dat <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat[, PctTrips := Trips/sum(Trips)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "PctTrips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_PctTrips_by_County_OD.csv"))
+assign("db_tab_tt_pcttrips_county_od", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Light Vehice Percent Trips by County OD 
+
+```{r Chart_Light_PctTrips_By_County_OD}
+# Organize
+dat <- TripTable[Vehicle == "Light", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat[, PctTrips := Trips/sum(Trips)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "PctTrips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Light_PctTrips_by_County_OD.csv"))
+assign("db_tab_tt_pcttrips_county_od_light", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Medium Truck Percent Trips by County OD 
+
+```{r Chart_Medium_PctTrips_By_County_OD}
+# Organize
+dat <- TripTable[Vehicle == "Medium", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat[, PctTrips := Trips/sum(Trips)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "PctTrips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Medium_PctTrips_by_County_OD.csv"))
+assign("db_tab_tt_pcttrips_county_od_medium", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Heavy Truck Percent Trips by County OD 
+
+```{r Chart_Heavy_PctTrips_By_County_OD}
+# Organize
+dat <- TripTable[Vehicle == "Heavy", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat[, PctTrips := Trips/sum(Trips)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "PctTrips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Heavy_PctTrips_by_County_OD.csv"))
+assign("db_tab_tt_pcttrips_county_od_heavy", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+```
+
+### IX Trips County to External OD
+
+```{r Table_Trips_IX_OD}
+# Organize
+dat <- TripTable[ODSegment %in% c("IX") & DTAZ %in% BASE_TAZ_EXTERNAL & trips > 0, 
+                      .(Trips = round(sum(trips))), keyby = .(County = OSummaryGeog, External = DStationName, ExternalGroup = DStationGroup, ODSegment)]
+dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  County ~ ExternalName,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_IX_County_External.csv"), row.names = FALSE)
+assign("db_tab_tt_trips_county_external_ix", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### XI Trips External to County OD
+
+```{r Table_Trips_XI_OD}
+# Organize
+dat <- TripTable[ODSegment %in% c("XI") & OTAZ %in% BASE_TAZ_EXTERNAL & trips > 0, 
+                      .(Trips = round(sum(trips))), keyby = .(County = DSummaryGeog, External = OStationName, ExternalGroup = OStationGroup)]
+
+dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  ExternalName ~ County,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XI_External_County.csv"), row.names = FALSE)
+assign("db_tab_tt_trips_external_county_xi", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+```
+
+### XX Trips External to External OD
+
+```{r Table_Trips_XX_OD}
+# Organize
+dat <- TripTable[ODSegment %in% c("XX") & trips > 0, 
+                      .(Trips = round(sum(trips))), keyby = .(OStationName, OStationGroup, DStationName, DStationGroup)]
+dat[, OExternalName := paste0(OStationName, " (", OStationGroup, ")")]
+dat[, DExternalName := paste0(DStationName, " (", DStationGroup, ")")]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  OExternalName ~ DExternalName,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XX_External_External.csv"), row.names = FALSE)
+assign("db_tab_tt_trips_external_external_xx", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```

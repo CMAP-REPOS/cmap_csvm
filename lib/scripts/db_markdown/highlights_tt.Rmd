@@ -1,0 +1,16 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+### Total Trips
+
+```{r Trip_Table_Trips_ValueBox}
+value <- format(TripTable[, sum(trips)], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Total Trips (SEMCOG)", icon = "fa-truck")
+```

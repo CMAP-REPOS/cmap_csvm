@@ -1,0 +1,512 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+
+Firms {data-navmenu="Firm Synthesis Model"}
+============================================
+
+Highlights {data-width=100}
+--------------------------------------------
+
+**Firm Synthesis Model: Firms in the Model Region**
+
+Firm synthesis model outputs enumerating firms by size, location, and industry.
+
+### Synthesized Firms SEMCOG Region
+
+```{r Synthesized_Firms_ValueBox_SEMCOG}
+value <- format(ScenarioFirms[TAZ_TYPE == "SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Firms<br>SEMCOG Region</br>", icon = "fa-building-o",
+         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+```
+
+### Synthesized Firms SEMCOG Buffer Region
+
+```{r Synthesized_Firms_ValueBox_BUFFER}
+value <- format(ScenarioFirms[TAZ_TYPE != "SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Firms<br>Buffer Region</br>", icon = "fa-building-o",
+         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+```
+
+### Synthesized Firms SEMCOG Total
+
+```{r Synthesized_Firms_ValueBox_ALL}
+value <- format(ScenarioFirms[, .N], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Firms<br>Total</br>", icon = "fa-building-o")
+```
+
+Column {data-width=400 .tabset}
+--------------------------------------------
+### Firms by Industry
+
+```{r Map_Firms_By_Industry}
+k <- 25
+map <- leaflet(width = "100%") %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = ScenarioFirms, shp = shp,
+                            group = "EmpCatGroupedName",
+                            scale.factor = k) %>%
+  addTAZPolygons() %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addEasyButton(easyButton(
+    icon = "ion-arrow-shrink",
+    title = "Reset View",
+    onClick = JS("function(btn, map){
+                 map.setView(map._initialCenter, map._initialZoom);}"))) %>%
+  htmlwidgets::onRender(JS("function(el, x){
+  var map = this;
+  map.whenReady(function(){
+    map._initialCenter = map.getCenter();
+    map._initialZoom = map.getZoom();
+  });
+  }"))
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_RUN_FIRMSYN) {paste0("Note: Each data point represents ", comma(k), " firms within SEMCOG and buffer region and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
+
+### Firms by Size
+
+```{r Map_Firms_By_Size}
+k <- 25
+map <- leaflet(shp, width = "100%") %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = ScenarioFirms, shp = shp,
+                            group = "esizecat", scale.factor = k) %>%
+  addTAZPolygons() %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addEasyButton(easyButton(
+    icon = "ion-arrow-shrink",
+    title = "Reset View",
+    onClick = JS("function(btn, map){
+                 map.setView(map._initialCenter, map._initialZoom);}"))) %>%
+  htmlwidgets::onRender(JS("function(el, x){
+  var map = this;
+  map.whenReady(function(){
+    map._initialCenter = map.getCenter();
+    map._initialZoom = map.getZoom();
+  });
+  }"))
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_DB_FIRMSYN) {paste0("Note: Each data point represents ", comma(k), " firms within SEMCOG and buffer region and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
+
+### Freight Facility Locations
+
+```{r Map_Facilities}
+k <- 1
+map <- leaflet(width = "100%") %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = Facilities, shp = shp,
+                            group = "FacilityTy",
+                            scale.factor = k) %>%
+  addTAZPolygons() %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addEasyButton(easyButton(
+    icon = "ion-arrow-shrink",
+    title = "Reset View",
+    onClick = JS("function(btn, map){
+                 map.setView(map._initialCenter, map._initialZoom);}"))) %>%
+  htmlwidgets::onRender(JS("function(el, x){
+  var map = this;
+  map.whenReady(function(){
+    map._initialCenter = map.getCenter();
+    map._initialZoom = map.getZoom();
+  });
+  }"))
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_DB_FIRMSYN) {paste0("Note: Each data point represents ", comma(k), " freight facility within the SEMCOG region and precise locations are illustrative as facilities are only identified geographically at the TAZ-level.")}`
+
+
+Column {data-width=500 .tabset}
+--------------------------------------------
+
+### Firms by Industry
+
+```{r Chart_Firms_By_Industry}
+# Organize
+dat <- ScenarioFirms[, .N, keyby = .(Region = TAZ_TYPE, Industry = EmpCatName)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Industry.csv"))
+assign("db_tab_firms_industry", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Industry", yvar = "N", ylabel = "Firms",
+                        fill = "Region", position = "dodge", coord_flip = TRUE)
+```
+
+### Firms by Size
+
+```{r Chart_Firms_By_Size}
+# Organize
+dat <- ScenarioFirms[, .N, keyby = .(Region = TAZ_TYPE, Size = esizecat)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Size.csv"))
+assign("db_tab_firms_size", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Size", yvar = "N", xlabel = "Firm Size Category", ylabel = "Firms", fill = "Region", position = "dodge", coord_flip = TRUE)
+```
+
+### Firms by County
+
+```{r Chart_Firms_By_County}
+# Organize
+dat <- ScenarioFirms[TAZ_TYPE=="SEMCOG", .N, keyby = .(Region)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_County.csv"))
+assign("db_tab_firms_county", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Region", yvar = "N", xlabel = "SEMCOG County", ylabel = "Firms", 
+             coord_flip = TRUE)
+```
+
+> Includes firms within the SEMCOG region only
+
+### Firms by Industry and Size (SEMCOG)
+
+```{r Chart_Firms_By_Industry_And_Size_SEMCOG}
+# Organize
+dat <- ScenarioFirms[TAZ_TYPE=="SEMCOG", .N, keyby = .(Industry = EmpCatName, Size = esizecat)]
+
+dat <- add_totals(dcast.data.table(dat,
+                     Industry ~ Size,
+                     fun.aggregate = sum,
+                     value.var = "N"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Industry_and_Size_SEMCOG.csv"))
+assign("db_tab_firms_industry_size_semcog", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+
+```
+
+> Includes firms within the SEMCOG region only
+
+### Firms by Industry and Size (Buffer)
+
+```{r Chart_Firms_By_Industry_And_Size_Buffer}
+# Organize
+dat <- ScenarioFirms[TAZ_TYPE=="BUFFER", .N, keyby = .(Industry = EmpCatName, Size = esizecat)]
+
+dat <- add_totals(dcast.data.table(dat,
+                     Industry ~ Size,
+                     fun.aggregate = sum,
+                     value.var = "N"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Industry_and_Size_Buffer.csv"))
+assign("db_tab_firms_industry_size_buffer", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+
+```
+
+> Includes firms within the buffer region only
+
+### Firms by Industry and County/Region
+
+```{r Chart_Firms_By_Industry_And_County}
+# Organize
+dat <- ScenarioFirms[, .N, keyby = .(Industry = EmpCatName, Region)]
+
+dat <- add_totals(dcast.data.table(dat,
+                     Industry ~ Region,
+                     fun.aggregate = sum,
+                     value.var = "N"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Industry_and_County.csv"))
+assign("db_tab_firms_industry_county", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+
+```
+
+> Includes firms within the SEMCOG region and portions of States/Countries in the buffer.
+
+### Freight Facilities by Facility Type
+
+```{r Chart_Facilities_Type}
+# Organize
+dat <- Facilities[, .N, keyby = .(Type = FacilityTy)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Facilities_by_Type.csv"))
+assign("db_tab_facilities_type", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Type", yvar = "N", xlabel = "Facility Type", ylabel = "Facilities",  coord_flip = TRUE)
+
+
+```
+
+> Includes freight facilities within the SEMCOG region
+
+Employment {data-navmenu="Firm Synthesis Model"}
+============================================
+
+Highlights {data-width=100}
+--------------------------------------------
+
+**Firm Synthesis Model: Employment in the Model Region**
+
+Firm synthesis model outputs enumerating employment by location and industry.
+
+
+### Synthesized Employment SEMCOG
+
+```{r}
+value <- format(ScenarioFirms[TAZ_TYPE=="SEMCOG", sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>SEMCOG Region</br>", icon = "fa-briefcase",
+         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+```
+
+### Synthesized Employment BUFFER
+
+```{r}
+value <- format(ScenarioFirms[TAZ_TYPE!="SEMCOG", sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>Buffer Region</br>", 
+         icon = "fa-briefcase",
+         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+```
+
+### Synthesized Employment TOTAL
+
+```{r}
+value <- format(ScenarioFirms[, sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>Total</br>", icon = "fa-briefcase")
+```
+
+Column {data-width=400 .tabset}
+--------------------------------------------
+
+### Employment by Industry
+
+```{r Map_Employment_By_Industry}
+k <- 50
+map <- leaflet(shp, width = "100%") %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = ScenarioFirms, shp = shp,
+                            group = "EmpCatGroupedName", weight = "Employees",
+                            scale.factor = k) %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addTAZPolygons()
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_DB_FIRMSYN) {paste0("Note: Each data point represents ", comma(k), " employees and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
+
+### Employment by Size
+
+```{r Map_Employment_By_Size}
+k <- 25
+map <- leaflet(shp, width = "100%") %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = ScenarioFirms, shp = shp,
+                            group = "esizecat", weight = "Employees",
+                            scale.factor = k) %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addTAZPolygons()
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_DB_FIRMSYN) {paste0("Note: Each data point represents ", comma(k), " employees and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
+
+Column {data-width=500 .tabset}
+--------------------------------------------
+### Employment by Industry
+
+```{r Chart_Employment_By_Industry}
+# Organize
+dat <- ScenarioFirms[, .(Employees = sum(Employees)), keyby = .(Region = TAZ_TYPE, Industry = EmpCatName)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Industry.csv"))
+assign("db_tab_emp_industry", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Industry", yvar = "Employees",  fill = "Region", position = "dodge", coord_flip = TRUE)
+
+```
+
+### Employment by Size
+
+```{r Chart_Employment_By_Size}
+# Organize
+dat <- ScenarioFirms[, .(Employees = sum(Employees)), keyby = .(Region = TAZ_TYPE, Size = esizecat)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Size.csv"))
+assign("db_tab_emp_size", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Size", yvar = "Employees", xlabel = "Firm Size Category", 
+            fill = "Region", position = "dodge", coord_flip = TRUE)
+
+```
+
+### Employment by County
+
+```{r Chart_Employment_By_County}
+# Organize
+dat <- ScenarioFirms[TAZ_TYPE=="SEMCOG", .(Employees = sum(Employees)), keyby = .(Region)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_County.csv"))
+assign("db_tab_emp_county", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Region", yvar = "Employees", xlabel = "SEMCOG County", coord_flip = TRUE)
+```
+
+> Includes employment within the SEMCOG region only
+
+### Employment by Industry and Size (SEMCOG)
+
+```{r Chart_Employment_By_Industry_And_Size_SEMCOG}
+# Organize
+dat <- ScenarioFirms[TAZ_TYPE=="SEMCOG", .(Employees = sum(Employees)), keyby = .(Industry = EmpCatName, Size = esizecat)]
+
+dat <- add_totals(dcast.data.table(dat,
+                     Industry ~ Size,
+                     fun.aggregate = sum,
+                     value.var = "Employees"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Industry_and_Size_SEMCOG.csv"))
+assign("db_tab_emp_industry_size_semcog", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+
+```
+
+> Includes employment within the SEMCOG region only
+
+### Employment by Industry and Size (Buffer)
+
+```{r Chart_Employment_By_Industry_And_Size_Buffer}
+# Organize
+dat <- ScenarioFirms[TAZ_TYPE=="BUFFER", .(Employees = sum(Employees)), keyby = .(Industry = EmpCatName, Size = esizecat)]
+
+dat <- add_totals(dcast.data.table(dat,
+                     Industry ~ Size,
+                     fun.aggregate = sum,
+                     value.var = "Employees"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Industry_and_Size_Buffer.csv"))
+assign("db_tab_emp_industry_size_buffer", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+
+```
+
+> Includes employment within the buffer region only
+
+### Employment by Industry and County/Region
+
+```{r Chart_Employment_By_Industry_And_County}
+# Organize
+dat <- ScenarioFirms[, .(Employees = sum(Employees)), keyby = .(Industry = EmpCatName, Region)]
+
+dat <- add_totals(dcast.data.table(dat,
+                     Industry ~ Region,
+                     fun.aggregate = sum,
+                     value.var = "Employees"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Industry_and_County.csv"))
+assign("db_tab_emp_industry_county", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+
+```
+
+> Includes employment within the SEMCOG region only
+

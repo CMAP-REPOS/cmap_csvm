@@ -1,0 +1,1281 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+
+Stops - Geography {data-navmenu="Commercial Vehicle Touring Model"}
+============================================
+
+Highlights {data-width=150}
+--------------------------------------------
+
+**Commercial Vehicle Touring Model: Stops and Geography**
+
+Commercial vehicle stops by vehicle type, activity, and location
+
+### Total Stops
+
+```{r Commercial_Vehicle_Total_Stops_ValueBox_All2}
+value <- format(cv_trips[, .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Total Stops<br>(SEMCOG and Buffer Region)</br>", icon = "fa-map-marker")
+```
+
+### Total Stops within SEMCOG
+
+```{r Commercial_Vehicle_Total_Stops_ValueBox_SEMCOG2}
+value <- format(cv_trips[DTYPE=="SEMCOG", .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Total Stops<br>(SEMCOG Region)</br>", icon = "fa-map-marker")
+```
+
+### Light Vehicle Stops within SEMCOG
+
+```{r Commercial_Vehicle_Light_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Vehicle == "Light" & DTYPE=="SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, "Light Vehicle Stops<br>(SEMCOG Region)</br>", icon = "fa-cube")
+```
+
+### Medium Truck Stops within SEMCOG
+
+```{r Commercial_Vehicle_Medium_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Vehicle == "Medium" & DTYPE=="SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, "Medium Truck Stops<br>(SEMCOG Region)</br>", icon = "fa-wrench")
+```
+
+### Heavy Truck Stops within SEMCOG
+
+```{r Commercial_Vehicle_Heavy_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Vehicle == "Heavy"  & DTYPE=="SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, "Heavy Truck Stops<br>(SEMCOG Region)</br>", icon = "fa-cutlery")
+```
+
+### Total Stops Buffer
+
+```{r Commercial_Vehicle_Total_Stops_ValueBox_BUFFER2}
+value <- format(cv_trips[DTYPE != "SEMCOG", .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Total Stops<br>(Buffer Region)</br>", icon = "fa-map-marker")
+```
+
+Column {data-width=475, .tabset}
+--------------------------------------------
+### Stops by Vehicle Type
+
+```{r Map_Commercial_Stops_By_Vehicle}
+k <- 50
+map <- leaflet() %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = cv_trips[Activity != "Return"],
+                            shp = shp, group = "Vehicle",
+                            scale.factor = k, TAZcol = "DTAZ") %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addTAZPolygons()
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_RUN_CVTM) {paste0("Note: Each data point represents ", comma(k), " stops and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
+
+### Stops by Activity
+
+```{r Map_Commercial_Stops_By_Activity}
+k <- 50
+map <- leaflet() %>%
+  addProviderTiles(map_type, group = "Background Map")
+map <- map %>% addTAZPoints(data = cv_trips[Activity != "Return"],
+                            shp = shp, group = "Activity",
+                            scale.factor = k, TAZcol = "DTAZ") %>%
+  addPolygons(data = shp, weight = 0.5,
+              opacity = 0.25, color = "grey",
+              fillOpacity = 0, fillColor = "white") %>%
+  addTAZPolygons()
+map %>% htmlwidgets::onRender(JS(paste0("function(el, x){
+var map = this;
+var corner1 = new L.LatLng(",SEMCOG_BBOX["y", "min"],", ",SEMCOG_BBOX["x", "min"],"),
+    corner2 = new L.LatLng(",SEMCOG_BBOX["y", "max"],", ",SEMCOG_BBOX["x", "max"],"),
+    bounds = new L.LatLngBounds(corner1, corner2);
+map.fitBounds(bounds);
+}")))
+```
+
+>`r if(SCENARIO_RUN_CVTM) {paste0("Note: Each data point represents ", comma(k), " stops and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
+
+
+Column {data-width=375, .tabset}
+--------------------------------------------
+### Stop Activities by County
+
+```{r Chart_Commercial_Stop_Activity_by_County}
+# Organize
+dat <- cv_trips[DTYPE == "SEMCOG",.N, keyby = .(County = Region.Destination, Activity)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_county", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Commercial Vehicle Stops", coord_flip = TRUE)
+```
+
+### Stop Activities by County for Light Vehicles
+
+```{r Chart_Commercial_Stop_Activity_by_County_Light}
+# Organize
+dat <- cv_trips[DTYPE == "SEMCOG" & Vehicle == "Light",.N, keyby = .(County = Region.Destination, Activity)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Light.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_county_light", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Light Vehicle Stops", coord_flip = TRUE)
+```
+
+### Stop Activities by County for Medium Trucks
+
+```{r Chart_Commercial_Stop_Activity_by_County_Medium}
+# Organize
+dat <- cv_trips[DTYPE == "SEMCOG" & Vehicle == "Medium",.N, keyby = .(County = Region.Destination, Activity)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Medium.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_county_medium", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Medium Truck Stops", coord_flip = TRUE)
+```
+
+### Stop Activities by County for Heavy Trucks
+
+```{r Chart_Commercial_Stop_Activity_by_County_Heavy}
+# Organize
+dat <- cv_trips[DTYPE == "SEMCOG" & Vehicle == "Heavy",.N, keyby = .(County = Region.Destination, Activity)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Heavy.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_county_heavy", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Heavy Vehicle Stops", coord_flip = TRUE)
+```
+
+### Stop Activities by County and Vehicle (Table)
+
+```{r Table_Commercial_Stop_Activity_by_County_Vehicle}
+# Organize
+dat <- cv_trips[DTYPE == "SEMCOG",.N, keyby = .(County = Region.Destination, Activity, Vehicle)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  Vehicle + Activity ~ County,
+                                   fun.aggregate = sum,
+                                   value.var = "N"),
+                  idcols = 2L)
+dat[is.na(Vehicle), Vehicle := ""]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_county_vehicle", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> Stops counts include "Return" activities, i.e., the stop completing a tour (usually at the truck base location for tours that are closed tours that start and end at the truck base location).
+
+Stops - Timing {data-navmenu="Commercial Vehicle Touring Model"}
+============================================
+
+Highlights {data-width=150}
+--------------------------------------------
+
+**Commercial Vehicle Touring Model: Stops and Timing**
+
+Commercial vehicle stops by time of day and stop duration
+
+### Total Stops
+
+```{r Commercial_Vehicle_Total_Stops_ValueBox_All}
+value <- format(cv_trips[, .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Total Stops<br>(SEMCOG and Buffer Region)</br>", icon = "fa-map-marker")
+```
+
+### Total Stops within SEMCOG
+
+```{r Commercial_Vehicle_Total_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[DTYPE=="SEMCOG", .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Total Stops<br>(SEMCOG Region)</br>", icon = "fa-map-marker")
+```
+
+### Goods Stops within SEMCOG
+
+```{r Commercial_Vehicle_Goods_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Activity == "Goods" & DTYPE=="SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, "Goods Deliveries<br>(SEMCOG Region)</br>", icon = "fa-cube")
+```
+
+### Service Stops within SEMCOG
+
+```{r Commercial_Vehicle_Service_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Activity == "Service" & DTYPE=="SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, "Service Stops<br>(SEMCOG Region)</br>", icon = "fa-wrench")
+```
+
+### Intermediate Stops within SEMCOG
+
+```{r Commercial_Vehicle_Intermediate_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Scheduled == 0L & DTYPE=="SEMCOG", .N], big.mark = ",", trim = TRUE)
+valueBox(value, "Non-Scheduled Stops<br>(SEMCOG Region)</br>", icon = "fa-cutlery")
+```
+
+### Return Stops within SEMCOG
+
+```{r Commercial_Vehicle_Return_Stops_ValueBox_SEMCOG}
+value <- format(cv_trips[Activity == "Return" & DTYPE=="SEMCOG", .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Return Stops<br>(SEMCOG Region)</br>", icon = "fa-building-o")
+```
+
+### Total Stops Buffer
+
+```{r Commercial_Vehicle_Total_Stops_ValueBox_BUFFER}
+value <- format(cv_trips[DTYPE != "SEMCOG", .N], 
+                big.mark = ",", trim = TRUE)
+valueBox(value, "Total Stops<br>(Buffer Region)</br>", icon = "fa-map-marker")
+```
+
+Column {data-width=400, .tabset}
+--------------------------------------------
+
+### First Stop Arrival Time by Vehicle Type
+
+```{r Chart_Commercial_Arrival_Time_By_Vehicle}
+# Organize
+cv_trips[Scheduled == 1L, MinTripID := min(TripID), by = .(BusID, Vehicle, TourID)]
+dat <- cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(ArrivalTime = factor(floor(as.numeric(MAMArrive)/60)), Vehicle)]
+dat[, PctTours := Tours/sum(Tours), by = Vehicle]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_First_Stop_Arrival_Time_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_arrival_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "ArrivalTime", yvar = "PctTours", xlabel = "Arrival Time at First Stop", ylabel = "Percent of Tours", fill = "Vehicle", position = "dodge")
+
+```
+
+### First Stop Arrival Time by Activity
+
+```{r Chart_Commercial_Arrival_Time_By_Activity}
+# Organize
+dat <- cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(ArrivalTime = factor(floor(as.numeric(MAMArrive)/60)), Activity)]
+dat[, PctTours := Tours/sum(Tours), by = Activity]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_First_Stop_Arrival_Time_Activity.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_arrival_activity", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "ArrivalTime", yvar = "PctTours", xlabel = "Arrival Time at First Stop", ylabel = "Percent of Tours", fill = "Activity", position = "dodge")
+
+```
+
+### Stop Duration by Vehicle Type
+
+```{r Chart_Commercial_Stop_Duration_By_Vehicle}
+# Organize
+dur_bins <- c(seq(0,120, 15), seq(180,360,60))
+
+dat <- cv_trips[Activity != "Return", .(Vehicle, StopDuration)]
+dat[, StopDurationBin := dur_bins[findInterval(StopDuration, dur_bins)]]
+dat <- dat[, .(Stops = .N), keyby = .(StopDurationBin, Vehicle)]
+dat[, StopDurationBin := factor(StopDurationBin)]
+dat[, PctStops := Stops/sum(Stops), by = Vehicle]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_Duration_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_duration_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "StopDurationBin", yvar = "PctStops", xlabel = "Stop Duration (minutes, lower bound)", ylabel = "Percent of Stops", fill = "Vehicle", position = "dodge")
+
+```
+
+### Stop Duration by Activity (Scheduled)
+
+```{r Chart_Commercial_Stop_Duration_By_Activity_Scheduled}
+# Organize
+dur_bins <- c(seq(0,120, 15), seq(180,360,60))
+
+dat <- cv_trips[Activity != "Return" & Scheduled == 1L, .(Activity, StopDuration)]
+dat[, StopDurationBin := dur_bins[findInterval(StopDuration, dur_bins)]]
+dat <- dat[, .(Stops = .N), keyby = .(StopDurationBin, Activity)]
+dat[, StopDurationBin := factor(StopDurationBin)]
+dat[, PctStops := Stops/sum(Stops), by = Activity]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_Duration_Activity_Scheduled.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_duration_activity_scheduled", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "StopDurationBin", yvar = "PctStops", xlabel = "Stop Duration (minutes, lower bound)", ylabel = "Percent of Stops", fill = "Activity", position = "dodge")
+
+```
+
+### Stop Duration by Activity (Non-Scheduled)
+
+```{r Chart_Commercial_Stop_Duration_By_Activity_Non-Scheduled}
+# Organize
+dur_bins <- c(seq(0,120, 15), seq(180,360,60))
+
+dat <- cv_trips[Activity != "Return" & Scheduled == 0L, .(Activity, StopDuration)]
+dat[, StopDurationBin := dur_bins[findInterval(StopDuration, dur_bins)]]
+dat <- dat[, .(Stops = .N), keyby = .(StopDurationBin, Activity)]
+dat[, StopDurationBin := factor(StopDurationBin)]
+dat[, PctStops := Stops/sum(Stops), by = Activity]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_Duration_Activity_Non-Scheduled.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_duration_activity_nonsched", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "StopDurationBin", yvar = "PctStops", xlabel = "Stop Duration (minutes, lower bound)", ylabel = "Percent of Stops", fill = "Activity", position = "dodge")
+
+```
+
+Column {data-width=400, .tabset}
+--------------------------------------------
+
+### First Stop Arrival Time by Vehicle Type and Activty
+
+```{r Table_Commercial_Arrival_Time_By_Vehicle_Activity}
+
+# Organize
+cv_trips[Scheduled == 1L, MinTripID := min(TripID), by = .(BusID, Vehicle, TourID)]
+dat <- cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(ArrivalTime = factor(floor(as.numeric(MAMArrive)/60)), Vehicle, Activity)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  ArrivalTime ~ Vehicle + Activity,
+                                   fun.aggregate = sum,
+                                   value.var = "Tours"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_First_Stop_Arrival_Time_Vehicle_Activity.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_arrival_vehicle_activity", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Stop Duration by Vehicle and Activity (Scheduled)
+
+```{r Chart_Commercial_Stop_Duration_By_Vehicle_Activity}
+# Organize
+dur_bins <- c(seq(0,120, 15), seq(180,360,60))
+
+dat <- cv_trips[Activity != "Return", .(Vehicle, Activity, StopDuration)]
+dat[, StopDurationBin := dur_bins[findInterval(StopDuration, dur_bins)]]
+dat <- dat[, .(Stops = .N), keyby = .(StopDurationBin, Vehicle, Activity)]
+dat[, StopDurationBin := factor(StopDurationBin)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  StopDurationBin ~ Vehicle + Activity,
+                                   fun.aggregate = sum,
+                                   value.var = "Stops"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "CVTM_Stops_Duration_Vehicle_Activity.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_duration_vehicle_activity", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+Tours {data-navmenu="Commercial Vehicle Touring Model"}
+============================================
+
+Highlights {data-width=150}
+--------------------------------------------
+
+**Commercial Vehicle Touring Model: Tours**
+
+Commercial vehicle tours by location, activity, and length
+
+### Total Tours (Stops in SEMCOG)
+
+```{r Commercial_Vehicle_Tours_ValueBox2}
+
+value <- format(cv_trips[OTYPE == "SEMCOG" | DTYPE == "SEMCOG", uniqueN(TourID)],
+                big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Commercial Vehicle Tours (Stop in SEMCOG)", icon = "fa-truck")
+
+```
+
+### Light Vehicle Tours (Stops in SEMCOG)
+
+```{r Commercial_Vehicle_Tours_Light_ValueBox2}
+
+value <- format(cv_trips[(OTYPE == "SEMCOG" | DTYPE == "SEMCOG") & Vehicle == "Light", uniqueN(TourID)],
+                big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Light Vehicle Tours (Stop in SEMCOG)", icon = "fa-truck")
+
+```
+
+### Medium Truck Tours (Stops in SEMCOG)
+
+```{r Commercial_Vehicle_Tours_Medium_ValueBox2}
+
+value <- format(cv_trips[(OTYPE == "SEMCOG" | DTYPE == "SEMCOG") & Vehicle == "Medium", uniqueN(TourID)],
+                big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Medium Truck Tours (Stop in SEMCOG)", icon = "fa-truck")
+
+```
+
+### Heavy Truck Tours (Stops in SEMCOG)
+
+```{r Commercial_Vehicle_Tours_Heavy_ValueBox2}
+
+value <- format(cv_trips[(OTYPE == "SEMCOG" | DTYPE == "SEMCOG") & Vehicle == "Heavy", uniqueN(TourID)],
+                big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Heavy Truck Tours (Stop in SEMCOG)", icon = "fa-truck")
+
+```
+
+
+Column {data-width=400, .tabset}
+--------------------------------------------
+
+### Tour Start Locations by SEMCOG County and Buffer
+
+```{r Chart_Commercial_Tour_Starts_by_County}
+# Organize
+dat <- cv_trips[TripID == 1, .(Region = Region.Start, Vehicle)]
+dat[, Region := factor(Region, levels = sort_levels(Region))]
+dat <- dat[,.N, by = .(Region, Vehicle)][order(Region)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_Start_Locations_by_Region.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_start_region", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Tour Start County or Buffer State/Country", ylabel = "Commercial Vehicle Tours", coord_flip = TRUE)
+```
+
+> Includes all CV tours including those that start and end in the buffer region and do not include stops inside the SEMCOG region
+
+### Total Stops per Tour by Vehicle
+
+```{r Chart_Commercial_Stops_per_Tour_By_Vehicle}
+# Organize
+dat <- cv_trips[, .(Stops = .N), by = .(TourID, Vehicle)]
+dat <- dat[, .(Tours = .N), keyby = .(Stops, Vehicle)]
+dat[, PctTours := Tours/sum(Tours), keyby = Vehicle]
+dat[, Stops := factor(Stops)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_Stops_Tours.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_stops_tours", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Stops", yvar = "PctTours", fill = "Vehicle", position = "dodge", xlabel = "Number of Stops per Tour", ylabel = "Percent Commercial Vehicle Tours", coord_flip = TRUE)
+```
+
+> Total Stops includes all Stops on the Tour for Scheduled and Non-Scheduled Activities, as well as the Return Stop at the end of the Tour
+
+### Scheduled Stops per Tour by Vehicle
+
+```{r Chart_Commercial_Scheduled_Stops_per_Tour_By_Vehicle}
+# Organize
+dat <- cv_trips[Scheduled == 1L & Activity != "Return", .(Stops = .N), by = .(TourID, Vehicle)]
+dat <- dat[, .(Tours = .N), keyby = .(Stops, Vehicle)]
+dat[, PctTours := Tours/sum(Tours), keyby = Vehicle]
+dat[, Stops := factor(Stops)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_Scheduled_Stops_Tours.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_sched_stops_tours", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Stops", yvar = "PctTours", fill = "Vehicle", position = "dodge", xlabel = "Number of Scheduled Stops per Tour", ylabel = "Percent Commercial Vehicle Tours", coord_flip = TRUE)
+```
+
+> Scheduled Stops includes all Stops on the Tour for Scheduled Activities, which are Goods Deliveries and Service Stops. The Return Stop at the end of the Tour is not included.
+
+### Non-Scheduled Stops per Tour by Vehicle
+
+```{r Chart_Commercial_NonSched_Stops_per_Tour_By_Vehicle}
+# Organize
+dat <- cv_trips[Scheduled == 0L & Activity != "Return", .(Stops = .N), by = .(TourID, Vehicle)]
+dat <- merge(dat,
+             cv_trips[, .(AllStops = .N), by = .(TourID, Vehicle)],
+             by = c("TourID","Vehicle"),
+             all = TRUE)
+dat[is.na(Stops), Stops := 0]
+
+dat <- dat[, .(Tours = .N), keyby = .(Stops, Vehicle)]
+dat[, PctTours := Tours/sum(Tours), keyby = Vehicle]
+dat[, Stops := factor(Stops)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_NonScheduled_Stops_Tours.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_nonsched_stops_tours", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Stops", yvar = "PctTours", fill = "Vehicle", position = "dodge", xlabel = "Number of Non-Scheduled Stops per Tour", ylabel = "Percent Commercial Vehicle Tours", coord_flip = TRUE)
+```
+
+> Non-Scheduled Stops includes all Stops on the Tour for Non-Scheduled Activities, which are Driver Breaks and Vehicle Service Stops.
+
+### Tour Length by Vehicle Type
+
+```{r Density_Commercial_Tour_Length_By_Vehicle}
+# Organize
+dat <- cv_trips[, .(`Tour Length` = sum(Distance)), by = .(BusID, Vehicle, TourID)]
+
+# Save
+assign("db_tab_cv_tour_distance_vehicle", dat, envir = db_inputs)
+
+# Plot
+alpha <- 0.95
+x.limits <- c(0, quantile(dat$`Tour Length`, alpha))
+p <- ggplot(dat, aes(x = `Tour Length`, fill = Vehicle)) +
+  geom_density(alpha = 0.25) + ylab("Density") + xlim(x.limits) +
+  xlab(paste0("Tour Length (", BASE_DASHBOARD_LENGTH_UNIT, ")")) +
+  theme_db
+
+plotly_build(p)
+```
+
+>`r if(SCENARIO_RUN_CVTM) {paste0("Note: ", percent(1 - alpha), " of trips are longer than ", round(x.limits[2]), " minutes and are not displayed.")}`
+
+### Tour Duration by Vehicle Type
+
+```{r Density_Commercial_Tour_Duration_By_Vehicle}
+# Organize
+dat <- cv_trips[, .(`Tour Duration (mins)` = sum(TravelTime+StopDuration)),
+                by = .(BusID, Vehicle, TourID)]
+
+# Save
+assign("db_tab_cv_tour_duration_vehicle", dat, envir = db_inputs)
+
+# Plot
+alpha <- 0.95
+x.limits <- c(0, quantile(dat$`Tour Duration (mins)`, alpha))
+p <- ggplot(dat, aes(x = `Tour Duration (mins)`, fill = Vehicle)) +
+  geom_density(alpha = 0.25) + ylab("Density") + xlim(x.limits) +
+  theme_db
+
+plotly_build(p)
+```
+
+>`r if(SCENARIO_RUN_CVTM) {paste0("Note: ", percent(1 - alpha), " of trips are longer than ", round(x.limits[2]), " minutes and are not displayed.")}`
+
+Column {data-width=400, .tabset}
+--------------------------------------------
+
+### Stops by Number of Tour Stops and Stop Activity
+
+```{r Table_Commercial_Tours_by_Stops_Activity}
+# Organize
+dat <- cv_trips[,.(Stops = .N), keyby = .(TourID, Activity)]
+
+dat <- merge(dat,
+             cv_trips[, .(TourStops = .N), by = .(TourID)],
+             by = c("TourID"),
+             all = TRUE)
+dat[is.na(Stops), Stops := 0]
+dat[, TourStops := factor(TourStops)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  TourStops ~ Activity,
+                                   fun.aggregate = sum,
+                                   value.var = "Stops"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_Tour_Composition.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_activity_composition", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> Table includes a count of stops by activity for tours with different numbers of total stops
+
+### Light Vehicle Stops by Number of Tour Stops and Stop Activity
+
+```{r Table_Light_Vehicle_Tours_by_Stops_Activity}
+# Organize
+dat <- cv_trips[Vehicle == "Light",.(Stops = .N), keyby = .(TourID, Activity)]
+
+dat <- merge(dat,
+             cv_trips[Vehicle == "Light", .(TourStops = .N), by = .(TourID)],
+             by = c("TourID"),
+             all = TRUE)
+dat[is.na(Stops), Stops := 0]
+dat[, TourStops := factor(TourStops)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  TourStops ~ Activity,
+                                   fun.aggregate = sum,
+                                   value.var = "Stops"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Light_Stop_Activity_Tour_Composition.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_activity_composition_light", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> Table includes a count of stops by activity for tours with different numbers of total stops
+
+### Medium Truck Stops by Number of Tour Stops and Stop Activity
+
+```{r Table_Medium_Truck_Tours_by_Stops_Activity}
+# Organize
+dat <- cv_trips[Vehicle == "Medium",.(Stops = .N), keyby = .(TourID, Activity)]
+
+dat <- merge(dat,
+             cv_trips[Vehicle == "Medium", .(TourStops = .N), by = .(TourID)],
+             by = c("TourID"),
+             all = TRUE)
+dat[is.na(Stops), Stops := 0]
+dat[, TourStops := factor(TourStops)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  TourStops ~ Activity,
+                                   fun.aggregate = sum,
+                                   value.var = "Stops"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Medium_Stop_Activity_Tour_Composition.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_activity_composition_medium", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> Table includes a count of stops by activity for tours with different numbers of total stops
+
+### Heavy Truck Stops by Number of Tour Stops and Stop Activity
+
+```{r Table_Heavy_Truck_Tours_by_Stops_Activity}
+# Organize
+dat <- cv_trips[Vehicle == "Heavy",.(Stops = .N), keyby = .(TourID, Activity)]
+
+dat <- merge(dat,
+             cv_trips[Vehicle == "Heavy", .(TourStops = .N), by = .(TourID)],
+             by = c("TourID"),
+             all = TRUE)
+dat[is.na(Stops), Stops := 0]
+dat[, TourStops := factor(TourStops)]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  TourStops ~ Activity,
+                                   fun.aggregate = sum,
+                                   value.var = "Stops"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Heavy_Stop_Activity_Tour_Composition.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_activity_composition_heavy", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> Table includes a count of stops by activity for tours with different numbers of total stops
+
+Trips {data-navmenu="Commercial Vehicle Touring Model"}
+============================================
+
+Highlights {data-width=150}
+--------------------------------------------
+
+**Commercial Vehicle Touring Model: Trips**
+
+Commercial vehicle trips by location, activity, and length
+
+### Total Daily Trips
+
+```{r Daily_Trips_CV_ValueBox}
+value <- format(cv_trips[, .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Total Daily CV Trips", icon = "fa-cube")
+```
+
+### II Daily Trips
+
+```{r Daily_II_CV_Trips_ValueBox}
+value <- format(cv_trips[SKIMTYPE == "Within SEMCOG", .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Daily Trips within SEMCOG", icon = "fa-arrow-down")
+```
+
+### XI Daily Trips
+
+```{r Daily_XI_CV_Trips_ValueBox}
+value <- format(cv_trips[SKIMTYPE == "Buffer to SEMCOG", .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Daily Buffer to SEMCOG Trips (XI)", icon = "fa-arrow-down")
+```
+
+### IX Daily Trips
+
+```{r Daily_IX_CV_Trips_ValueBox}
+value <- format(cv_trips[SKIMTYPE == "SEMCOG to Buffer", .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Daily SEMCOG to Buffer Trips (IX)", icon = "fa-arrow-down")
+```
+
+### XX Daily Trips
+
+```{r Daily_XX_CV_Trips_ValueBox}
+value <- format(cv_trips[SKIMTYPE == "Buffer traversing SEMCOG", .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Daily Traversing Trips (XX)", icon = "fa-arrow-down")
+```
+
+### XX Daily Trips
+
+```{r Daily_Buffer_CV_Trips_ValueBox}
+value <- format(cv_trips[SKIMTYPE == "Buffer no traverse", .N], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Daily Buffer Trips (non-SEMCOG)", icon = "fa-arrow-down")
+```
+
+Column {data-width=400, .tabset}
+--------------------------------------------
+
+### Trip Origin-Destination Type
+
+```{r Chart_Commercial_Trips_OD_Vehicle}
+# Organize
+dat <- cv_trips[,.N, keyby = .(Segment = SKIMTYPE, Vehicle)]
+dat[, Segment := factor(Segment, levels = c("Within SEMCOG", "Buffer to SEMCOG", "SEMCOG to Buffer", "Buffer traversing SEMCOG", "Buffer no traverse"))]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_OD_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_trip_od_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Segment", yvar = "N", fill = "Vehicle", xlabel = "Trips O-D Segment", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
+```
+
+```{r Chart_Commercial_Trips_TOD_Vehicle}
+# Organize
+dat <- cv_trips[,.N, keyby = .(TOD, Vehicle)]
+dat[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_TOD_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_trip_tod_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "TOD", yvar = "N", fill = "Vehicle", xlabel = "Time Period", ylabel = "Commercial Vehicle Trips", position = "dodge")
+```
+
+### Trip Orgins by County and Buffer
+
+```{r Chart_Commercial_Trips_Origins_by_County}
+# Organize
+dat <- cv_trips[, .(Region = Region.Origin, Vehicle)]
+dat[, Region := factor(Region, levels = sort_levels(Region))]
+dat <- dat[,.N, by = .(Region, Vehicle)][order(Region)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_Origins_by_County_Buffer.csv"), row.names = FALSE)
+assign("db_tab_cv_trip_origin_county_buffer", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Trip Origin County or Buffer State/Country", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
+```
+
+### Trip Destinations by County and Buffer
+
+```{r Chart_Commercial_Trips_Destinations_by_Region}
+# Organize
+dat <- cv_trips[, .(Region = Region.Destination, Vehicle)]
+dat[, Region := factor(Region, levels = sort_levels(Region))]
+dat <- dat[,.N, by = .(Region, Vehicle)][order(Region)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_Destinations_by_County_Buffer.csv"), row.names = FALSE)
+assign("db_tab_cv_trip_destination_county_buffer", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Trip Destination County or Buffer State/Country", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
+```
+
+### Trip Length by Vehicle Type
+
+```{r Density_Commercial_Trip_Length_By_Vehicle}
+# Organize
+dat <- cv_trips[, .(Vehicle, `Trip Length` = Distance)]
+
+# Save
+assign("db_tab_cv_trip_distance_vehicle", dat, envir = db_inputs)
+
+# Plot
+alpha <- 0.95
+x.limits <- c(0, quantile(dat$`Trip Length`, alpha))
+p <- ggplot(dat, aes(x = `Trip Length`, fill = Vehicle)) +
+  geom_density(alpha = 0.25) + ylab("Density") + xlim(x.limits) +
+  xlab(paste0("Trip Length (", BASE_DASHBOARD_LENGTH_UNIT, ")")) +
+  theme_db
+plotly_build(p)
+```
+
+>`r if(SCENARIO_RUN_CVTM) {paste0("Note: ", percent(1 - alpha), " of trips are longer than ", round(x.limits[2]), " minutes and are not displayed.")}`
+
+
+### Trip Duration by Vehicle Type
+
+```{r Density_Commercial_Trip_Duration_By_Vehicle}
+# Organize
+dat <- cv_trips[, .(Vehicle, `Trip Duration (mins)` = TravelTime)]
+
+# Save
+assign("db_tab_cv_trip_duration_vehicle", dat, envir = db_inputs)
+
+# Plot
+alpha <- 0.95
+x.limits <- c(0, quantile(dat$`Trip Duration (mins)`, alpha))
+p <- ggplot(dat, aes(x = `Trip Duration (mins)`, fill = Vehicle)) +
+  geom_density(alpha = 0.25) + ylab("Density") + xlim(x.limits) +
+  theme_db
+plotly_build(p)
+```
+
+>`r if(SCENARIO_RUN_CVTM) {paste0("Note: ", percent(1 - alpha), " of trips are longer than ", round(x.limits[2]), " minutes and are not displayed.")}`
+
+Column {data-width=400, .tabset}
+--------------------------------------------
+
+### Trips by County, Vehicle, and Segment
+
+```{r Table_County_Vehicle_Segment}
+# Organize
+dat <- rbind(cv_trips[OTYPE == "SEMCOG",.(.N), keyby = .(County = Region.Origin, Segment = SKIMTYPE, Vehicle)],
+             cv_trips[OTYPE != "SEMCOG" & DTYPE == "SEMCOG",.(.N), keyby = .(County = Region.Destination, Segment = SKIMTYPE, Vehicle)])
+dat[, Segment := factor(Segment, levels = c("Within SEMCOG", "Buffer to SEMCOG", "SEMCOG to Buffer", "Buffer traversing SEMCOG", "Buffer no traverse"))]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  Vehicle + County ~ Segment,
+                                   fun.aggregate = sum,
+                                   value.var = "N"),
+                  idcols = 2L)
+dat[is.na(Vehicle), Vehicle := ""]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_County_Vehicle_Segment.csv"), row.names = FALSE)
+assign("db_tab_cv_county_vehicle_segment", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> All trips with an origin or destination in a SEMCOG region county
+
+### Trip Origins by County, Vehicle, and TOD
+
+```{r Table_County_Vehicle_TOD}
+# Organize
+dat <- cv_trips[OTYPE == "SEMCOG",.(.N), keyby = .(County = Region.Origin, TOD, Vehicle)]
+dat[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  Vehicle + County ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "N"),
+                  idcols = 2L)
+dat[is.na(Vehicle), Vehicle := ""]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_County_Vehicle_TOD.csv"), row.names = FALSE)
+assign("db_tab_cv_county_vehicle_tod", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> All trips with origins in a SEMCOG region county
+
+### II Trips County to County OD 
+
+```{r iTable_CV_Trips_IX_OD}
+# Organize
+dat <- TripTable[Source == "CV" & ODSegment %in% c("II"), .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- add_totals(dcast.data.table(dat,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trips_II_County_County.csv"))
+assign("db_tab_cv_county_county_ii", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 0) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> All trips with origins and destinations in a SEMCOG region county
+
+### IX Trips County to External OD
+
+```{r Table_CV_Trips_IX_OD}
+# Organize
+dat <- TripTable[Source == "CV" & ODSegment %in% c("IX") & DTAZ %in% BASE_TAZ_EXTERNAL & trips > 0, 
+                      .(Trips = round(sum(trips))), keyby = .(County = OSummaryGeog, External = DStationName, ExternalGroup = DStationGroup, ODSegment)]
+dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  County ~ ExternalName,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trips_IX_County_External.csv"), row.names = FALSE)
+assign("db_tab_cv_county_external_ix", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> All trips with origins in a SEMCOG region county and a destination in the buffer
+
+### XI Trips External to County OD
+
+```{r Table_CV_Trips_XI_OD}
+# Organize
+dat <- TripTable[Source == "CV" & ODSegment %in% c("XI") & OTAZ %in% BASE_TAZ_EXTERNAL & trips > 0, 
+                      .(Trips = round(sum(trips))), keyby = .(County = DSummaryGeog, External = OStationName, ExternalGroup = OStationGroup)]
+
+dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  ExternalName ~ County,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trips_XI_External_County.csv"), row.names = FALSE)
+assign("db_tab_cv_external_county_xi", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+```
+
+> All trips with origins in the buffer and a destination in a SEMCOG region county  
+
+### XX Trips External to External OD
+
+```{r Table_CV_Trips_XX_OD}
+# Organize
+dat <- TripTable[Source == "CV" & ODSegment %in% c("XX") & trips > 0, 
+                      .(Trips = round(sum(trips))), keyby = .(OStationName, OStationGroup, DStationName, DStationGroup)]
+dat[, OExternalName := paste0(OStationName, " (", OStationGroup, ")")]
+dat[, DExternalName := paste0(DStationName, " (", DStationGroup, ")")]
+
+dat <- add_totals(dcast.data.table(dat,
+                                  OExternalName ~ DExternalName,
+                                   fun.aggregate = sum,
+                                   value.var = "Trips"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trips_XX_External_External.csv"), row.names = FALSE)
+assign("db_tab_cv_external_external_xx", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+> All trips with origins and destinations in the buffer and a trip route that involves traversing part of the SEMCOG region.  
+
+
+
+<!-- Calibration {data-navmenu="Commercial Vehicle Touring Model"} -->
+<!-- ============================================ -->
+
+<!-- Column {.tabset} -->
+<!-- -------------------------------------------- -->
+
+<!-- ### Firm-to-Stop Distance -->
+
+<!-- ```{r Calibration_Commercial_Firm-Stop_Distance} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[Scheduled == 1L & Activity != "Return", .(BusID, DTAZ)] -->
+<!-- dat[ScenarioFirms, c("BusTAZ", "Industry") := .(i.TAZ, i.EmpCatGroupedName), -->
+<!--     on = "BusID"] -->
+<!-- dat[skims[, .(BusTAZ = OTAZ, DTAZ, dist.avg)], -->
+<!--     Distance := i.dist.avg, -->
+<!--     on = c("BusTAZ", "DTAZ")] -->
+<!-- dat <- dat[, .(`Mean Distance` = mean(Distance), `Std. Dev.` = sd(Distance)), by = Industry] -->
+<!-- dat[, Industry := factor(as.character(Industry))] -->
+<!-- dat <- dat[order(Industry)] -->
+<!-- targets <- data.table(Industry = c("Industrial", "Production", "Retail", "Transportation", "Leisure", "Ed_Pub_Other_Ser", "Info_FIRE_Prof", "Medical_Services"), -->
+<!--                       `Target Distance` = c(7.0, 9.2, 6.3, 18.2, 16.2, 7.0, 9.2, 6.3), -->
+<!--                       `Target Std. Dev.` = c(8.7, 10.4, 8.1, 16.5, 14.2, 8.7, 10.4, 8.1)) -->
+<!-- dat[targets, c("Target Distance", "Target Std. Dev.") := .(`i.Target Distance`, `i.Target Std. Dev.`), -->
+<!--     on = "Industry"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Vehicle_Firm-Stop_Distance.csv")) -->
+
+<!-- # Plot -->
+<!-- dat <- rbind(dat[, .(Industry, variable = "Simulated", `Mean Distance`, `Std. Dev.`)], -->
+<!--              dat[, .(Industry, variable = "Target", `Mean Distance` = `Target Distance`, `Std. Dev.` = `Target Std. Dev.`)]) -->
+<!-- p <- ggplot(dat, aes(x = Industry, y = `Mean Distance`, fill = variable)) + -->
+<!--   geom_bar(stat = "identity", position = "dodge") + -->
+<!--   geom_errorbar(aes(ymax = `Mean Distance` + `Std. Dev.`, ymin = `Mean Distance` - `Std. Dev.`), position = "dodge") + -->
+<!--   scale_y_continuous(labels = comma) + -->
+<!--   scale_fill_manual(values = rgb(rsgcolordf[2:3,],maxColorValue = 255)) + -->
+<!--   ylab(paste0("Mean Distance", " (", BASE_DASHBOARD_LENGTH_UNIT, ")")) + -->
+<!--   theme_db + theme(axis.text.x = element_text(angle = 45, hjust = 1), -->
+<!--                    legend.title = element_blank()) -->
+<!-- plotly_build(p) -->
+
+<!-- ``` -->
+
+<!-- > Note: Bar whiskers represent one standard deviation. -->
+
+<!-- ### Scheduled Stops per Tour -->
+
+<!-- ```{r Calibration_Commercial_Stops_Per_Tour} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[Scheduled == 1L, .(BusID, TourID, TripID)] -->
+<!-- dat[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"] -->
+<!-- dat <- dat[, .N, by = .(TourID, Industry)][, .(`Simulated` = mean(N)), by = Industry][order(as.character(Industry))] -->
+<!-- targets <- data.table(Industry = c("Industrial", "Production", "Retail", "Transportation", "Leisure", "Ed_Pub_Other_Ser", "Info_FIRE_Prof", "Medical_Services"), -->
+<!--                       Target = c(2.0, 2.5, 2.9, 2.7, 8.6, 2.0, 2.5, 2.9)) -->
+<!-- dat[targets, Target := i.Target, on = "Industry"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_ScheduledStops_per_Tour.csv")) -->
+
+<!-- # Plot -->
+<!-- dat <- melt.data.table(dat, id.vars = "Industry", value.name = "Scheduled Stops/Tour") -->
+
+<!-- bar_plotter(dat, xvar = "Industry", yvar = "Scheduled Stops/Tour", fill = "variable", position = "dodge", xrotate = TRUE, legend_label = FALSE) -->
+
+<!-- ``` -->
+
+<!-- ### Single-Stop Tours -->
+
+<!-- ```{r Calibration_Commercial_Single_Stop_Tours} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[Activity != "Return", .(BusID, TourID, TripID, Scheduled)] -->
+<!-- dat[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"] -->
+<!-- dat <- dat[, .(N = sum(Scheduled)), -->
+<!--                by = .(TourID, Industry)][, .(`Simulated` = sum(N==1L)/.N), by = Industry][order(as.character(Industry))] -->
+<!-- targets <- data.table(Industry = c("Industrial", "Production", "Retail", "Transportation", "Leisure", "Ed_Pub_Other_Ser", "Info_FIRE_Prof", "Medical_Services"), -->
+<!--                       Target = c(0.541, 0.394, 0.498, 0.715, 0.203, 0.541, 0.394, 0.498)) -->
+<!-- dat[targets, Target := i.Target, on = "Industry"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Single_Stop_Tour_Shares.csv")) -->
+
+<!-- # Plot -->
+<!-- dat <- melt.data.table(dat, id.vars = "Industry", value.name = "Share") -->
+<!-- bar_plotter(dat, xvar = "Industry", yvar = "Share", fill = "variable", position = "dodge", xrotate = TRUE, legend_label = FALSE) -->
+
+<!-- ``` -->
+
+<!-- ### Intermediate Stops per Scheduled Stop -->
+
+<!-- ```{r Calibration_Commercial_Intermediate_Per_Scheduled_Stop} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[, .(Simulated = sum(Scheduled == 0L)/(sum(Scheduled == 1L) - 1L)), -->
+<!--                 by = Vehicle][order(Vehicle)] -->
+<!-- targets <- data.table(Vehicle = c("Light", "Medium", "Heavy"), -->
+<!--                       Target = c(0.094, 0.067, 0.040)) -->
+<!-- dat[targets, Target := i.Target, on = "Vehicle"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_IntermediateStops_per_ScheduledStop.csv")) -->
+
+<!-- # Plot -->
+<!-- dat <- melt.data.table(dat, id.vars = "Vehicle", value.name = "Intermediate Stops/Scheduled Stop") -->
+<!-- p <- ggplot(dat, aes(x = Vehicle, y = `Intermediate Stops/Scheduled Stop`, fill = variable)) + -->
+<!--   geom_bar(stat = "identity", position = "dodge") + -->
+<!--   scale_y_continuous(labels = comma) + -->
+<!--   scale_fill_manual(values = rgb(rsgcolordf[2:3,],maxColorValue = 255)) + -->
+<!--   theme_db + theme(legend.title=element_blank()) -->
+<!-- plotly_build(p) -->
+<!-- ``` -->
+
+<!-- ### Meal or Break Stops per 8 Hours -->
+
+<!-- ```{r Calibration_Commercial_MealBreak_Stops_Per_8Hours} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[, .(Simulated = sum(Activity == "Break/Meal")/(sum(TravelTime + StopDuration)/(8*60))), -->
+<!--                 by = Vehicle][order(Vehicle)] -->
+<!-- targets <- data.table(Vehicle = c("Light", "Medium", "Heavy"), -->
+<!--                       Target = c(0.219, 0.290, 0.229)) -->
+<!-- dat[targets, Target := i.Target, on = "Vehicle"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_MealBreak_Stops_per_8Hours.csv")) -->
+
+<!-- # Plot -->
+<!-- dat <- melt.data.table(dat, id.vars = "Vehicle", value.name = "Meal or Break Stops/8 Hours") -->
+<!-- p <- ggplot(dat, aes(x = Vehicle, y = `Meal or Break Stops/8 Hours`, fill = variable)) + -->
+<!--   geom_bar(stat = "identity", position = "dodge") + -->
+<!--   scale_y_continuous(labels = comma) + -->
+<!--   scale_fill_manual(values = rgb(rsgcolordf[2:3,],maxColorValue = 255)) + -->
+<!--   theme_db + theme(legend.title=element_blank()) -->
+<!-- plotly_build(p) -->
+<!-- ``` -->
+
+<!-- ### Refueling Stop Frequency -->
+
+<!-- ```{r Calibration_Commercial_Refueling_Stops_Frequency} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[, .(Simulated = sum(Activity == "Vehicle Service")/(sum(Distance)/100)), -->
+<!--                 by = Vehicle][order(Vehicle)] -->
+<!-- targets <- data.table(Vehicle = c("Light", "Medium", "Heavy"), -->
+<!--                       Target = c(0.205, 0.191, 0.100)) -->
+<!-- dat[targets, Target := i.Target, on = "Vehicle"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Refueling_Stops_per_100Miles.csv")) -->
+
+<!-- # Plot -->
+<!-- valueName <- paste0("Refueling Stops/100 ", BASE_DASHBOARD_LENGTH_UNIT) -->
+<!-- dat <- melt.data.table(dat, id.vars = "Vehicle", value.name = valueName) -->
+<!-- p <- ggplot(dat, aes(x = Vehicle, y = get(valueName), fill = variable)) + -->
+<!--   geom_bar(stat = "identity", position = "dodge") + -->
+<!--   scale_y_continuous(labels = comma) + -->
+<!--   scale_fill_manual(values = rgb(rsgcolordf[2:3,],maxColorValue = 255)) + -->
+<!--   ylab(valueName) + -->
+<!--   theme_db + theme(legend.title=element_blank()) -->
+<!-- plotly_build(p) -->
+<!-- ``` -->
+
+<!-- Chart Column 2 {.tabset} -->
+<!-- -------------------------------------------- -->
+
+<!-- ### Vehicle Shares (Simulated) -->
+
+<!-- ```{r Calibration_Commercial_Vehicle_Shares1} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[, .N, by = .(BusID, Vehicle)] -->
+<!-- dat[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"] -->
+<!-- dat <- dat[, .(N = sum(N)), by = .(Industry, Vehicle)][order(Industry, Vehicle)] -->
+<!-- dat[, Simulated := N/sum(N), by = Industry] -->
+<!-- Industry <- c("Industrial", "Production", "Retail", "Transportation", "Leisure", "Ed_Pub_Other_Ser", "Info_FIRE_Prof", "Medical_Services") -->
+<!-- Vehicles <- c("Light", "Medium", "Heavy") -->
+<!-- targets <- data.table(Industry = rep(Industry, each = length(Vehicles)), -->
+<!--                       Vehicle = rep(c("Light", "Medium", "Heavy"), times = length(Industry)), -->
+<!--                   Share = c(0.40, 0.52, 0.08, 0.71, 0.22, 0.07,0.40, 0.52, 0.08, -->
+<!--                             0.90, 0.07, 0.03, 0.96, 0.04, 0.00,0.90, 0.07, 0.03, -->
+<!--                             0.93, 0.07, 0.00, 0.36, 0.35, 0.29,0.93, 0.07, 0.00)) -->
+<!-- targets[, Vehicle := factor(Vehicle, levels = Vehicles, ordered = TRUE)] -->
+<!-- dat[targets, Target := i.Share, on = c("Industry", "Vehicle")] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Vehicle_Shares.csv")) -->
+
+<!-- # Plot -->
+<!-- bar_plotter(dat, xvar = "Industry", yvar = "Simulated", fill = "Vehicle", coord_flip = TRUE, ylabel = "Share") -->
+
+<!-- ``` -->
+
+<!-- ### Vehicle Shares (Target) -->
+
+<!-- ```{r Calibration_Commercial_Vehicle_Shares2} -->
+<!-- # Plot -->
+<!-- bar_plotter(dat, xvar = "Industry", yvar = "Target", fill = "Vehicle", coord_flip = TRUE, ylabel = "Share") -->
+
+<!-- ``` -->
+
+<!-- Chart Column 3 -->
+<!-- -------------------------------------------- -->
+
+<!-- ### First Stop Arrival Time -->
+
+<!-- ```{r Calibration_Commercial_First_Stop_Arrival_Time} -->
+<!-- # Organize -->
+<!-- dat <- cv_trips[TripID == 1L, .(TourID, MAMArrive)] -->
+<!-- dat[, `Arrival Time` := cut(MAMArrive, breaks = tod_breaks30, labels = tod_labels30, ordered_result = TRUE, right = FALSE)] -->
+<!-- dat <- dat[, .N, by = `Arrival Time`][order(`Arrival Time`), .(`Arrival Time`, Share = N/sum(N))] -->
+<!-- targets <- data.table(`Arrival Time` = tod_labels30, -->
+<!--                       Share = c(0.0039, 0.0010, 0.0009, 0.0007, 0.0005, 0.0013, -->
+<!--                                 0.0010, 0.0031, 0.0010, 0.0013, 0.0030, 0.0023, -->
+<!--                                 0.0037, 0.0109, 0.0359, 0.0539, 0.0651, 0.0754, -->
+<!--                                 0.0783, 0.0723, 0.0839, 0.0611, 0.0372, 0.0444, -->
+<!--                                 0.0445, 0.0375, 0.0442, 0.0367, 0.0337, 0.0437, -->
+<!--                                 0.0208, 0.0155, 0.0236, 0.0104, 0.0116, 0.0089, -->
+<!--                                 0.0044, 0.0006, 0.0043, 0.0034, 0.0015, 0.0007, -->
+<!--                                 0.0045, 0.0014, 0.0018, 0.0004, 0.0005, 0.0033)) -->
+<!-- dat[targets, Target := i.Share, on = "Arrival Time"] -->
+
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Vehicle_Arrival_Time_Shares.csv")) -->
+
+<!-- # Plot -->
+<!-- dat <- melt.data.table(dat, id.vars = "Arrival Time") -->
+<!-- bar_plotter(dat, xvar = "Arrival Time", yvar = "value", fill = "variable", position = "dodge", coord_flip = TRUE, legend_label = FALSE) -->
+
+<!-- ``` -->
+
+

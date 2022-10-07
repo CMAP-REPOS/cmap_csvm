@@ -135,33 +135,34 @@ if (SCENARIO_RUN_TT) {
 
 }
 
-# ### 4. Produce Dashboard -------------------------------------------------------------------------
-# 
-# SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
-# 
-# if (SCENARIO_RUN_DB) {
-# 
-#   # Load executive functions
-#   source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build.R"))
-#   
-#   # source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_process_inputs.R"))
-#   # 
-#   # # Process inputs
-#   # db_inputs <- new.env()
-#   # db_process_inputs(envir = db_inputs)
-#   # 
-#   
-#   # Generate dashboard
-#   DashboardRender(data.display = "both", scenarios = SCENARIO_NAME)
-#   
-#   # dashboardFileLoc <- suppressWarnings(suppressMessages(
-#   #   run_sim(
-#   #     FUN = db_build,
-#   #     data = NULL,
-#   #     packages = SYSTEM_REPORT_PKGS,
-#   #     lib = SYSTEM_PKGS_PATH,
-#   #     inputEnv = db_inputs
-#   #   )
-#   # ))
-#   
-# }
+### 4. Produce Dashboard and Spreadsheet Report -------------------------------------------------------------------------
+
+if (SCENARIO_RUN_DB) {
+  
+  cat("Producing Commercial Vehicle Dashboard", "\n")
+  
+  # Load executive functions
+  source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build.R"))
+  source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build_process_inputs.R"))
+  
+  # Process inputs
+  cat("Processing Commercial Vehicle Dashboard Inputs", "\n")
+  db_inputs <- new.env()
+  db_build_process_inputs(envir = db_inputs)
+  
+  # Generate dashboard and spreadsheet
+  cat("Rendering Commercial Vehicle Dashboard and Spreadsheet", "\n")
+  dashboardFileLoc <- suppressWarnings(suppressMessages(
+    run_sim(FUN = db_build, data = NULL,
+            packages = SYSTEM_REPORT_PKGS, lib = SYSTEM_PKGS_PATH,
+            inputEnv = db_inputs
+    )
+  ))
+  
+  # Save results to Rdata file
+  cat("Saving Dashboard Tabulations Database", "\n")
+  save(db_inputs, 
+       file = file.path(SCENARIO_OUTPUT_PATH, 
+                        SYSTEM_DB_OUTPUTNAME)) 
+  
+}

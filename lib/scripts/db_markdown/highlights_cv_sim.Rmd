@@ -1,0 +1,18 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+
+### Commercial Vehicle Trips
+
+```{r Total_Stops_ValueBox}
+value <- format(cv_trips[SKIMTYPE != "Buffer no traverse", .N],
+                big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Commercial Vehicle Trips (SEMCOG)", icon = "fa-truck")
+```
