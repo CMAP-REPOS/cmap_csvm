@@ -1,5 +1,5 @@
 # Scale employment by industry and mesozone to match control data
-firm_synthesis_scaling <- function(Firms, emp_control_taz, c_cbp_mz, c_taz_mz, EmpBounds){
+firm_synthesis_scaling <- function(Firms, emp_control_taz, TAZ_System, EmpBounds){
 
   # Control data for the CMAP region
   # emp_control_taz:
@@ -8,8 +8,8 @@ firm_synthesis_scaling <- function(Firms, emp_control_taz, c_cbp_mz, c_taz_mz, E
 
   # Update fieldnames/datatypes for consistency
   setnames(emp_control_taz, 
-           c("Zone17", "Mesozone", "NAICS", "Employment"), 
-           c("TAZ", "MESOZONE", "n2" , "Employees.SE"))
+           c("Zone17", "NAICS", "Employment"), 
+           c("TAZ", "n2" , "Employees.SE"))
   
   Firms[, n2 := as.integer(n2)]
   
@@ -19,23 +19,23 @@ firm_synthesis_scaling <- function(Firms, emp_control_taz, c_cbp_mz, c_taz_mz, E
   # Scaling algorithm will deal with any discrepancies at the TAZ level
   if(!"TAZ" %in% names(Firms)){
     
-    taz_prob <- emp_control_taz[, .(Employees.SE = sum(Employees.SE)), by = .(TAZ, MESOZONE)]
-    taz_prob[, Prob := Employees.SE/sum(Employees.SE), by = MESOZONE]
+    taz_prob <- emp_control_taz[, .(Employees.SE = sum(Employees.SE)), by = .(TAZ, Mesozone)]
+    taz_prob[, Prob := Employees.SE/sum(Employees.SE), by = Mesozone]
     
-    for (mz in 1:132){
-      SampleTAZ <- c_taz_mz[mz == Mesozone]$TAZ
-      ProbTAZ <- taz_prob[mz == MESOZONE]$Prob
+    for (mz in BASE_MZ_INTERNAL){
+      SampleTAZ <- TAZ_System[mz == Mesozone]$TAZ
+      ProbTAZ <- taz_prob[mz == Mesozone]$Prob
       if(length(SampleTAZ) == 1){
-        Firms[MESOZONE == mz, TAZ := SampleTAZ]
+        Firms[Mesozone == mz, TAZ := SampleTAZ]
       } else {
-        Firms[MESOZONE == mz, TAZ := sample(SampleTAZ, size = .N, replace = TRUE, prob = ProbTAZ)]
+        Firms[Mesozone == mz, TAZ := sample(SampleTAZ, size = .N, replace = TRUE, prob = ProbTAZ)]
       }
     }
   }
 
   # Scale the employment in the region
   # Leave the upper employment bound open so the 8th group can grow larger than the upper bound set earlier to accomodate large firms
-  Firms <- firm_sim_scale_employees(Firms, emp_control_taz, c_cbp_mz, c_taz_mz, EmpBounds[1:8])
+  Firms <- firm_sim_scale_employees(Firms, emp_control_taz, TAZ_System, EmpBounds[1:8])
 
   # Return the processed cbp table
   return(Firms)
@@ -43,7 +43,7 @@ firm_synthesis_scaling <- function(Firms, emp_control_taz, c_cbp_mz, c_taz_mz, E
 }
 
 # Scale Firms to Employment Forecasts
-firm_sim_scale_employees <- function(Firms, emp_control_taz, c_cbp_mz, c_taz_mz, EmpBounds) {
+firm_sim_scale_employees <- function(Firms, emp_control_taz, TAZ_System, EmpBounds) {
 
   # Ensure that the targets and firms are consistent in terms of industrial coverage
   # Function will produce an error if there are zero firms for a category where there is employment
@@ -59,9 +59,9 @@ firm_sim_scale_employees <- function(Firms, emp_control_taz, c_cbp_mz, c_taz_mz,
   
   setnames(Firms, "ZONE", "TAZ")
   
-  # Those that were sampled might have the wrong MESOZONE and County
-  Firms[c_taz_mz, MESOZONE := i.Mesozone, on = "TAZ"]
-  Firms[c_cbp_mz, CBPZONE := i.COUNTY, on = "MESOZONE"]
+  # Those that were sampled might have the wrong Mesozone and County
+  Firms[TAZ_System, Mesozone := i.Mesozone, on = "TAZ"]
+  Firms[TAZ_System, CountyFIPS := i.CountyFIPS, on = "Mesozone"]
   
   # Recode employee counts into categories
   Firms[, Emp := as.integer(Emp)]

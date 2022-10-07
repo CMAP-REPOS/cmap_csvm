@@ -2,7 +2,7 @@
 TAZ_System <- read.csv(file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"))
 BASE_TAZ_INTERNAL <- TAZ_System$TAZ #range of TAZs that covers the CMAP model region 
 BASE_MZ_INTERNAL <- sort(unique(TAZ_System$Mesozone)) #range of mesozones that covers the CMAP model region 
-BASE_FIPS_INTERNAL <- sort(unique(TAZ_System$FIPS)) #range of county fips code that covers the CMAP model region 
+BASE_FIPS_INTERNAL <- sort(unique(TAZ_System$CountyFIPS)) #range of county fips code that covers the CMAP model region 
 rm(TAZ_System)
 
 # 2. Define other application parameters

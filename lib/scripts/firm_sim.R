@@ -14,21 +14,20 @@ firm_sim <- function(cbp) {
     # Process and enumerate the CBP data
     progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
     FirmsDomestic <- firm_synthesis_enumerate(cbp = cbp,
-                                              c_cbp_mz = c_cbp_mz,
                                               EmpBounds = EmpBounds,
                                               emp_control_taz = emp_control_taz,
                                               cbp_ag = cbp_ag)
     
     # Allocate from counties to mesozones
     progressUpdate(prop = 2/4, dir = SCENARIO_LOG_PATH)
-    FirmsDomestic <- firm_synthesis_mesozones(Firms = FirmsDomestic)
+    FirmsDomestic <- firm_synthesis_mesozones(Firms = FirmsDomestic,
+                                              mzemp = mzemp)
     
     # Scale the employment to TAZ controls
     progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
     FirmsDomestic <- firm_synthesis_scaling(Firms = FirmsDomestic,
                                             emp_control_taz = emp_control_taz,
-                                            c_cbp_mz = c_cbp_mz,
-                                            c_taz_mz = c_taz_mz,
+                                            TAZ_System = TAZ_System,
                                             EmpBounds = EmpBounds)
     
   } else {
@@ -49,8 +48,7 @@ firm_sim <- function(cbp) {
       progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
       FirmsDomestic <- firm_synthesis_scaling(Firms = FirmsDomestic,
                                               emp_control_taz = emp_control_taz,
-                                              c_cbp_mz = c_cbp_mz,
-                                              c_taz_mz = c_taz_mz,
+                                              TAZ_System = TAZ_System,
                                               EmpBounds = EmpBounds)
       
     } else {

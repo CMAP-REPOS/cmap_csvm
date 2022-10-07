@@ -1,8 +1,8 @@
 # Assign establishments to Mesozones
-firm_synthesis_mesozones <- function(Firms){
+firm_synthesis_mesozones <- function(Firms, mzemp){
 
-  # Assign firms from CBPZones (counties) to model MESOZONES that are smaller in size -- more like cities
-  FirmsCMAP <- Firms[CBPZONE > 999, .(CBPZONE, BusID, n2, Emp)]
+  # Assign firms from Counties to model Mesozones that are smaller in size -- more like cities
+  FirmsCMAP <- Firms[CountyFIPS %in% BASE_FIPS_INTERNAL, .(CountyFIPS, BusID, n2, Emp)]
 
   # Assign specific NAICS categories which would be used to locate businesses to tazs
   FirmsCMAP[n2 %in% c("31","32","33"), n2 := "3133"]
@@ -11,17 +11,16 @@ firm_synthesis_mesozones <- function(Firms){
   
   # Convert the ranking table to long format
   mzemp <- melt.data.table(mzemp,
-                id.vars = c("COUNTY", "MESOZONE"),
+                id.vars = c("CountyFIPS", "Mesozone"),
                 variable.name = "n2",
                 value.name = "EmpRank")
 
   mzemp[, n2 := sub("rank", "", as.character(n2))]
-  setnames(mzemp,"COUNTY", "CBPZONE")
-
+  
   # Merge the rankings dataset to the firms database based on county
   FirmsCMAP <- merge(FirmsCMAP,
                 mzemp,
-                by = c("CBPZONE", "n2"),
+                by = c("CountyFIPS", "n2"),
                 allow.cartesian = TRUE,
                 all.x = TRUE)
 
@@ -50,7 +49,7 @@ firm_synthesis_mesozones <- function(Firms){
   FirmsCMAP <- FirmsCMAP[FirmsCMAP[,.I[which.max(u)], by = BusID]$V1,]
 
   # Assign MESOZONES for all firms
-  Firms[FirmsCMAP, MESOZONE := i.MESOZONE, on = "BusID"]
+  Firms[FirmsCMAP, Mesozone := i.Mesozone, on = "BusID"]
   
   # Return the processed cbp table
   return(Firms)
