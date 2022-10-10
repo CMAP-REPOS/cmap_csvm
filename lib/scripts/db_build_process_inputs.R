@@ -212,10 +212,9 @@ db_build_process_inputs <- function(envir){
   
   ### Create files for mapping
   # Open geographic file of TAZs
-  shp <- readOGR(file.path(SYSTEM_DATA_PATH, "zones17.shp"), layer = "zones17", verbose = FALSE)
+  shp <- readOGR(file.path(SYSTEM_DATA_PATH, "TAZ_System_Shape.shp"), layer = "TAZ_System_Shape", verbose = FALSE)
   
-  # Adjust the field names
-  shp$TAZ <- shp$zone17
+  # Add the grouping variable and order it
   shp$county_state <- paste(shp$county_nam, shp$state, sep = ", ")
   shp$county_state <- factor(shp$county_state, levels = county_order_vec)
   envir[["shp"]] <- shp
@@ -229,7 +228,7 @@ db_build_process_inputs <- function(envir){
   envir[["TAZ.polys"]] <- prepTAZList$shp
   if(exists("county_order_vec")){
     envir[["TAZ.polys"]]$county_state <- factor(envir[["TAZ.polys"]]$county_state, levels=county_order_vec)
-    envir[["TAZ.polys"]]$Group <- factor(envir[["TAZ.polys"]]$Group, levels=names(county_order_vec))
+    envir[["TAZ.polys"]]$Group <- factor(envir[["TAZ.polys"]]$Group, levels=county_order_vec)
   }
   envir[["colorFun"]] <- prepTAZList$colorFun
 
