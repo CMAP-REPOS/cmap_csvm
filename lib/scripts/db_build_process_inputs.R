@@ -48,6 +48,11 @@ db_build_process_inputs <- function(envir){
     ScenarioFirms <- merge(ScenarioFirms, TAZ_System[,.(TAZ, Region = get(BASE_DASHBOARD_GEOGRAPHY))],
                            by.x = "TAZ", by.y = "TAZ")
     
+    ScenarioFirms[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP 7 County Area", "Rest of Model Region")]
+    
+    # Convert size to labels
+    ScenarioFirms[, esizecat := factor(firm_inputs$EmpLabels[esizecat], 
+                                       levels = firm_inputs$EmpLabels)]
     
     setnames(ScenarioFirms, "Emp", "Employees")
     envir[["ScenarioFirms"]] <- ScenarioFirms

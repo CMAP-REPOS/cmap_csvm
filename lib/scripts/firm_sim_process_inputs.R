@@ -46,6 +46,8 @@ firm_sim_process_inputs <- function(envir) {
   # Employment ranges: assume upper bound for the largest size (>5000) is 10,000 
   # to conform to earlier assumption of midpoint being 7,500
   envir[["EmpBounds"]] <- c(1, 20, 100, 250, 500, 1000, 2500, 5000, 10000)
+  envir[["EmpLabels"]] <- c("1-19", "20-99", "100-249", "250-499", "500-999", 
+                            "1,000-2,499", "2,500-4,999", "5,000-9,999", "10,000+")
   
   ### Return the cbp table
   cbp <- envir[["cbp"]]

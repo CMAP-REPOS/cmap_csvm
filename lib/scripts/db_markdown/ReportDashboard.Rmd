@@ -329,12 +329,12 @@ kable(activities_table, escape=FALSE) %>%
 ```
 
 
-<!-- ```{r section_build_firm_sim, results='asis', eval=SCENARIO_DB_FIRMSYN} -->
-<!-- section_firm_sim <- knitr::knit_child('section_firm_sim.Rmd', -->
-<!--                               envir = environment(), -->
-<!--                               quiet = TRUE) -->
-<!-- cat(unlist(section_firm_sim), sep = '\n') -->
-<!-- ``` -->
+```{r section_build_firm_sim, results='asis', eval=SCENARIO_DB_FIRMSYN}
+section_firm_sim <- knitr::knit_child('section_firm_sim.Rmd',
+                              envir = environment(),
+                              quiet = TRUE)
+cat(unlist(section_firm_sim), sep = '\n')
+```
 
 <!-- ```{r section_build_cv_sim, results='asis', eval=SCENARIO_DB_CVTM} -->
 <!-- section_cv_sim <- knitr::knit_child('section_cv_sim.Rmd', -->
