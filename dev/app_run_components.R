@@ -36,9 +36,8 @@ suppressWarnings(suppressMessages(library(rFreight,
 initializeApp(rFreight.path = SYSTEM_RFREIGHT_PATH,
               output.path = SCENARIO_OUTPUT_PATH,
               lib = SYSTEM_PKGS_PATH,
-              packages = c(SYSTEM_PKGS, SYSTEM_REPORT_PKGS),
+              packages = c(SYSTEM_PKGS),
               reload.rFreight = FALSE)
-
 
 cat("Running the", SCENARIO_NAME, "scenario for", SCENARIO_YEAR, "\n")
 SCENARIO_RUN_START   <- Sys.time()
@@ -340,31 +339,36 @@ gc(verbose = FALSE)
 # listOMX("./scenarios/base/outputs/CV_Trip_Tables.omx")
 
 # ### DASHBOARD ==================================================================
-# SCENARIO_RUN_DURATION <- Sys.time() - SCENARIO_RUN_START
-# 
-# ### Run dashboard
-# loadPackages(SYSTEM_REPORT_PKGS)
-# 
-# # Load executive functions
-# source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build.R"))
-# source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build_process_inputs.R"))
-# 
-# # Process inputs
-# db_inputs <- new.env()
-# db_build_process_inputs(envir = db_inputs)
-# 
-# # For scratch only, bring model component input environment variables into the
-# # global environment
-# for(n in ls(db_inputs, all.names=TRUE)) assign(n, get(n, db_inputs), environment())
-# 
-# # Begin progress tracking
-# progressStart(action = "Writing...", task = "Dashboard", dir = SCENARIO_LOG_PATH, subtasks = FALSE)
-# 
-# # Render the dashboard into HTML
-# db_build_render()
-# 
-# # End progress tracking
-# progressEnd(dir = SCENARIO_LOG_PATH)
-# 
-# rm(list = names(db_inputs)) # For scratch only, remove variables that were added from model component environment
+
+### Run dashboard
+cat("Producing Commercial Vehicle Dashboard", "\n")
+
+# Load executive functions
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build.R"))
+source(file = file.path(SYSTEM_SCRIPTS_PATH, "db_build_process_inputs.R"))
+
+# Process inputs
+cat("Processing Commercial Vehicle Dashboard Inputs", "\n")
+db_inputs <- new.env()
+db_build_process_inputs(envir = db_inputs)
+
+# For scratch only, bring model component input environment variables into the
+# global environment
+for(n in ls(db_inputs, all.names=TRUE)) assign(n, get(n, db_inputs), environment())
+
+# Generate dashboard and spreadsheet
+cat("Rendering Commercial Vehicle Dashboard and Spreadsheet", "\n")
+dashboardFileLoc <- suppressWarnings(suppressMessages(
+  run_sim(FUN = db_build, data = NULL,
+          packages = SYSTEM_PKGS, lib = SYSTEM_PKGS_PATH,
+          inputEnv = db_inputs
+  )
+))
+
+# Save results to Rdata file
+cat("Saving Dashboard Tabulations Database", "\n")
+save(db_inputs, 
+     file = file.path(SCENARIO_OUTPUT_PATH, 
+                      SYSTEM_DB_OUTPUTNAME)) 
+rm(list = names(db_inputs)) # For scratch only, remove variables that were added from model component environment
 
