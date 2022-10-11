@@ -336,17 +336,17 @@ section_firm_sim <- knitr::knit_child('section_firm_sim.Rmd',
 cat(unlist(section_firm_sim), sep = '\n')
 ```
 
-<!-- ```{r section_build_cv_sim, results='asis', eval=SCENARIO_DB_CVTM} -->
-<!-- section_cv_sim <- knitr::knit_child('section_cv_sim.Rmd', -->
-<!--                               envir = environment(), -->
-<!--                               quiet = TRUE) -->
-<!-- cat(unlist(section_cv_sim), sep = '\n') -->
-<!-- ``` -->
+```{r section_build_cv_sim, results='asis', eval=SCENARIO_DB_CVTM}
+section_cv_sim <- knitr::knit_child('section_cv_sim.Rmd',
+                              envir = environment(),
+                              quiet = TRUE)
+cat(unlist(section_cv_sim), sep = '\n')
+```
 
-<!-- ```{r section_build_tt, results='asis', eval=SCENARIO_DB_TT} -->
-<!-- section_tt <- knitr::knit_child('section_tt.Rmd', -->
-<!--                               envir = environment(), -->
-<!--                               quiet = TRUE) -->
-<!-- cat(unlist(section_tt), sep = '\n') -->
-<!-- ``` -->
+```{r section_build_tt, results='asis', eval=SCENARIO_DB_TT}
+section_tt <- knitr::knit_child('section_tt.Rmd',
+                              envir = environment(),
+                              quiet = TRUE)
+cat(unlist(section_tt), sep = '\n')
+```
 

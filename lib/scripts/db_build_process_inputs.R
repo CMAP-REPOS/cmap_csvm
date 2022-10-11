@@ -150,6 +150,9 @@ db_build_process_inputs <- function(envir){
     TripTable <- add_od_fields(TripTable, TAZ_System,  
                                fieldsToAdd = c("county_state"))
     
+    TripTable[, OSummaryGeog := Ocounty_state]
+    TripTable[, DSummaryGeog := Dcounty_state]
+    
     envir[["TripTable"]] <- TripTable
               
     # Trips, VMT, VHT by Vehicle, TOD, ODSegment

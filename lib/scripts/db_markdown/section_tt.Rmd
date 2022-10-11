@@ -16,50 +16,22 @@ Highlights {data-width=150}
 
 **Trip Tables: Daily Trips**
 
-Daily trip tables combining trips from the long distance and commercial vehicle touring models for the SEMCOG region (does not include trips wholly within the buffer region).
+Daily trip tables combining trips from the commercial services vehicle model for the CMAP model.
 
-### Long Distance Model Trips
+### Trips within CMAP Model Region
 
-```{r Trip_Table_LD_Trips_ValueBox_SEMCOG}
-value <- format(sum(tmh_vtods[Source == "LD"]$Trips, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
-valueBox(value, "Long Distance<br>Model Trips</br>", icon = "fa-cube")
-```
-
-### Commercial Vehicle Touring Model Trips
-
-```{r Trip_Table_CV_Trips_ValueBox_SEMCOG}
-value <- format(sum(tmh_vtods[Source == "CV"]$Trips, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
-valueBox(value, "CVTM Trips<br>(SEMCOG Region)</br>", icon = "fa-wrench")
-```
-
-### Total Trips within, to, from, and through SEMCOG Region
-
-```{r Trip_Table_Total_Trips_ValueBox_SEMCOG}
+```{r Trip_Table_Total_Trips_ValueBox}
 value <- format(sum(tmh_vtods$Trips, na.rm = TRUE), 
                 digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
-valueBox(value, "Total Trips<br>(SEMCOG Region)</br>", icon = "fa-map-marker")
+valueBox(value, "Total Trips<br>(Model Region)</br>", icon = "fa-map-marker")
 ```
 
-### Long Distance Model VMT
+### Total VMT in CMAP Model Region
 
-```{r Trip_Table_LD_VMT_ValueBox_SEMCOG}
-value <- format(sum(tmh_vtods[Source == "LD"]$VMT, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
-valueBox(value, "Long Distance<br>Model VMT</br>", icon = "fa-cube")
-```
-
-### Commercial Vehicle Touring Model VMT
-
-```{r Trip_Table_CV_VMT_ValueBox_SEMCOG}
-value <- format(sum(tmh_vtods[Source == "CV"]$VMT, na.rm = TRUE), digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
-valueBox(value, "CVTM VMT<br>(SEMCOG Region)</br>", icon = "fa-wrench")
-```
-
-### Total VMT in SEMCOG Region
-
-```{r Trip_Table_Total_VMT_ValueBox_SEMCOG}
+```{r Trip_Table_Total_VMT_ValueBox}
 value <- format(sum(tmh_vtods$VMT, na.rm = TRUE), 
                 digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
-valueBox(value, "Total VMT<br>(SEMCOG Region)</br>", icon = "fa-map-marker")
+valueBox(value, "Total VMT<br>(Model Region)</br>", icon = "fa-map-marker")
 ```
 
 Column {data-width=600, .tabset}
@@ -287,78 +259,78 @@ kable(dat, escape=FALSE, digits = 3) %>%
   column_spec(ncol(dat), background = "#f2f2f2")
 ```
 
-### IX Trips County to External OD
+<!-- ### IX Trips County to External OD -->
 
-```{r Table_Trips_IX_OD}
-# Organize
-dat <- TripTable[ODSegment %in% c("IX") & DTAZ %in% BASE_TAZ_EXTERNAL & trips > 0, 
-                      .(Trips = round(sum(trips))), keyby = .(County = OSummaryGeog, External = DStationName, ExternalGroup = DStationGroup, ODSegment)]
-dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")]
+<!-- ```{r Table_Trips_IX_OD} -->
+<!-- # Organize -->
+<!-- dat <- TripTable[ODSegment %in% c("IX") & DTAZ %in% BASE_TAZ_EXTERNAL & trips > 0,  -->
+<!--                       .(Trips = round(sum(trips))), keyby = .(County = OSummaryGeog, External = DStationName, ExternalGroup = DStationGroup, ODSegment)] -->
+<!-- dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")] -->
 
-dat <- add_totals(dcast.data.table(dat,
-                                  County ~ ExternalName,
-                                   fun.aggregate = sum,
-                                   value.var = "Trips"))
+<!-- dat <- add_totals(dcast.data.table(dat, -->
+<!--                                   County ~ ExternalName, -->
+<!--                                    fun.aggregate = sum, -->
+<!--                                    value.var = "Trips")) -->
 
-# Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_IX_County_External.csv"), row.names = FALSE)
-assign("db_tab_tt_trips_county_external_ix", dat, envir = db_inputs)
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_IX_County_External.csv"), row.names = FALSE) -->
+<!-- assign("db_tab_tt_trips_county_external_ix", dat, envir = db_inputs) -->
 
-# Table
-kable(dat, escape=FALSE) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+<!-- # Table -->
+<!-- kable(dat, escape=FALSE) %>% -->
+<!--   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>% -->
+<!--   row_spec(nrow(dat), background = "#f2f2f2") %>% -->
+<!--   column_spec(ncol(dat), background = "#f2f2f2") -->
 
-```
+<!-- ``` -->
 
-### XI Trips External to County OD
+<!-- ### XI Trips External to County OD -->
 
-```{r Table_Trips_XI_OD}
-# Organize
-dat <- TripTable[ODSegment %in% c("XI") & OTAZ %in% BASE_TAZ_EXTERNAL & trips > 0, 
-                      .(Trips = round(sum(trips))), keyby = .(County = DSummaryGeog, External = OStationName, ExternalGroup = OStationGroup)]
+<!-- ```{r Table_Trips_XI_OD} -->
+<!-- # Organize -->
+<!-- dat <- TripTable[ODSegment %in% c("XI") & OTAZ %in% BASE_TAZ_EXTERNAL & trips > 0,  -->
+<!--                       .(Trips = round(sum(trips))), keyby = .(County = DSummaryGeog, External = OStationName, ExternalGroup = OStationGroup)] -->
 
-dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")]
+<!-- dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")] -->
 
-dat <- add_totals(dcast.data.table(dat,
-                                  ExternalName ~ County,
-                                   fun.aggregate = sum,
-                                   value.var = "Trips"))
+<!-- dat <- add_totals(dcast.data.table(dat, -->
+<!--                                   ExternalName ~ County, -->
+<!--                                    fun.aggregate = sum, -->
+<!--                                    value.var = "Trips")) -->
 
-# Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XI_External_County.csv"), row.names = FALSE)
-assign("db_tab_tt_trips_external_county_xi", dat, envir = db_inputs)
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XI_External_County.csv"), row.names = FALSE) -->
+<!-- assign("db_tab_tt_trips_external_county_xi", dat, envir = db_inputs) -->
 
-# Table
-kable(dat, escape=FALSE) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
-```
+<!-- # Table -->
+<!-- kable(dat, escape=FALSE) %>% -->
+<!--   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>% -->
+<!--   row_spec(nrow(dat), background = "#f2f2f2") %>% -->
+<!--   column_spec(ncol(dat), background = "#f2f2f2") -->
+<!-- ``` -->
 
-### XX Trips External to External OD
+<!-- ### XX Trips External to External OD -->
 
-```{r Table_Trips_XX_OD}
-# Organize
-dat <- TripTable[ODSegment %in% c("XX") & trips > 0, 
-                      .(Trips = round(sum(trips))), keyby = .(OStationName, OStationGroup, DStationName, DStationGroup)]
-dat[, OExternalName := paste0(OStationName, " (", OStationGroup, ")")]
-dat[, DExternalName := paste0(DStationName, " (", DStationGroup, ")")]
+<!-- ```{r Table_Trips_XX_OD} -->
+<!-- # Organize -->
+<!-- dat <- TripTable[ODSegment %in% c("XX") & trips > 0,  -->
+<!--                       .(Trips = round(sum(trips))), keyby = .(OStationName, OStationGroup, DStationName, DStationGroup)] -->
+<!-- dat[, OExternalName := paste0(OStationName, " (", OStationGroup, ")")] -->
+<!-- dat[, DExternalName := paste0(DStationName, " (", DStationGroup, ")")] -->
 
-dat <- add_totals(dcast.data.table(dat,
-                                  OExternalName ~ DExternalName,
-                                   fun.aggregate = sum,
-                                   value.var = "Trips"))
+<!-- dat <- add_totals(dcast.data.table(dat, -->
+<!--                                   OExternalName ~ DExternalName, -->
+<!--                                    fun.aggregate = sum, -->
+<!--                                    value.var = "Trips")) -->
 
-# Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XX_External_External.csv"), row.names = FALSE)
-assign("db_tab_tt_trips_external_external_xx", dat, envir = db_inputs)
+<!-- # Save -->
+<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XX_External_External.csv"), row.names = FALSE) -->
+<!-- assign("db_tab_tt_trips_external_external_xx", dat, envir = db_inputs) -->
 
-# Table
-kable(dat, escape=FALSE) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+<!-- # Table -->
+<!-- kable(dat, escape=FALSE) %>% -->
+<!--   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>% -->
+<!--   row_spec(nrow(dat), background = "#f2f2f2") %>% -->
+<!--   column_spec(ncol(dat), background = "#f2f2f2") -->
 
-```
+<!-- ``` -->
