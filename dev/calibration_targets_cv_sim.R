@@ -30,35 +30,35 @@ for(n in ls(cv_inputs, all.names=TRUE)) assign(n, get(n, cv_inputs), environment
 # Skims
 skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
 
-# Processed table of ATRI data (for II heavy truck targets)
-mut_od <- readRDS(file = file.path(SYSTEM_DEV_DATA_PATH, 
-                                   "ATRI", 
-                                   "Outputs", 
-                                   "SEMCOG_ATRI_OD_Processed_Table.RDS"))
+# # Processed table of ATRI data (for II heavy truck targets)
+# mut_od <- readRDS(file = file.path(SYSTEM_DEV_DATA_PATH, 
+#                                    "ATRI", 
+#                                    "Outputs", 
+#                                    "SEMCOG_ATRI_OD_Processed_Table.RDS"))
 
-# Processed CVS data
-est <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-                         "Survey",
-                         "Outputs",
-                         "semcog_cvs_est.RDS"))
-
-veh <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-                         "Survey",
-                         "Outputs",
-                         "semcog_cvs_veh.RDS"))
-
-trip <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-                         "Survey",
-                         "Outputs",
-                         "semcog_cvs_trip.RDS"))
-
-tour <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-                          "Survey",
-                          "Outputs",
-                          "semcog_cvs_tour.RDS"))
+# # Processed CVS data
+# est <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
+#                          "Survey",
+#                          "Outputs",
+#                          "semcog_cvs_est.RDS"))
+# 
+# veh <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
+#                          "Survey",
+#                          "Outputs",
+#                          "semcog_cvs_veh.RDS"))
+# 
+# trip <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
+#                          "Survey",
+#                          "Outputs",
+#                          "semcog_cvs_trip.RDS"))
+# 
+# tour <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
+#                           "Survey",
+#                           "Outputs",
+#                           "semcog_cvs_tour.RDS"))
 
 # Datasets processed for estimation
-# Stop Counts
+# Stop Counts (SEMCOG data)
 load("./dev/Estimation/cv_stops/Stop_Counts_Goods.RData") 
 good_stop_counts
 load("./dev/Estimation/cv_stops/Stop_Counts_Service.RData") 
@@ -67,17 +67,21 @@ service_stop_counts
 # Vehicle choice data
 cv_vehicle_data <- readRDS(file.path("./dev/Estimation/cv_vehicle/cv_vehicle_processed_data.rds"))
 
-# Stop duration data
-cv_stopduration_data <- readRDS(file.path("./dev/Estimation/cv_duration/cv_duration_processed_data.rds"))
+###TODO for calibration replace with stop duration data from the GPS data and also purpose specific summaries 
+###from the SEMCOG original estimation (not updated here?)
+# # Stop duration data
+# cv_stopduration_data <- readRDS(file.path("./dev/Estimation/cv_duration/cv_duration_processed_data.rds"))
 
 # Tours data
 cv_tours_data <- readRDS(file.path("./dev/Estimation/cv_tours/cv_tours_processed_data.rds"))
 
+###TODO for calibration replace with arrival data from the GPS data
 # Arrival time
-cv_arrival_data <- readRDS(file.path("./dev/Estimation/cv_arrival/cv_arrival_processed_data.rds"))
+# cv_arrival_data <- readRDS(file.path("./dev/Estimation/cv_arrival/cv_arrival_processed_data.rds"))
 
+###TODO for calibration summaries from the SEMCOG original estimation (not updated here?)
 # Intermediate stops
-cv_intermediate_data <- readRDS(file.path("./dev/Estimation/cv_intermediate/cv_intermediate_processed_data.rds"))
+# cv_intermediate_data <- readRDS(file.path("./dev/Estimation/cv_intermediate/cv_intermediate_processed_data.rds"))
 cv_intermediate_attraction_data <- readRDS(file.path("./dev/Estimation/cv_intermediate/cv_intermediate_attraction_processed_data.rds"))
 
 
