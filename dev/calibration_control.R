@@ -50,7 +50,7 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                                                    submodel_results_name = "firmStopsVeh",
                                                    last_output_step = "cv_sim_scheduledstops",
                                                    estimated_models = NULL),
-                             cv_sim_stopduration = list(require_calibration = FALSE,
+                             cv_sim_stopduration = list(require_calibration = TRUE,
                                                         submodel_results_name = "firmStopsVehDur",
                                                         last_output_step = "cv_sim_vehicle",
                                                         estimated_models = NULL),
@@ -85,6 +85,9 @@ source("./dev/init_dev.R")
 
 # Set the run model to calibration so built in calibration features are activated
 USER_RUN_MODE <- "Calibration"
+
+# Set the skim processing to false to use existing skims (will still run if they are not present)
+USER_PROCESS_SKIMS <- FALSE 
 
 # Start the main model step
 # loop over main model steps

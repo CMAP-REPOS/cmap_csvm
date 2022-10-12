@@ -43,82 +43,87 @@ cv_sim_process_inputs <- function(envir) {
 
   ### Load skims
   
-  # Import skim matrices for time, distance, and tolls.
-  skims_names <- envir[["skims_names"]][condition == BASE_SKIM_CONDITION]
+  # Run skim process if user process skims is TRUE or the skims file does not exist
+  if(USER_PROCESS_SKIMS | !file.exists(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))){
   
-  # loop over the three vehicle types
-  for(vehicle in unique(skims_names$vehicle_type)){
-  
-  # loop over the time periods and create a combined time, distance, and toll skims for each zone pair
-    if(USER_PROCESSOR_CORES > 1){
-      require(parallel)
-  
-      clust <- makeCluster(USER_PROCESSOR_CORES)
-  
-      clusterCall(clust,
-                  fun = function(packages, lib) lapply(X = as.list(packages), FUN = library, character.only = TRUE, lib.loc = lib),
-                  packages = c("rFreight", "rhdf5"), lib = SYSTEM_PKGS_PATH)
-  
-      clusterExport(clust, varlist = getGlobalVars(), envir = .GlobalEnv)
-  
-      clusterExport(clust,
-                    c("skims_names"),
-                    envir = environment())
-  
-      skims_int <- parLapply(clust, 
-                                 1:length(BASE_TOD_RANGES),
-                                 function(x){
-                                   skims <- read_skims_from_omx(omxinputpaths = file.path(SCENARIO_INPUT_PATH, skims_names[time_period == x & vehicle_type == vehicle]$file_name), #lists path of files with x time period
-                                                                subsetvar = paste0('P',skims_names[time_period == x & vehicle_type == vehicle]$time_period),
-                                                                matnames = skims_names[time_period == x & vehicle_type == vehicle]$matrix_name,
-                                                                variablenames = skims_names[time_period == x & vehicle_type == vehicle]$skims_type,
-                                                                row_lookup_name = "zone_number",
-                                                                col_lookup_name = "zone_number") 
-                                   return(skims[[1]])
-                                 })
-      stopCluster(clust)
-  
-    } else {
-  
-      skims_int <- lapply(1:length(BASE_TOD_RANGES),
-                                 function(x){
-                                   skims <- read_skims_from_omx(omxinputpaths = file.path(SCENARIO_INPUT_PATH, skims_names[time_period == x & vehicle_type == vehicle]$file_name), #lists path of files with x time period
-                                                                subsetvar = paste0('P',skims_names[time_period == x & vehicle_type == vehicle]$time_period),
-                                                                matnames = skims_names[time_period == x & vehicle_type == vehicle]$matrix_name,
-                                                                variablenames = skims_names[time_period == x & vehicle_type == vehicle]$skims_type,
-                                                                row_lookup_name = "zone_number",
-                                                                col_lookup_name = "zone_number") 
-                                   return(skims[[1]])
-                                 })
-  
+    # Import skim matrices for time, distance, and tolls.
+    skims_names <- envir[["skims_names"]][condition == BASE_SKIM_CONDITION]
+    
+    # loop over the three vehicle types
+    for(vehicle in unique(skims_names$vehicle_type)){
+    
+    # loop over the time periods and create a combined time, distance, and toll skims for each zone pair
+      if(USER_PROCESSOR_CORES > 1){
+        require(parallel)
+    
+        clust <- makeCluster(USER_PROCESSOR_CORES)
+    
+        clusterCall(clust,
+                    fun = function(packages, lib) lapply(X = as.list(packages), FUN = library, character.only = TRUE, lib.loc = lib),
+                    packages = c("rFreight", "rhdf5"), lib = SYSTEM_PKGS_PATH)
+    
+        clusterExport(clust, varlist = getGlobalVars(), envir = .GlobalEnv)
+    
+        clusterExport(clust,
+                      c("skims_names"),
+                      envir = environment())
+    
+        skims_int <- parLapply(clust, 
+                                   1:length(BASE_TOD_RANGES),
+                                   function(x){
+                                     skims <- read_skims_from_omx(omxinputpaths = file.path(SCENARIO_INPUT_PATH, skims_names[time_period == x & vehicle_type == vehicle]$file_name), #lists path of files with x time period
+                                                                  subsetvar = paste0('P',skims_names[time_period == x & vehicle_type == vehicle]$time_period),
+                                                                  matnames = skims_names[time_period == x & vehicle_type == vehicle]$matrix_name,
+                                                                  variablenames = skims_names[time_period == x & vehicle_type == vehicle]$skims_type,
+                                                                  row_lookup_name = "zone_number",
+                                                                  col_lookup_name = "zone_number") 
+                                     return(skims[[1]])
+                                   })
+        stopCluster(clust)
+    
+      } else {
+    
+        skims_int <- lapply(1:length(BASE_TOD_RANGES),
+                                   function(x){
+                                     skims <- read_skims_from_omx(omxinputpaths = file.path(SCENARIO_INPUT_PATH, skims_names[time_period == x & vehicle_type == vehicle]$file_name), #lists path of files with x time period
+                                                                  subsetvar = paste0('P',skims_names[time_period == x & vehicle_type == vehicle]$time_period),
+                                                                  matnames = skims_names[time_period == x & vehicle_type == vehicle]$matrix_name,
+                                                                  variablenames = skims_names[time_period == x & vehicle_type == vehicle]$skims_type,
+                                                                  row_lookup_name = "zone_number",
+                                                                  col_lookup_name = "zone_number") 
+                                     return(skims[[1]])
+                                   })
+    
+      }
+    
+      names(skims_int) <- names(BASE_TOD_RANGES)
+    
+      # Join all skim tables together, giving each time of day a weighting for calculating average skim values
+      assign(paste0("skims_tod_", vehicle), 
+             joinSkimTables(skims_int,
+             by = c("OTAZ", "DTAZ"),
+             tod.ranges = BASE_TOD_RANGES,
+             var.names = c("time", "dist", "toll"),
+             weights = rep(1,length(BASE_TOD_RANGES))))
+    
     }
   
-    names(skims_int) <- names(BASE_TOD_RANGES)
-  
-    # Join all skim tables together, giving each time of day a weighting for calculating average skim values
-    assign(paste0("skims_tod_", vehicle), 
-           joinSkimTables(skims_int,
-           by = c("OTAZ", "DTAZ"),
-           tod.ranges = BASE_TOD_RANGES,
-           var.names = c("time", "dist", "toll"),
-           weights = rep(1,length(BASE_TOD_RANGES))))
-  
-  }
-
-  ### TODO update model code to be able to use vehicle type specific skims them remove this and 
-  ###      save combined skims as skims_tod
-  saveRDS(skims_tod_light,
-          file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"),
-          compress = FALSE)
-  
-  skims_tod <- rbindlist(list(light = skims_tod_light, 
-                              medium = skims_tod_medium,
-                              heavy = skims_tod_heavy),
-                         idcol = "vehicle")
-  
-  saveRDS(skims_tod,
-          file.path(SCENARIO_OUTPUT_PATH, "skims_tod_vehicle.rds"),
-          compress = FALSE)
+    ### TODO update model code to be able to use vehicle type specific skims them remove this and 
+    ###      save combined skims as skims_tod
+    saveRDS(skims_tod_light,
+            file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"),
+            compress = FALSE)
+    
+    skims_tod <- rbindlist(list(light = skims_tod_light, 
+                                medium = skims_tod_medium,
+                                heavy = skims_tod_heavy),
+                           idcol = "vehicle")
+    
+    saveRDS(skims_tod,
+            file.path(SCENARIO_OUTPUT_PATH, "skims_tod_vehicle.rds"),
+            compress = FALSE)
+    
+  } # end if proces skims
   
   gc()
   
