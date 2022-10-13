@@ -368,9 +368,20 @@ calibrate_cv_sim_stopduration =
     submodel_results, 
     model_step_target){
     
-    # Summarise the model results
+    # Summarise the model results: overall and then using the categories for activity and vehicle type 
+    # Overall by choice for adjustment of alternative specific constants
     submodel_results_summary <- submodel_results[,.(ModelStops = .N), keyby = choice]
     submodel_results_summary[, Model := ModelStops/sum(ModelStops)]
+    
+    # By vehicle type, comparing mediums by <30, 30-75, 90+, and heavies <30, 30-90, 150+
+    submodel_results_vehicle_summary <- submodel_results[,.(ModelStops = .N), keyby = .(choice, Vehicle)]
+    submodel_results_vehicle_summary[, Model := ModelStops/sum(ModelStops), by = Vehicle]
+    
+    # By activity type (service variables grouped <60, 60-75, 90+)
+    submodel_results_activity_summary <- submodel_results[,.(ModelStops = .N), keyby = .(choice, Activity)]
+    submodel_results_activity_summary[, Model := ModelStops/sum(ModelStops), by = Activity]
+    
+    
     
     # Create Comparison between the target data and the model results
     model_step_target$duration_stops[, choice := .I]
