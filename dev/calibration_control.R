@@ -169,9 +169,11 @@ for(model_step_num in 1:length(models)){
           submodel_iter <- submodel_iter + 1
           
           # update the parameters returned from the function in the input environment
-          for(est_mod_num in 1:length(models[[model_step_num]][[submodel_name]]$estimated_models)){
-            model_step_inputs$model_step_env[[models[[model_step_num]][[submodel_name]]$estimated_models[[est_mod_num]]]] = 
-              submodel_calibrated_list$submodel_parameters[[est_mod_num]]
+          if(!is.null(models[[model_step_num]][[submodel_name]]$estimated_models)) {
+            for(est_mod_num in 1:length(models[[model_step_num]][[submodel_name]]$estimated_models)){
+              model_step_inputs$model_step_env[[models[[model_step_num]][[submodel_name]]$estimated_models[[est_mod_num]]]] = 
+                submodel_calibrated_list$submodel_parameters[[est_mod_num]]
+            }
           }
         }  
       } else { 
