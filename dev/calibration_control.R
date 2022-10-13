@@ -1,7 +1,6 @@
 # Calibraton Control Script
 
-# support functions
-### TODO move these to rFreight?
+# support and component specific functions
 source("./dev/calibration_functions.R")
 
 # Flow:
