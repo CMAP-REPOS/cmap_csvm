@@ -284,8 +284,6 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
 }
 
-### TODO Jeff add the calibrate_cv_sim_vehiclechoice function and subsequent calibration functions
-
 calibrate_cv_sim_vehicle_choice = 
   function(
     submodel_calibrated, 
@@ -364,7 +362,72 @@ calibrate_cv_sim_vehicle_choice =
   
 }
 
-
+calibrate_cv_sim_stopduration = 
+  function(
+    submodel_calibrated, 
+    submodel_results, 
+    model_step_target){
+    
+    # Summarise the model results
+    submodel_results_summary <- submodel_results[,.(ModelStops = .N), keyby = choice]
+    submodel_results_summary[, Model := ModelStops/sum(ModelStops)]
+    
+    # Create Comparison between the target data and the model results
+    model_step_target$duration_stops[, choice := .I]
+    
+    submodel_comparison <- merge(model_step_target$duration_stops, 
+                                 submodel_results_summary, 
+                                 by = c("choice"), 
+                                 all = TRUE)
+    
+    submodel_comparison[is.na(Target), Target := 0]
+    submodel_comparison[is.na(Model), Model := 0]
+    
+    # Comparison: 
+    # The difference between the model and target shares by duration alternative
+    
+    submodel_comparison[, Difference := abs(Model - Target)]
+    
+    # Set a threshold for the model to reach
+    submodel_difference_threshold <- 0.001
+    submodel_criteria <- 0
+    submodel_test <- submodel_comparison[, sqrt(mean((Difference)^2))]
+    
+    # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
+    submodel_parameters <- list()
+    submodel_choices_constants <- data.table(choice = 1:11,
+                                             coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate)[1:11])
+    
+    if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
+      submodel_calibrated <- TRUE
+    } else {
+      # Adjust the constants in the model
+      coefficients = 
+        data.table(
+          coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_stopduration_model$estimate)
+      
+      coefficients[submodel_choices_constants, choice := i.choice, on = "coefficient"]
+      submodel_comparison[, Adjustment := log(Target / Model)]
+      coefficients[submodel_comparison, adjustment := i.Adjustment, on = "choice"]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
+      new_coefficients = coefficients[, estimate]
+      names(new_coefficients) = coefficients[, coefficient]
+      model_step_inputs$model_step_env$cv_stopduration_model$estimate = new_coefficients
+  
+    }
+    
+    submodel_parameters[["cv_stopduration_model"]] = model_step_inputs$model_step_env$cv_stopduration_model
+    
+    # return a list of items to support calibration and debugging
+    return(list(submodel_calibrated = submodel_calibrated,
+                submodel_comparison = submodel_comparison,
+                submodel_difference_threshold = submodel_difference_threshold,
+                submodel_criteria = submodel_criteria,
+                submodel_test = submodel_test,
+                submodel_parameters = submodel_parameters))
+    
+  }
 
 # generic function for calibrating logit-based choice model
 calibrate_logit_based_model = 

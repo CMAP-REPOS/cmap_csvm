@@ -17,7 +17,7 @@ source("./dev/calibration_functions.R")
 # 10. Rerun to confirm calibration
 
 ### 1. Settings
-CALIBRATION_MAX_ITER <- 1 # Maximum number of iterations
+CALIBRATION_MAX_ITER <- 5 # Maximum number of iterations
 CALIBRATION_RUN <- "Calibration_Run_1"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   stop("Calibration Folder Exists. Update the CALIBRATION_RUN name")
@@ -53,7 +53,7 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                              cv_sim_stopduration = list(require_calibration = TRUE,
                                                         submodel_results_name = "firmStopsVehDur",
                                                         last_output_step = "cv_sim_vehicle",
-                                                        estimated_models = NULL),
+                                                        estimated_models = list(cv_stopduration_model = "cv_stopduration_model")),
                              cv_sim_tours = list(require_calibration = FALSE,
                                                  submodel_results_name = "firmTourSequence",
                                                  last_output_step = "cv_sim_stopduration",
@@ -137,27 +137,25 @@ for(model_step_num in 1:length(models)){
     # Start the calibration routine for this submodel
     submodel_calibrated <- FALSE
     submodel_iter <- 1
-    
-    # Run the submodel
     submodel_results_name <- models[[model_step_num]][[submodel_name]]$submodel_results_name
-    
-    submodel_results <- 
-      run_submodel(
-        model_step_name,
-        model_step_submodels,
-        submodel_name, 
-        submodel_results_name,
-        model_step_inputs,
-        last_output)
-    
     submodel_calibrated_list = list()
     
-    if (models[[model_step_name]][[submodel_name]][["require_calibration"]]) {
+    while(!submodel_calibrated & submodel_iter <= CALIBRATION_MAX_ITER){
     
-      while(!submodel_calibrated & submodel_iter <= CALIBRATION_MAX_ITER){
-        
-        print(paste("    Iteration:", submodel_iter))
-
+      print(paste("    Iteration:", submodel_iter))
+      
+      # Run the submodel  
+      submodel_results <- 
+        run_submodel(
+          model_step_name,
+          model_step_submodels,
+          submodel_name, 
+          submodel_results_name,
+          model_step_inputs,
+          last_output)
+      
+      if (models[[model_step_name]][[submodel_name]][["require_calibration"]]) {
+    
         # Test the results against targets and adjust parameters if needed
         submodel_calibrated_list <- do.call(paste0("calibrate_", submodel_name),
                                             args = list(submodel_calibrated = submodel_calibrated, 
@@ -166,10 +164,20 @@ for(model_step_num in 1:length(models)){
         
         submodel_calibrated <- submodel_calibrated_list$submodel_calibrated
         
-        if(!submodel_calibrated) submodel_iter <- submodel_iter + 1
+        if(!submodel_calibrated) {
+          # move to the next iteration
+          submodel_iter <- submodel_iter + 1
           
-      }  
-    
+          # update the parameters returned from the function in the input environment
+          for(est_mod_num in 1:length(models[[model_step_num]][[submodel_name]]$estimated_models)){
+            model_step_inputs$model_step_env[[models[[model_step_num]][[submodel_name]]$estimated_models[[est_mod_num]]]] = 
+              submodel_calibrated_list$submodel_parameters[[est_mod_num]]
+          }
+        }  
+      } else { 
+        # not a component that required iterative adjustment
+        submodel_calibrated <- TRUE
+      }
     }
     
     # save the calibrated submodel results and calibration comparisons
@@ -183,9 +191,9 @@ for(model_step_num in 1:length(models)){
       # save the calibration model objects to their respective files
       ### TODO update if objects need to be something other than an RDS file
       lapply(1:length(models[[model_step_num]][[submodel_name]]$estimated_models),
-             function(x) saveRDS(object = submodel_calibrated_list$submodel_parameters,
+             function(x) saveRDS(object = submodel_calibrated_list$submodel_parameters[[x]],
                                  file = file.path(SYSTEM_DATA_PATH,
-                                                  models[[model_step_num]][[submodel_name]]$estimated_models[[x]])))
+                                                  paste0(models[[model_step_num]][[submodel_name]]$estimated_models[[x]],".RDS"))))
       
       print(paste("  Calibration complete and parameters saved for", submodel_name))
       
