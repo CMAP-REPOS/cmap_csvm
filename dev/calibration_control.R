@@ -17,6 +17,7 @@ source("./dev/calibration_functions.R")
 
 ### 1. Settings
 CALIBRATION_MAX_ITER <- 5 # Maximum number of iterations
+CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
 CALIBRATION_RUN <- "Calibration_Run_1"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   stop("Calibration Folder Exists. Update the CALIBRATION_RUN name")
@@ -82,6 +83,26 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
 # Initialize model system
 source("./dev/init_dev.R")
 
+# Rest the model objects
+if(CALIBRATION_RESET_TO_ESTIMATED){
+  
+  paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_model.RDS",
+                                                   "cv_stops/new_models/goods/cv_goods_model.RDS",
+                                                   "cv_stops/new_models/services/cv_service_model.RDS",
+                                                   "cv_vehicle/final_model/cv_vehicle_model.rds",
+                                                   "cv_duration/cv_stopduration_model.rds",
+                                                   "cv_tours/cv_tours_model.rds",
+                                                   # "cv_arrival/cv_arrival_model.rds",
+                                                   # "cv_intermediate/cv_intermediate_model.rds",
+                                                   # "cv_intermediate/cv_intermediate_deviations.rds",
+                                                   "cv_intermediate/cv_intermediate_model_attraction.rds"))
+
+  file.copy(from = paths_to_models,
+            to = "./lib/data",
+            overwrite = TRUE)
+
+}
+  
 # Set the run model to calibration so built in calibration features are activated
 USER_RUN_MODE <- "Calibration"
 
