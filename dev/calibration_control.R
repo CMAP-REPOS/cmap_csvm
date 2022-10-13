@@ -16,7 +16,7 @@ source("./dev/calibration_functions.R")
 # 10. Rerun to confirm calibration
 
 ### 1. Settings
-CALIBRATION_MAX_ITER <- 5 # Maximum number of iterations
+CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations
 CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
 CALIBRATION_RUN <- "Calibration_Run_1"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
@@ -113,7 +113,7 @@ USER_PROCESS_SKIMS <- FALSE
 # loop over main model steps
 for(model_step_num in 1:length(models)){
 
-  #model_step_num <- 1
+  #model_step_num <- 2
   model_step_name <- names(models)[model_step_num]
   model_step_submodels <- names(models[[model_step_name]])
   
@@ -134,7 +134,7 @@ for(model_step_num in 1:length(models)){
   
   for(submodel_num in 1:length(model_step_submodels)){
     
-    #submodel_num <- 1
+    #submodel_num <- 4
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     
