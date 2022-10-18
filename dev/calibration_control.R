@@ -121,6 +121,10 @@ for(model_step_num in 1:length(models)){
   
   # create environment, source and run the process inputs script, and add the model step function
   model_step_inputs <- process_inputs(model_step = model_step_name)
+  # Manually import any additional inputs by model step into the environment, e.g., skims if they are not loaded
+  if(model_step_num == 2){
+    model_step_inputs$model_step_env$skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
+  }
   
   # check to see if any submodels in mainmodel are getting calibrated and grab targets if true
   if (sum(unlist(lapply(models[[model_step_name]], "[[", "require_calibration")) == TRUE) > 0) {
