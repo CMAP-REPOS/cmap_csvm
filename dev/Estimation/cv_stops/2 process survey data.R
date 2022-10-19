@@ -5,6 +5,7 @@ library(foreign)
 library(data.table)
 library(pscl)
 
+#install.packages("geosphere")
 
 base_loc = "dev/Data_Processed/SEMCOG_Data/"
 

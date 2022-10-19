@@ -407,25 +407,38 @@ hurdle_ll + count_ll
 
 #need to include wholsale
 #some categories from semcog now are composed of several categories now in other employment groups
-myFormula <- STOPS ~ log1p(NEmp_Retail) + log1p(NEmp_Wholesale)+ log1p(NEmp_Transport_Industry) + 
-  log1p(NEmp_Service_Other) + log1p(NEmp_Service_Public) + 
+myFormula <- STOPS ~ 
   log1p(NEmp_Admin_Support_Waste) +
-  Construction + Transport_Industry + Ed_Health_SocialServices + log(time) + 
-  Construction:log(time) + Transport_Industry:log(time) + Ed_Health_SocialServices:log(time) |
-  log1p(HH) + log1p(NEmp_Transport_Industry) + log1p(NEmp_Retail) + log1p(NEmp_Wholesale) +
-  log1p(NEmp_Office_Professional) + log1p(NEmp_Ed_Health_SocialServices) + 
+  log1p(NEmp_Office_Professional) + 
+  log1p(NEmp_Service_FoodDrink) + 
+  log1p(NEmp_Service_Other) + 
+  log1p(NEmp_Transport_Industry) + 
+  log(time) + 
+  Construction:log(time) + 
+  Ed_Health_SocialServices:log(time) | 
+  log1p(HH) + 
+  log1p(NEmp_Admin_Support_Waste) +
+  log1p(NEmp_Ed_Health_SocialServices) + 
+  log1p(NEmp_Office_Professional) + 
+  log1p(NEmp_Retail) + 
+  log1p(NEmp_Service_FoodDrink) + 
+  log1p(NEmp_Service_Other) + 
+  log1p(NEmp_Transport_Industry) + 
   Admin_Support_Waste + 
-  Service_Other + 
-  #Retail + removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
-  Wholesale + 
-  Construction + 
-  Transport_Industry + 
-  Ed_Health_SocialServices + 
-  Service_FoodDrink + 
+  Construction +
+  Ed_Health_SocialServices +
   Office_Professional + 
-  log(time) + log(TOTAL_EMPLOYEES) + 
-  Admin_Support_Waste:log(TOTAL_EMPLOYEES) + Service_Other:log(TOTAL_EMPLOYEES) + 
-  Service_FoodDrink:log(TOTAL_EMPLOYEES) + Office_Professional:log(TOTAL_EMPLOYEES)
+  #Retail + removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
+  Service_FoodDrink + 
+  Service_Other + 
+  Transport_Industry + 
+  Wholesale + 
+  log(time) + 
+  log(TOTAL_EMPLOYEES) + 
+  Admin_Support_Waste:log(TOTAL_EMPLOYEES) + 
+  Office_Professional:log(TOTAL_EMPLOYEES) +
+  Service_FoodDrink:log(TOTAL_EMPLOYEES)  +
+  Service_Other:log(TOTAL_EMPLOYEES) 
   
 
 service.fit <- hurdle(formula = myFormula, data = service_stop_counts,

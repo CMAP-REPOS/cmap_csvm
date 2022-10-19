@@ -13,9 +13,7 @@ library(DHARMa)
 
 model_loc = 'dev/Estimation/cv_stops/'
 # Load data
-load(file.path(model_loc, "Stop_Counts_Goods_test.RData"))
-# load("Counts_Meeting.RData")
-# load("Counts_Service.RData")
+load(file.path(model_loc, "Stop_Counts_Goods.RData"))
 source(file.path(model_loc, "0 helper functions.R"))
 
 # Code employment size category
@@ -267,13 +265,33 @@ hurdle_ll + count_ll
 
 #CMAP FORMULA
 #due to grouped categories, we would have some repeats which i have commented out for comparison
-myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Transport_Industry) + 
-  log1p(NEmp_Ed_Health_SocialServices) + #log1p(NEmp_Transportation) +
-  log1p(NEmp_Retail) + log1p(NEmp_Wholesale) + log(time) + Construction + Transport_Industry + log(TOTAL_EMPLOYEES) +
-  log(time):(Transport_Industry) | #+ Transport_Industry
-  log1p(HH) + log1p(NEmp_Transport_Industry) + 
-  log1p(NEmp_Retail) + log1p(NEmp_Wholesale) + log(dist) + Construction + Transport_Industry + Office_Professional + Retail + #Transport_Industry +
-  (Construction):log(dist) + (Transport_Industry):log(dist) + #(Transport_Industry):log(dist) + 
+myFormula <- STOPS ~ 
+  log1p(HH) + 
+  log1p(NEmp_Ed_Health_SocialServices) + 
+  log1p(NEmp_Office_Professional) + 
+  log1p(NEmp_Retail) +
+  log1p(NEmp_Service_Public) + 
+  log1p(NEmp_Transport_Industry) +
+  log(time) + 
+  log(TOTAL_EMPLOYEES) +
+  log(time):(Transport_Industry) | 
+  log1p(HH) + 
+  log1p(NEmp_Construction) + 
+  log1p(NEmp_Retail) +
+  log1p(NEmp_Service_Other) +
+  log1p(NEmp_Transport_Industry) +
+  log(dist) + 
+  Admin_Support_Waste + 
+  Construction +
+  Ed_Health_SocialServices +
+  Office_Professional + 
+  #Retail + removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
+  Service_FoodDrink + 
+  Service_Other + 
+  Transport_Industry + 
+  Wholesale + 
+  (Construction):log(dist) + 
+  (Transport_Industry):log(dist) + 
   (Office_Professional):log(dist) + 
   log(TOTAL_EMPLOYEES)
 
@@ -327,8 +345,8 @@ saveRDS(finalModel, file = file.path(model_loc, "new_models/goods/cv_goods_model
 
 # Write results to csv
 options(width = 10000)
-sink(file = fiel.path(model_loc, "new_models/goods/goods_model_results.txt"))
-print(summary(goods.fit.copy))
-print(summary(final_model))
+sink(file = file.path(model_loc, "new_models/goods/goods_model_results.txt"))
+print(summary(goods.fit))
+print(summary(finalModel))
 sink()
 options(width = 137)

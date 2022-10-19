@@ -230,14 +230,14 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
   # Estimate totals and add to the targets and then merge with model
   # Exclude Transport_Industry as not covered by the CSVM 
-  model_step_target$emp_stops_total <- model_step_target$emp_stops[ EmpCatGroupedName != "Transport_Industry",
+  model_step_target$emp_stops_total <- model_step_target$emp_stops[!EmpCatGroupedName %in% c("Transport_Industry", "Total") ,
                                                                     .(Employment = sum(Employment), 
                                                                       Stops = sum(Stops), 
                                                                       WeightedStops = sum(WeightedStops), 
                                                                       EmpCatGroupedName = "Total"), 
                                                                    by = .(Activity)][, StopsEmp := WeightedStops/Employment]
   
-  model_step_target$emp_stops <- rbind(model_step_target$emp_stops[EmpCatGroupedName != "Transport_Industry"],
+  model_step_target$emp_stops <- rbind(model_step_target$emp_stops[!EmpCatGroupedName %in% c("Transport_Industry", "Total") ],
                                        model_step_target$emp_stops_total)
   
   submodel_comparison_emp_stops <- merge(model_step_target$emp_stops[, .(Activity, EmpCatGroupedName, Target = StopsEmp)], 
@@ -291,13 +291,6 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
   model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
   
-  
-  # update the goods zero coefficients and the service zero coefficients by industry
-  EmpCatGroups <- unique(submodel_comparison_emp_stops$EmpCatGroupedName)
-  
-  model_step_inputs$model_step_env$cv_service_model$coefficients$zero[names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero) %in% EmpCatGroups]
-  
-  model_step_inputs$model_step_env$cv_service_model$coefficients$zero["Service_Other"] <- model_step_inputs$model_step_env$cv_service_model$coefficients$zero["Service_Other"] - 0.5
   
   
   
