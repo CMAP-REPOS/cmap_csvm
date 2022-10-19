@@ -249,47 +249,6 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
   submodel_comparison_emp_stops[,TargetStops := Target * Emp]
   
-  submodel_comparison_emp_stops[, Ratio := Target/Model]
-  
-  
-  # Adjust the constants in the model
-  coefficients = 
-    rbind(data.table(
-      Activity = "Goods",
-      modelstep = "count",
-      coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$count), 
-      estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$count),
-      data.table(
-        Activity = "Goods",
-        modelstep = "zero",
-        coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$zero), 
-        estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$zero),
-      data.table(
-        Activity = "Service",
-        modelstep = "count",
-        coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$count), 
-        estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$count),
-      data.table(
-        Activity = "Service",
-        modelstep = "zero",
-        coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero), 
-        estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$zero))
-  
-  
-  submodel_comparison_emp_stops[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
-  
-  coefficients[submodel_comparison_emp_stops[,.(Activity, coefficient = EmpCatGroupedName, modelstep = "zero", Adjustment)], 
-               adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
-  
-  coefficients[!is.na(adjustment), estimate := estimate + adjustment]
-  
-  new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
-  names(new_coefficients_zero_goods) = coefficients[Activity == "Goods" & modelstep == "zero", coefficient]
-  model_step_inputs$model_step_env$cv_goods_model$coefficients$zero = new_coefficients_zero_goods
-  
-  new_coefficients_zero_service = coefficients[Activity == "Service" & modelstep == "zero", estimate]
-  names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
-  model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
   
   
   
@@ -318,33 +277,19 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
   # model_step_target$mean_stop_distance_industry
   # Average distance by activity and industry of the business operating the truck from business to stop location
-  
-  
-  
-  
-  # # Create Comparison between the target data and the model results
-  # submodel_comparison <- merge(model_step_target, 
-  #                              submodel_results_summary, 
-  #                              by = c("Activity", "Category"), 
-  #                              all = TRUE)
-  # 
-  # submodel_comparison[is.na(Target), Target := 0]
-  # submodel_comparison[is.na(Model), Model := 0]
-  
+
   # Comparison: 
-  # The difference between the model and target percentage of firms at a Activity/Category level
+  # The difference between the model and target stops
   # should be small but is not expected to be zero due to simulation differences. 
   
-  submodel_comparison[, Difference := abs(Model - Target)]
+  submodel_comparison_emp_stops[, Difference := abs(ModelStops - TargetStops)]
   
   # Set a threshold for the model to reach
-  
-  # submodel_difference_threshold <- model_step_inputs$model_step_data[,.(Firms = .N), 
-  #                                                                    by = .(Category = EmpCatName)][, Threshold := ifelse(Firms < 1000, 0.05, 0.02)]
-  # submodel_comparison[submodel_difference_threshold, Threshold := i.Threshold, on = "Category"]
+  submodel_difference_threshold = 1000
+  submodel_comparison_emp_stops[, Threshold := submodel_difference_threshold]
   
   submodel_criteria <- 0
-  submodel_test <- submodel_comparison[Difference > Threshold,.N]
+  submodel_test <- submodel_comparison_emp_stops[Difference > Threshold,.N]
   
   # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
   submodel_parameters <- list()
@@ -354,11 +299,61 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   } else {
     # Parameter adjustments 
     
+    # Adjust the constants in the model
+    coefficients = 
+      rbind(data.table(
+        Activity = "Goods",
+        modelstep = "count",
+        coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$count), 
+        estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$count),
+        data.table(
+          Activity = "Goods",
+          modelstep = "zero",
+          coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$zero), 
+          estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$zero),
+        data.table(
+          Activity = "Service",
+          modelstep = "count",
+          coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$count), 
+          estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$count),
+        data.table(
+          Activity = "Service",
+          modelstep = "zero",
+          coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero), 
+          estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$zero))
     
+    submodel_comparison_emp_stops[, Ratio := Target/Model]
+    submodel_comparison_emp_stops[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
     
+    # calibration approach: 
+    # adjust intercept and then employment specific constants
+    if(submodel_iter <= CALIBRATION_MAX_ITER/2){
+      
+      coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",.(Activity, coefficient = "(Intercept)", modelstep = "zero", Adjustment)], 
+                   adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment]
+      
+    } else {
+      
+      coefficients[submodel_comparison_emp_stops[,.(Activity, coefficient = EmpCatGroupedName, modelstep = "zero", Adjustment)], 
+                   adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment]
+      
+    }
     
-    submodel_parameters <- submodel_comparison[Difference > submodel_difference_threshold]
+    new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
+    names(new_coefficients_zero_goods) = coefficients[Activity == "Goods" & modelstep == "zero", coefficient]
+    model_step_inputs$model_step_env$cv_goods_model$coefficients$zero = new_coefficients_zero_goods
+    
+    new_coefficients_zero_service = coefficients[Activity == "Service" & modelstep == "zero", estimate]
+    names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
+    model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
+    
   }
+  
+  submodel_comparison = submodel_comparison_emp_stops
+  submodel_parameters[["cv_goods_model"]] = model_step_inputs$model_step_env$cv_goods_model
+  submodel_parameters[["cv_service_model"]] = model_step_inputs$model_step_env$cv_service_model
   
   # return a list of items to support calibration and debugging
   return(list(submodel_calibrated = submodel_calibrated,
