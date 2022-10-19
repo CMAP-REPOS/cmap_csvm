@@ -17,9 +17,9 @@ EmpCatID,EmpCatName,EmpCatDesc,EmpCatGroupedName
 16,54,"Professional, Scientific, and Technical Services",Office_Professional
 17,55,Management of Companies and Enterprises,Office_Professional
 18,56,Administrative and Support and Waste Management and Remediation Services,Admin_Support_Waste
-19,61,Educational Services,Ed_Health_SocialServices
-20,62,Health Care and Social Assistance,Ed_Health_SocialServices
+19,61,Educational Services,Ed_Health_Social_Public
+20,62,Health Care and Social Assistance,Ed_Health_Social_Public
 21,71,"Arts, Entertainment, and Recreation",Service_FoodDrink
 22,72,Accommodation and Food Services,Service_FoodDrink
 23,81,Other Services (except Public Administration),Service_Other
-24,92,Public Administration,Service_Public
+24,92,Public Administration,Ed_Health_Social_Public

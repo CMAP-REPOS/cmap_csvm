@@ -13,7 +13,7 @@ source("./dev/init_dev.R")
 
 ### READ INPUT FILES ==================================================
 
-emp_control <- fread("./scenarios/base/inputs/data_emp_control_2017.csv")
+emp_control <- fread("./scenarios/base/inputs/data_emp_control_taz.csv")
 
 ### CREATE COMPLETE CORRESPONDENCES AT NAICS 2 LEVEL ==============
 
@@ -33,9 +33,9 @@ n2labels[, EmpCatGroupedName := case_when(
   EmpCatName %in% c(44,45) ~ 'Retail',
   EmpCatName %in% c(22, 23) ~ 'Construction',
   EmpCatName %in% c(51, 52, 53, 54, 55) ~ 'Office_Professional',
-  EmpCatName %in% c(61,62) ~ 'Ed_Health_SocialServices',
+  EmpCatName %in% c(61,62, 92) ~ 'Ed_Health_Social_Public',
   EmpCatName == c(56) ~ 'Admin_Support_Waste',
-  EmpCatName == 92 ~ 'Service_Public',
+  #EmpCatName == 92 ~ 'Service_Public',
   EmpCatName %in% c(71, 72) ~ 'Service_FoodDrink',
   EmpCatName == 81 ~ 'Service_Other',
   EmpCatName == 42 ~ 'Wholesale',
