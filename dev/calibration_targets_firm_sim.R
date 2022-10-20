@@ -12,7 +12,7 @@
 # Charts documenting firm synthesis calibration targets
 #
 # Use init_dev.R to run here instead of sourcing from _Master_Dev.R
-# source("./dev/init_dev.R")
+source("./dev/init_dev.R")
 
 ### READ IN FIRM SIM MODEL INPUTS, SCENARIO INPUTS, AND SUPPORT DATA -------------------------------------
 
