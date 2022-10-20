@@ -24,9 +24,8 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
   database[, industry_construction := 1 * (EmpCatGroupedName %in% c("Construction"))]
   database[, industry_transport_industry := 1 * (EmpCatGroupedName %in% c("Transport_Industry"))]
   database[, industry_admin_support_waste := 1 * (EmpCatGroupedName %in% c("Admin_Support_Waste"))]
-  database[, industry_ed_health_socialservices := 1 * (EmpCatGroupedName %in% c("Ed_Health_SocialServices"))]
+  database[, industry_ed_health_social_public := 1 * (EmpCatGroupedName %in% c("Ed_Health_Social_Public"))]
   database[, industry_service_other := 1 * (EmpCatGroupedName %in% c("Service_Other"))]
-  database[, industry_service_public := 1 * (EmpCatGroupedName %in% c("Service_Public"))]
   database[, industry_office_professional := 1 * (EmpCatGroupedName %in% c("Office_Professional"))]
   database[, industry_service_foodDrink := 1 * (EmpCatGroupedName %in% c("Service_FoodDrink"))]
   
@@ -88,9 +87,8 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v1_industry_construction *	industry_construction +
         beta_v1_industry_transport_industry *	industry_transport_industry +
         beta_v1_industry_admin_support_waste * industry_admin_support_waste +
-        beta_v1_industry_ed_health_socialservices *	industry_ed_health_socialservices +
+        beta_v1_industry_ed_health_social_public *	industry_ed_health_social_public +
         beta_v1_industry_service_other * industry_service_other + 
-        #beta_v1_industry_service_public *	industry_service_public + 
         beta_v1_industry_office_professional *	industry_office_professional +
         beta_v1_industry_service_foodDrink * industry_service_foodDrink + 
         beta_v1_activity_deliver_pickup * activity_deliver_pickup +
@@ -108,9 +106,8 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v2_industry_construction *	industry_construction +
         beta_v2_industry_transport_industry *	industry_transport_industry +
         beta_v2_industry_admin_support_waste * industry_admin_support_waste +
-        beta_v2_industry_ed_health_socialservices *	industry_ed_health_socialservices +
+        beta_v2_industry_ed_health_social_public *	industry_ed_health_social_public +
         beta_v2_industry_service_other * industry_service_other + 
-        #beta_v2_industry_service_public *	industry_service_public +
         beta_v2_industry_office_professional *	industry_office_professional +
         beta_v2_industry_service_foodDrink * industry_service_foodDrink +
         beta_v2_activity_deliver_pickup * activity_deliver_pickup +

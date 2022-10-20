@@ -130,9 +130,8 @@ choice_data[, industry_wholesale := 1 * (model_emp_cat %in% c('Wholesale'))]
 choice_data[, industry_construction := 1 * (model_emp_cat %in% c("Construction"))]
 choice_data[, industry_transport_industry := 1 * (model_emp_cat %in% c("Transport_Industry"))]
 choice_data[, industry_admin_support_waste := 1 * (model_emp_cat %in% c("Admin_Support_Waste"))]
-choice_data[, industry_ed_health_socialservices := 1 * (model_emp_cat %in% c("Ed_Health_SocialServices"))]
+choice_data[, industry_ed_health_social_public := 1 * (model_emp_cat %in% c("Ed_Health_Social_Public"))]
 choice_data[, industry_service_other := 1 * (model_emp_cat %in% c("Service_Other"))]
-choice_data[, industry_service_public := 1 * (model_emp_cat %in% c("Service_Public"))]
 choice_data[, industry_office_professional := 1 * (model_emp_cat %in% c("Office_Professional"))]
 choice_data[, industry_service_foodDrink := 1 * (model_emp_cat %in% c("Service_FoodDrink"))]
 
@@ -143,9 +142,8 @@ choice_data[,
     industry_construction,
     industry_transport_industry,
     industry_admin_support_waste,
-    industry_ed_health_socialservices,
+    industry_ed_health_social_public,
     industry_service_other,
-    industry_service_public,
     industry_office_professional,
     industry_service_foodDrink)]
 
@@ -231,9 +229,8 @@ names_to_keep =
     "industry_construction",
     "industry_transport_industry",
     "industry_admin_support_waste",
-    "industry_ed_health_socialservices",
+    "industry_ed_health_social_public",
     "industry_service_other",
-    "industry_service_public",
     "industry_office_professional",
     "industry_service_foodDrink",
     "activity_deliver", "activity_pickup", "activity_service", 

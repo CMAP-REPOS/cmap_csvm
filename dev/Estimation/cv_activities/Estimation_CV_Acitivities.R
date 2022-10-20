@@ -26,9 +26,9 @@ cv_activities_model_old <- readRDS(file.path(THIS_MODEL_PATH, "_cv_activities_mo
 ## Load Output of Firm Synthesis (For Reference) ---------------------------
 load(file.path("scenarios/base/outputs/1.Firms.RData"))
 names(firm_sim_results)
-firm_sim_results$RegionFirms
+firm_sim_results$ScenarioFirms
 # n2 field is the NAICS 2 digit employment category
-firm_sim_results$RegionFirms[,.N, keyby = n2]
+firm_sim_results$ScenarioFirms[,.N, keyby = n2]
 
 # Load in the CMAP Establishment survey data
 # Identify which business establishments operated commercial vehicles and made stops in each of the four categories:
@@ -61,9 +61,9 @@ est_rename <- est_vars %>%
     AGEN_NAICS %in% c(44,45) ~ 'Retail',
     AGEN_NAICS %in% c(22, 23) ~ 'Construction',
     AGEN_NAICS %in% c(53, 54) ~ 'Office_Professional',
-    AGEN_NAICS %in% c(61,62) ~ 'Ed_Health_SocialServices',
+    AGEN_NAICS %in% c(61,62,92) ~ 'Ed_Health_Social_Public',
     AGEN_NAICS %in% c(561, 562, 5617) ~ 'Admin_Support_Waste',
-    AGEN_NAICS == 92 ~ 'Service_Public',
+    #AGEN_NAICS == 92 ~ 'Service_Public',
     AGEN_NAICS == 72 ~ 'Service_FoodDrink',
     AGEN_NAICS == 81 ~ 'Service_Other',
     AGEN_NAICS == 42 ~ 'Wholesale',

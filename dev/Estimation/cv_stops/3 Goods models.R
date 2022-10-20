@@ -1,12 +1,6 @@
 library(data.table)
 library(pscl)
-library(ggplot2)
-# library(countreg)
 library(splines)
-library(glmmTMB)
-library(foreach)
-library(doParallel)
-library(DHARMa)
 
 ##########################
 # Estimate Models
@@ -62,215 +56,23 @@ good_stop_counts[, size_100_250 := 1 * (TOTAL_EMPLOYEES >= 100 & TOTAL_EMPLOYEES
 good_stop_counts[, size_250_p    := 1 * (TOTAL_EMPLOYEES >= 250)]
 
 # # Check good_stop_counts
-# good_stop_counts[,.N, keyby = STOPS][,NSTOPS := N*STOPS][]
-# sum(good_stop_counts[,.N, keyby = STOPS][,NSTOPS := N*STOPS]$NSTOPS)
-# sum(good_stop_counts$WEIGHTED_STOPS)
-# length(unique(good_stop_counts$SITEID))
-# good_stop_counts[,.(STOPS = sum(STOPS)), by = SITEID][,.N, keyby = STOPS]
+good_stop_counts[,.N, keyby = STOPS][,NSTOPS := N*STOPS][]
+sum(good_stop_counts[,.N, keyby = STOPS][,NSTOPS := N*STOPS]$NSTOPS)
+sum(good_stop_counts$WEIGHTED_STOPS)
+length(unique(good_stop_counts$SITEID))
+good_stop_counts[,.(STOPS = sum(STOPS)), by = SITEID][,.N, keyby = STOPS]
 
 # Calculate null log-likelihood
 hurdle_ll <- sum(log(0.5)*nrow(good_stop_counts))
 count_ll <- sum(dpois(good_stop_counts[, STOPS], mean(good_stop_counts[, STOPS]), log = TRUE))
 hurdle_ll + count_ll
 
-# Need to update expressions below to account for updated employment category grouping
-# # Model 1 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time)
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# # Model 2 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time)
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# # Model 2 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time)
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail + 
-#   (Industrial + Office + Retail):log(dist)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# 
-# # Model 3 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time)
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail + 
-#   (Industrial):log(dist)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# 
-# # Model 4 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time) + Industrial + Office + Retail
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail + 
-#   (Industrial):log(dist)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# 
-# 
-# # Model 5 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time) + Industrial
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail + 
-#   (Industrial):log(dist)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# 
-# # Model 6 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time) + Industrial + log(TOTAL_EMPLOYEES)
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail + 
-#   (Industrial):log(dist) + log(TOTAL_EMPLOYEES)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# # Model 7 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Medical_Services) + 
-#   log1p(NEmp_Retail) + log(time) + Industrial + log(TOTAL_EMPLOYEES) + (1 | SITE_TAZID)
-# myZIFormula <- ~ log1p(HH) + log1p(NEmp_Industrial) + log1p(NEmp_Education) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Office + Retail + 
-#   (Industrial):log(dist) + log(TOTAL_EMPLOYEES)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts,
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# summary(fit)
-
-
-# # Model 8 glmmtmb
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Production) + 
-#   log1p(NEmp_Medical_Services) + log1p(NEmp_Transportation) +
-#   log1p(NEmp_Retail) + log(time) + Industrial + Transportation + log(TOTAL_EMPLOYEES) + 
-#   (1 | SITE_TAZID) + log(time):(Production) + Production
-# myZIFormula <- STOPF ~ log1p(HH) + log1p(NEmp_Production) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Production + Info_FIRE_Prof + Retail + Transportation +
-#   (Industrial):log(dist) + (Transportation):log(dist) + (Production):log(dist) + (Info_FIRE_Prof):log(dist) + 
-#   log(TOTAL_EMPLOYEES) + (1 | SITE_TAZID)
-# fit <- glmmTMB(myFormula, ziformula = myZIFormula, 
-#                data = good_stop_counts[STOPS>0],
-#                family = truncated_poisson(link = "log"),
-#                verbose = TRUE)
-# good_stop_counts[,STOPF:=STOPS>0]
-# fitzi <- glmmTMB(myZIFormula, 
-#                data = good_stop_counts,
-#                family = binomial(link = "logit"),
-#                verbose = TRUE)
-# fitzi2 <- glmmTMB(myZIFormula, 
-#                data = good_stop_counts,
-#                family = binomial(link = "cloglog"),
-#                verbose = TRUE)
-# summary(fit)
-# 
-# final_model <- fit
-# 
-# # Model diagnostics for count model
-# good_stops_filtered_count = good_stop_counts[STOPS > 0]
-# fit_trunc <- glmmTMB(myFormula,
-#                      data = good_stops_filtered_count,
-#                      family = truncated_poisson(link = "log"),
-#                      verbose = TRUE)
-# 
-# ### Final Model
-# # Perform some simulated residual checks
-# simres_goods_model = simulateResiduals(final_model)
-# simres_trunc_goods_model = simulateResiduals(fit_trunc)
-# 
-# # Plot residual plot
-# png("final_models/goods/Goods Model Residual.png", width = 1000, height = 500)
-# # testResiduals(simres_goods_model)
-# plotResiduals(simres_trunc_goods_model)
-# dev.off()
-# 
-# # Plot dispersion test
-# png("final_models/goods/Goods Model Dispersion.png", width = 1000, height = 500)
-# testDispersion(simres_goods_model)
-# dev.off()
-# 
-# # Tests count
-# png("final_models/goods/Goods Model Zero Count.png", width = 1000, height = 500)
-# testGeneric(simres_goods_model, function(x) sum(x==0))
-# dev.off()
-# 
-# # Tests count 1
-# png("final_models/goods/Goods Model One Count.png", width = 1000, height = 500)
-# testGeneric(simres_goods_model, function(x) sum(x==1))
-# dev.off()
-# 
-# # Tests count 2
-# png("final_models/goods/Goods Model Two Count.png", width = 1000, height = 500)
-# testGeneric(simres_goods_model, function(x) sum(x==2))
-# dev.off()
-# 
-# # Tests count 3
-# png("final_models/goods/Goods Model Three Count.png", width = 1000, height = 500)
-# testGeneric(simres_goods_model, function(x) sum(x==3))
-# dev.off()
-# 
-# # Tests count >=4
-# png("final_models/goods/Goods Model Four Plus Count.png", width = 1000, height = 500)
-# testGeneric(simres_goods_model, function(x) sum(x>=4))
-# dev.off()
-# 
-# # Tests uniformity
-# png("final_models/goods/Goods Model Uniformity Test.png", width = 1000, height = 500)
-# testUniformity(simres_trunc_goods_model)
-# dev.off()
-
-### Final Model
-#SEMCOG Formula
-# myFormula <- STOPS ~ log1p(HH) + log1p(NEmp_Production) + 
-#   log1p(NEmp_Medical_Services) + log1p(NEmp_Transportation) +
-#   log1p(NEmp_Retail) + log(time) + Industrial + Transportation + log(TOTAL_EMPLOYEES) +
-#   log(time):(Production) + Production | log1p(HH) + log1p(NEmp_Production) + 
-#   log1p(NEmp_Retail) + log(dist) + Industrial + Production + Info_FIRE_Prof + Retail + Transportation +
-#   (Industrial):log(dist) + (Transportation):log(dist) + (Production):log(dist) + (Info_FIRE_Prof):log(dist) + 
-#   log(TOTAL_EMPLOYEES)
-
-#CMAP FORMULA
-#due to grouped categories, we would have some repeats which i have commented out for comparison
+# CMAP FORMULA
 myFormula <- STOPS ~ 
   log1p(HH) + 
-  log1p(NEmp_Ed_Health_SocialServices) + 
+  log1p(NEmp_Ed_Health_Social_Public) + 
   log1p(NEmp_Office_Professional) + 
   log1p(NEmp_Retail) +
-  log1p(NEmp_Service_Public) + 
   log1p(NEmp_Transport_Industry) +
   log(time) + 
   log(TOTAL_EMPLOYEES) +
@@ -283,7 +85,7 @@ myFormula <- STOPS ~
   log(dist) + 
   Admin_Support_Waste + 
   Construction +
-  Ed_Health_SocialServices +
+  Ed_Health_Social_Public +
   Office_Professional + 
   #Retail + removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
   Service_FoodDrink + 
@@ -300,7 +102,6 @@ goods.fit <- hurdle(formula = myFormula, data = good_stop_counts,
                       zero.dist="binomial",
                       link="logit")
 summary(goods.fit)
-goods.fit.copy <- goods.fit
 
 # # Test
 # good_stop_counts[, STOPSPRED := predict(object = goods.fit)]
@@ -311,23 +112,6 @@ goods.fit.copy <- goods.fit
 # sum(good_stop_counts[,.N, keyby = STOPSPREDMC][,NSTOPS := N*STOPSPREDMC]$NSTOPS)
 # good_stop_counts[,.(STOPS = sum(STOPS)), by = SITEID][,.N, keyby = STOPS]
 # good_stop_counts[,.(STOPS = sum(STOPSPREDMC)), by = SITEID][,.N, keyby = STOPS]
-
-
-# Calibration trick: estimate with separate time parameters but use the shared value from the previous model
-# Copy population level estimate to hurdle model for prediction
-# coef_names <- names(goods.fit$coefficients$count)
-# count_par <- length(goods.fit$coefficients$count)
-# goods.fit$coefficients$count <- final_model$fit$par[seq_len(count_par)]
-# names(goods.fit$coefficients$count) <- coef_names
-# 
-# coef_names <- names(goods.fit$coefficients$zero)
-# zero_par <- length(goods.fit$coefficients$zero)
-# goods.fit$coefficients$zero <- -final_model$fit$par[(count_par+seq_len(zero_par))]
-# names(goods.fit$coefficients$zero) <- coef_names
-# Only works when passing newdata to predict function.
-
-summary(goods.fit)
-
 
 # Trim all the junk from the hurdle model object to save space
 # residuals, model, weights, fitted.values
@@ -347,6 +131,5 @@ saveRDS(finalModel, file = file.path(model_loc, "new_models/goods/cv_goods_model
 options(width = 10000)
 sink(file = file.path(model_loc, "new_models/goods/goods_model_results.txt"))
 print(summary(goods.fit))
-print(summary(finalModel))
 sink()
 options(width = 137)

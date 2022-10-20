@@ -44,9 +44,8 @@ apollo_beta =
     beta_v1_industry_construction = 0,
     beta_v1_industry_transport_industry = 0,
     beta_v1_industry_admin_support_waste = 0,
-    beta_v1_industry_ed_health_socialservices = 1,
+    beta_v1_industry_ed_health_social_public = 1,
     beta_v1_industry_service_other = 0,
-    #beta_v1_industry_service_public = 0,
     beta_v1_industry_office_professional = 0,
     beta_v1_industry_service_foodDrink = 2,
     
@@ -55,9 +54,8 @@ apollo_beta =
     beta_v2_industry_construction = 0,
     beta_v2_industry_transport_industry = 0,
     beta_v2_industry_admin_support_waste = 0,
-    beta_v2_industry_ed_health_socialservices = 2,
+    beta_v2_industry_ed_health_social_public = 2,
     beta_v2_industry_service_other = 0,
-    #beta_v2_industry_service_public = 0,
     beta_v2_industry_office_professional = 0,
     beta_v2_industry_service_foodDrink = 1,
     
@@ -88,7 +86,7 @@ apollo_fixed =
     "beta_v1_activity_deliver_pickup", "beta_v2_activity_deliver_pickup",
     "beta_v1_dist_00_02", "beta_v2_dist_00_02",
     "beta_v1_industry_service_foodDrink", "beta_v2_industry_service_foodDrink",
-    "beta_v1_industry_ed_health_socialservices", "beta_v2_industry_ed_health_socialservices")
+    "beta_v1_industry_ed_health_social_public", "beta_v2_industry_ed_health_social_public")
 
 # ################################################################# #
 #### GROUP AND VALIDATE INPUTS                                   ####
@@ -124,9 +122,8 @@ apollo_probabilities =
     beta_v1_industry_construction *	industry_construction +
     beta_v1_industry_transport_industry *	industry_transport_industry +
     beta_v1_industry_admin_support_waste * industry_admin_support_waste +
-    beta_v1_industry_ed_health_socialservices *	industry_ed_health_socialservices +
+    beta_v1_industry_ed_health_social_public *	industry_ed_health_social_public +
     beta_v1_industry_service_other * industry_service_other + 
-    #beta_v1_industry_service_public *	industry_service_public +
     beta_v1_industry_office_professional *	industry_office_professional +
     beta_v1_industry_service_foodDrink * industry_service_foodDrink + 
     beta_v1_activity_deliver_pickup * activity_deliver_pickup +
@@ -144,9 +141,8 @@ apollo_probabilities =
     beta_v2_industry_construction *	industry_construction +
     beta_v2_industry_transport_industry *	industry_transport_industry +
     beta_v2_industry_admin_support_waste * industry_admin_support_waste +
-    beta_v2_industry_ed_health_socialservices *	industry_ed_health_socialservices +
+    beta_v2_industry_ed_health_social_public *	industry_ed_health_social_public +
     beta_v2_industry_service_other * industry_service_other + 
-    #beta_v2_industry_service_public *	industry_service_public +
     beta_v2_industry_office_professional *	industry_office_professional +
     beta_v2_industry_service_foodDrink * industry_service_foodDrink + 
     beta_v2_activity_deliver_pickup * activity_deliver_pickup +

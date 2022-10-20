@@ -1,0 +1,50 @@
+
+Call:
+hurdle(formula = myFormula, data = service_stop_counts, dist = "poisson", 
+    zero.dist = "binomial", link = "logit")
+
+Pearson residuals:
+      Min        1Q    Median        3Q       Max 
+ -1.03708  -0.02953  -0.01884  -0.01236 235.42419 
+
+Count model coefficients (truncated poisson with log link):
+                                  Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                       -0.27254    0.26485  -1.029  0.30346    
+log1p(NEmp_Admin_Support_Waste)    0.19902    0.06568   3.030  0.00245 ** 
+log1p(NEmp_Office_Professional)   -0.13662    0.04816  -2.837  0.00456 ** 
+log1p(NEmp_Service_FoodDrink)     -0.07133    0.03249  -2.196  0.02811 *  
+log1p(NEmp_Service_Other)          0.09984    0.05056   1.975  0.04830 *  
+log1p(NEmp_Transport_Industry)     0.04589    0.02976   1.542  0.12304    
+log(time)                         -0.42523    0.05838  -7.283 3.26e-13 ***
+log(time):Construction             0.20615    0.03559   5.792 6.95e-09 ***
+log(time):Ed_Health_Social_Public  0.27273    0.04674   5.835 5.37e-09 ***
+Zero hurdle model coefficients (binomial with logit link):
+                                         Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                              -2.90142    0.19239 -15.081  < 2e-16 ***
+log1p(HH)                                 0.05171    0.01500   3.447 0.000567 ***
+log1p(NEmp_Admin_Support_Waste)           0.16808    0.04067   4.133 3.58e-05 ***
+log1p(NEmp_Ed_Health_Social_Public)       0.02676    0.01912   1.400 0.161633    
+log1p(NEmp_Office_Professional)           0.07422    0.02861   2.594 0.009476 ** 
+log1p(NEmp_Retail)                        0.04778    0.02545   1.878 0.060422 .  
+log1p(NEmp_Service_FoodDrink)             0.03404    0.02023   1.683 0.092392 .  
+log1p(NEmp_Service_Other)                -0.09453    0.03095  -3.055 0.002254 ** 
+log1p(NEmp_Transport_Industry)            0.05697    0.01839   3.098 0.001947 ** 
+Admin_Support_Waste                       2.24760    0.17469  12.866  < 2e-16 ***
+Construction                              0.29539    0.11095   2.662 0.007763 ** 
+Ed_Health_Social_Public                   0.45676    0.12613   3.621 0.000293 ***
+Office_Professional                       0.33352    0.17919   1.861 0.062709 .  
+Service_FoodDrink                         0.58350    0.41459   1.407 0.159307    
+Service_Other                             0.02984    0.22704   0.131 0.895421    
+Transport_Industry                       -0.01065    0.11676  -0.091 0.927337    
+Wholesale                                 0.50415    0.13768   3.662 0.000251 ***
+log(time)                                -1.88006    0.02869 -65.533  < 2e-16 ***
+log(TOTAL_EMPLOYEES)                      0.29888    0.02028  14.734  < 2e-16 ***
+Admin_Support_Waste:log(TOTAL_EMPLOYEES) -0.92423    0.10063  -9.185  < 2e-16 ***
+Office_Professional:log(TOTAL_EMPLOYEES) -0.30049    0.05633  -5.334 9.59e-08 ***
+Service_FoodDrink:log(TOTAL_EMPLOYEES)   -0.50476    0.11425  -4.418 9.96e-06 ***
+Service_Other:log(TOTAL_EMPLOYEES)        0.09779    0.07404   1.321 0.186592    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Number of iterations in BFGS optimization: 32 
+Log-likelihood: -1.204e+04 on 32 Df

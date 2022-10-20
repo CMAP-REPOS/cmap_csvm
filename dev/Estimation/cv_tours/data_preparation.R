@@ -73,25 +73,15 @@ cvs_establishment[,
 cvs_establishment[, NAICS2 := NULL]
 cvs_establishment[, NAICS3 := NULL]
 
-# cvs_establishment[, industry_retail := 1 * (model_emp_cat %in% c('Retail'))]
-# cvs_establishment[, industry_industrial := 1 * (model_emp_cat %in% c("Industrial"))]
-# cvs_establishment[, industry_production := 1 * (model_emp_cat %in% c("Production"))]
-# cvs_establishment[, industry_ed_pub_other_ser := 1 * (model_emp_cat %in% c("Ed_Pub_Other_Ser"))]
-# cvs_establishment[, industry_transportation := 1 * (model_emp_cat %in% c("Transportation"))]
-# cvs_establishment[, industry_info_fire_prof := 1 * (model_emp_cat %in% c("Info_FIRE_Prof"))]
-# cvs_establishment[, industry_medical_services := 1 * (model_emp_cat %in% c("Medical_Services"))]
-# cvs_establishment[, industry_leisure := 1 * (model_emp_cat %in% c("Leisure"))]
-
 cvs_establishment[, industry_retail := 1 * (model_emp_cat %in% c('Retail'))]
 cvs_establishment[, industry_wholesale := 1 * (model_emp_cat %in% c('Wholesale'))]
 cvs_establishment[, industry_construction := 1 * (model_emp_cat %in% c("Construction"))]
 cvs_establishment[, industry_transport_industry := 1 * (model_emp_cat %in% c("Transport_Industry"))]
 cvs_establishment[, industry_admin_support_waste := 1 * (model_emp_cat %in% c("Admin_Support_Waste"))]
-cvs_establishment[, industry_ed_health_socialservices := 1 * (model_emp_cat %in% c("Ed_Health_SocialServices"))]
+cvs_establishment[, industry_ed_health_social_public := 1 * (model_emp_cat %in% c("Ed_Health_Social_Public"))]
 cvs_establishment[, industry_service_other := 1 * (model_emp_cat %in% c("Service_Other"))]
 cvs_establishment[, industry_office_professional := 1 * (model_emp_cat %in% c("Office_Professional"))]
 cvs_establishment[, industry_service_foodDrink := 1 * (model_emp_cat %in% c("Service_FoodDrink"))]
-
 
 # types of tours
 # 01 - base to base, single stop
@@ -254,9 +244,8 @@ names_to_keep =
     "industry_construction",
     "industry_transport_industry",
     "industry_admin_support_waste",
-    "industry_ed_health_socialservices",
+    "industry_ed_health_social_public",
     "industry_service_other",
-    "industry_service_public",
     "industry_office_professional",
     "industry_service_foodDrink")
 

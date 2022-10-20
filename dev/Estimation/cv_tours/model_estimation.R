@@ -97,14 +97,14 @@ apollo_beta =
     asc_nb0_industry_admin_support_waste = 0,  
     asc_nbs_industry_admin_support_waste = 0,  
     asc_nnm_industry_admin_support_waste = 0,
-    asc_bbm_industry_ed_health_socialservices = 0,
-    asc_bbs_industry_ed_health_socialservices = 0,
-    asc_bnm_industry_ed_health_socialservices = 0,
-    asc_bns_industry_ed_health_socialservices = 0,
-    asc_nbm_industry_ed_health_socialservices = 0,  
-    asc_nb0_industry_ed_health_socialservices = 0,  
-    asc_nbs_industry_ed_health_socialservices = 0,  
-    asc_nnm_industry_ed_health_socialservices = 0,
+    asc_bbm_industry_ed_health_social_public = 0,
+    asc_bbs_industry_ed_health_social_public = 0,
+    asc_bnm_industry_ed_health_social_public = 0,
+    asc_bns_industry_ed_health_social_public = 0,
+    asc_nbm_industry_ed_health_social_public = 0,  
+    asc_nb0_industry_ed_health_social_public = 0,  
+    asc_nbs_industry_ed_health_social_public = 0,  
+    asc_nnm_industry_ed_health_social_public = 0,
     asc_bbm_industry_service_other = 0,
     asc_bbs_industry_service_other = 0,
     asc_bnm_industry_service_other = 0,
@@ -191,14 +191,14 @@ apollo_fixed =
     "asc_nb0_industry_admin_support_waste",  
     "asc_nbs_industry_admin_support_waste",  
     "asc_nnm_industry_admin_support_waste",
-    "asc_bbm_industry_ed_health_socialservices",
-    "asc_bbs_industry_ed_health_socialservices",
-    "asc_bnm_industry_ed_health_socialservices",
-    "asc_bns_industry_ed_health_socialservices",
-    "asc_nbm_industry_ed_health_socialservices",  
-    "asc_nb0_industry_ed_health_socialservices",  
-    "asc_nbs_industry_ed_health_socialservices",  
-    "asc_nnm_industry_ed_health_socialservices",
+    "asc_bbm_industry_ed_health_social_public",
+    "asc_bbs_industry_ed_health_social_public",
+    "asc_bnm_industry_ed_health_social_public",
+    "asc_bns_industry_ed_health_social_public",
+    "asc_nbm_industry_ed_health_social_public",  
+    "asc_nb0_industry_ed_health_social_public",  
+    "asc_nbs_industry_ed_health_social_public",  
+    "asc_nnm_industry_ed_health_social_public",
     "asc_bbm_industry_service_other",
     "asc_bbs_industry_service_other",
     "asc_bnm_industry_service_other",
@@ -261,14 +261,14 @@ apollo_probabilities =
   ### List of utilities: these must use the same names as in mnl_settings, order is irrelevant
   V = list()
 
-  V[['bbm']] = asc_bbm + asc_bbm_industry_retail * industry_retail + asc_bbm_industry_wholesale * industry_wholesale + asc_bbm_industry_construction * industry_construction + asc_bbm_industry_transport_industry * industry_transport_industry + asc_bbm_industry_admin_support_waste * industry_admin_support_waste + asc_bbm_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_bbm_industry_service_other * industry_service_other + asc_bbm_industry_office_professional * industry_office_professional + asc_bbm_industry_service_foodDrink * industry_service_foodDrink + asc_bbm_is_med_veh * is_med_veh + asc_bbm_is_hvy_veh * is_hvy_veh
-  V[['bbs']] = asc_bbs + asc_bbs_industry_retail * industry_retail + asc_bbs_industry_wholesale * industry_wholesale + asc_bbs_industry_construction * industry_construction + asc_bbs_industry_transport_industry * industry_transport_industry + asc_bbs_industry_admin_support_waste * industry_admin_support_waste + asc_bbs_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_bbs_industry_service_other * industry_service_other + asc_bbs_industry_office_professional * industry_office_professional + asc_bbs_industry_service_foodDrink * industry_service_foodDrink + asc_bbs_is_med_veh * is_med_veh + asc_bbs_is_hvy_veh * is_hvy_veh
-  V[['bnm']] = asc_bnm + asc_bnm_industry_retail * industry_retail + asc_bnm_industry_wholesale * industry_wholesale + asc_bnm_industry_construction * industry_construction + asc_bnm_industry_transport_industry * industry_transport_industry + asc_bnm_industry_admin_support_waste * industry_admin_support_waste + asc_bnm_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_bnm_industry_service_other * industry_service_other + asc_bnm_industry_office_professional * industry_office_professional + asc_bnm_industry_service_foodDrink * industry_service_foodDrink + asc_bnm_is_med_veh * is_med_veh + asc_bnm_is_hvy_veh * is_hvy_veh
-  V[['bns']] = asc_bns + asc_bns_industry_retail * industry_retail + asc_bns_industry_wholesale * industry_wholesale + asc_bns_industry_construction * industry_construction + asc_bns_industry_transport_industry * industry_transport_industry + asc_bns_industry_admin_support_waste * industry_admin_support_waste + asc_bns_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_bns_industry_service_other * industry_service_other + asc_bns_industry_office_professional * industry_office_professional + asc_bns_industry_service_foodDrink * industry_service_foodDrink + asc_bns_is_med_veh * is_med_veh + asc_bns_is_hvy_veh * is_hvy_veh
-  V[['nbm']] = asc_nbm + asc_nbm_industry_retail * industry_retail + asc_nbm_industry_wholesale * industry_wholesale + asc_nbm_industry_construction * industry_construction + asc_nbm_industry_transport_industry * industry_transport_industry + asc_nbm_industry_admin_support_waste * industry_admin_support_waste + asc_nbm_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_nbm_industry_service_other * industry_service_other + asc_nbm_industry_office_professional * industry_office_professional + asc_nbm_industry_service_foodDrink * industry_service_foodDrink + asc_nbm_is_med_veh * is_med_veh + asc_nbm_is_hvy_veh * is_hvy_veh
-  V[['nb0']] = asc_nb0 + asc_nb0_industry_retail * industry_retail + asc_nb0_industry_wholesale * industry_wholesale + asc_nb0_industry_construction * industry_construction + asc_nb0_industry_transport_industry * industry_transport_industry + asc_nb0_industry_admin_support_waste * industry_admin_support_waste + asc_nb0_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_nb0_industry_service_other * industry_service_other + asc_nb0_industry_office_professional * industry_office_professional + asc_nb0_industry_service_foodDrink * industry_service_foodDrink + asc_nb0_is_med_veh * is_med_veh + asc_nb0_is_hvy_veh * is_hvy_veh
-  V[['nbs']] = asc_nbs + asc_nbs_industry_retail * industry_retail + asc_nbs_industry_wholesale * industry_wholesale + asc_nbs_industry_construction * industry_construction + asc_nbs_industry_transport_industry * industry_transport_industry + asc_nbs_industry_admin_support_waste * industry_admin_support_waste + asc_nbs_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_nbs_industry_service_other * industry_service_other + asc_nbs_industry_office_professional * industry_office_professional + asc_nbs_industry_service_foodDrink * industry_service_foodDrink + asc_nbs_is_med_veh * is_med_veh + asc_nbs_is_hvy_veh * is_hvy_veh
-  V[['nnm']] = asc_nnm + asc_nnm_industry_retail * industry_retail + asc_nnm_industry_wholesale * industry_wholesale + asc_nnm_industry_construction * industry_construction + asc_nnm_industry_transport_industry * industry_transport_industry + asc_nnm_industry_admin_support_waste * industry_admin_support_waste + asc_nnm_industry_ed_health_socialservices * industry_ed_health_socialservices + asc_nnm_industry_service_other * industry_service_other + asc_nnm_industry_office_professional * industry_office_professional + asc_nnm_industry_service_foodDrink * industry_service_foodDrink + asc_nnm_is_med_veh * is_med_veh + asc_nnm_is_hvy_veh * is_hvy_veh
+  V[['bbm']] = asc_bbm + asc_bbm_industry_retail * industry_retail + asc_bbm_industry_wholesale * industry_wholesale + asc_bbm_industry_construction * industry_construction + asc_bbm_industry_transport_industry * industry_transport_industry + asc_bbm_industry_admin_support_waste * industry_admin_support_waste + asc_bbm_industry_ed_health_social_public * industry_ed_health_social_public + asc_bbm_industry_service_other * industry_service_other + asc_bbm_industry_office_professional * industry_office_professional + asc_bbm_industry_service_foodDrink * industry_service_foodDrink + asc_bbm_is_med_veh * is_med_veh + asc_bbm_is_hvy_veh * is_hvy_veh
+  V[['bbs']] = asc_bbs + asc_bbs_industry_retail * industry_retail + asc_bbs_industry_wholesale * industry_wholesale + asc_bbs_industry_construction * industry_construction + asc_bbs_industry_transport_industry * industry_transport_industry + asc_bbs_industry_admin_support_waste * industry_admin_support_waste + asc_bbs_industry_ed_health_social_public * industry_ed_health_social_public + asc_bbs_industry_service_other * industry_service_other + asc_bbs_industry_office_professional * industry_office_professional + asc_bbs_industry_service_foodDrink * industry_service_foodDrink + asc_bbs_is_med_veh * is_med_veh + asc_bbs_is_hvy_veh * is_hvy_veh
+  V[['bnm']] = asc_bnm + asc_bnm_industry_retail * industry_retail + asc_bnm_industry_wholesale * industry_wholesale + asc_bnm_industry_construction * industry_construction + asc_bnm_industry_transport_industry * industry_transport_industry + asc_bnm_industry_admin_support_waste * industry_admin_support_waste + asc_bnm_industry_ed_health_social_public * industry_ed_health_social_public + asc_bnm_industry_service_other * industry_service_other + asc_bnm_industry_office_professional * industry_office_professional + asc_bnm_industry_service_foodDrink * industry_service_foodDrink + asc_bnm_is_med_veh * is_med_veh + asc_bnm_is_hvy_veh * is_hvy_veh
+  V[['bns']] = asc_bns + asc_bns_industry_retail * industry_retail + asc_bns_industry_wholesale * industry_wholesale + asc_bns_industry_construction * industry_construction + asc_bns_industry_transport_industry * industry_transport_industry + asc_bns_industry_admin_support_waste * industry_admin_support_waste + asc_bns_industry_ed_health_social_public * industry_ed_health_social_public + asc_bns_industry_service_other * industry_service_other + asc_bns_industry_office_professional * industry_office_professional + asc_bns_industry_service_foodDrink * industry_service_foodDrink + asc_bns_is_med_veh * is_med_veh + asc_bns_is_hvy_veh * is_hvy_veh
+  V[['nbm']] = asc_nbm + asc_nbm_industry_retail * industry_retail + asc_nbm_industry_wholesale * industry_wholesale + asc_nbm_industry_construction * industry_construction + asc_nbm_industry_transport_industry * industry_transport_industry + asc_nbm_industry_admin_support_waste * industry_admin_support_waste + asc_nbm_industry_ed_health_social_public * industry_ed_health_social_public + asc_nbm_industry_service_other * industry_service_other + asc_nbm_industry_office_professional * industry_office_professional + asc_nbm_industry_service_foodDrink * industry_service_foodDrink + asc_nbm_is_med_veh * is_med_veh + asc_nbm_is_hvy_veh * is_hvy_veh
+  V[['nb0']] = asc_nb0 + asc_nb0_industry_retail * industry_retail + asc_nb0_industry_wholesale * industry_wholesale + asc_nb0_industry_construction * industry_construction + asc_nb0_industry_transport_industry * industry_transport_industry + asc_nb0_industry_admin_support_waste * industry_admin_support_waste + asc_nb0_industry_ed_health_social_public * industry_ed_health_social_public + asc_nb0_industry_service_other * industry_service_other + asc_nb0_industry_office_professional * industry_office_professional + asc_nb0_industry_service_foodDrink * industry_service_foodDrink + asc_nb0_is_med_veh * is_med_veh + asc_nb0_is_hvy_veh * is_hvy_veh
+  V[['nbs']] = asc_nbs + asc_nbs_industry_retail * industry_retail + asc_nbs_industry_wholesale * industry_wholesale + asc_nbs_industry_construction * industry_construction + asc_nbs_industry_transport_industry * industry_transport_industry + asc_nbs_industry_admin_support_waste * industry_admin_support_waste + asc_nbs_industry_ed_health_social_public * industry_ed_health_social_public + asc_nbs_industry_service_other * industry_service_other + asc_nbs_industry_office_professional * industry_office_professional + asc_nbs_industry_service_foodDrink * industry_service_foodDrink + asc_nbs_is_med_veh * is_med_veh + asc_nbs_is_hvy_veh * is_hvy_veh
+  V[['nnm']] = asc_nnm + asc_nnm_industry_retail * industry_retail + asc_nnm_industry_wholesale * industry_wholesale + asc_nnm_industry_construction * industry_construction + asc_nnm_industry_transport_industry * industry_transport_industry + asc_nnm_industry_admin_support_waste * industry_admin_support_waste + asc_nnm_industry_ed_health_social_public * industry_ed_health_social_public + asc_nnm_industry_service_other * industry_service_other + asc_nnm_industry_office_professional * industry_office_professional + asc_nnm_industry_service_foodDrink * industry_service_foodDrink + asc_nnm_is_med_veh * is_med_veh + asc_nnm_is_hvy_veh * is_hvy_veh
 
 
   ### Define settings for MNL model component
@@ -332,20 +332,6 @@ apollo_modelOutput(model)
 # ----------------------------------------------------------------- #
 #---- FORMATTED OUTPUT (TO FILE, using model name)               ----
 # ----------------------------------------------------------------- #
-
-# comparison to old model
-
-model_old = readRDS(file.path(model_loc, "cv_tours_model_semcog.rds"))
-
-apollo_modelOutput(model_old)
-
-comparison = 
-  data.table(
-    coefficients = names(model_old$estimate), 
-    old = model_old$estimate, 
-    new = model$estimate)
-
-comparison
 
 saveRDS(model, file.path(model_loc, "cv_tours_model.rds"))
 
