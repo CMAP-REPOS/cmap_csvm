@@ -7,6 +7,9 @@ db_build <- function(data = NULL){
   # Begin progress tracking
   progressStart(action = "Writing...", task = "Dashboard", dir = SCENARIO_LOG_PATH, subtasks = FALSE)
   
+  # Pandoc location inside the model
+  rmarkdown::find_pandoc(dir = SYSTEM_PANDOC_PATH)
+  
   # Render the dashboard into HTML
   db_build_render()
 
