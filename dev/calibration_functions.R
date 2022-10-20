@@ -55,6 +55,8 @@ calibrate_firm_sim_taz_land_use <- function(submodel_calibrated, submodel_result
     # No parameter adjustments for this model, difference means that there is an error somewhere in the code or inputs
     # For example mismatches in the SE data coding and the input data. Manual inspection is required
     submodel_parameters <- submodel_comparison[Difference > submodel_difference_threshold]
+    # Set submodel_calibrated to true to stop iterations
+    submodel_calibrated <- TRUE
   }
   
   # return a list of items to support calibration and debugging
@@ -105,6 +107,8 @@ calibrate_firm_sim_scale_employees <- function(submodel_calibrated, submodel_res
     # No parameter adjustments for this model, difference means that there is an error somewhere in the code or inputs
     # For example mismatches in the SE data coding and the input data. Manual inspection is required
     submodel_parameters <- submodel_comparison[Difference > submodel_difference_threshold]
+    # Set submodel_calibrated to true to stop iterations
+    submodel_calibrated <- TRUE
   }
 
   # return a list of items to support calibration and debugging
@@ -184,6 +188,8 @@ calibrate_cv_sim_activities <- function(submodel_calibrated, submodel_results, m
     # or that the calibration criteria are unreasonably tight for this approach
     # Manual inspection is required
     submodel_parameters <- submodel_comparison[Difference > Threshold]
+    # Set submodel_calibrated to true to stop iterations
+    submodel_calibrated <- TRUE
   }
   
   # return a list of items to support calibration and debugging

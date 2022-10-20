@@ -19,13 +19,13 @@ temp.envir$branch.limit <- data.table(EmpCatName = sort(unique(empcats$EmpCatNam
                                       brlim.mu = temp.envir$branch.limit$brlim.mu, 
                                       brlim.sd = temp.envir$branch.limit$brlim.sd)
 
-# add cal parameters
-temp.envir$cv_calibrated_parameters <- fread("./dev/Calibration/cv_calibrated_parameters.csv")
+# # add cal parameters
+# temp.envir$cv_calibrated_parameters <- fread("./dev/Calibration/cv_calibrated_parameters.csv")
 
 # Remove anything that should not be in there
 # Contents should be
 cv_settings_objects <- c("d_bars", "hurdle_support", "branch.limit", 
-                         ".Random.seed", "numZones", "deviance.threshold",
-                         "cv_calibrated_parameters")
+                         ".Random.seed", "numZones", "deviance.threshold")
+#,"cv_calibrated_parameters")
 
 save(list = cv_settings_objects, file = "lib/data/cv_settings.RData", envir = temp.envir)

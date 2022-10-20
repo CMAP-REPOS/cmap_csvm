@@ -185,6 +185,9 @@ gc(verbose = FALSE)
 source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim.R"))
 source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim_process_inputs.R"))
 
+# Set the skim processing to false to use existing skims (will still run if they are not present)
+USER_PROCESS_SKIMS <- FALSE 
+
 # Process inputs
 cv_inputs <- new.env()
 ScenarioFirms <- cv_sim_process_inputs(envir = cv_inputs)

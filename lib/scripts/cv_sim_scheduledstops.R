@@ -95,9 +95,6 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
   names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))]
   firmStops.Service <- merge(firmStops.Service, TAZLandUseCVTM[,cols, with = FALSE], by.x = "DTAZ", by.y = "TAZ")
   
-  # Calibration adjustment of hurdle constant
-  # cv_service_model$coefficients$zero["(Intercept)"] <- cv_service_model$coefficients$zero["(Intercept)"] + CAL_CVTM_SCHED_SERVICE
-
   # Simulate number of scheduled stops
   firmStops.Service[, NStops := as.integer(montecarlo.predict(object = cv_service_model, newdata = .SD, at = hurdle_support))]
   
@@ -128,9 +125,6 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
   names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))]
   
   firmStops.Goods <- merge(firmStops.Goods, TAZLandUseCVTM[,cols, with = FALSE], by.x = "DTAZ", by.y = "TAZ")
-  
-  # Calibration adjustment of hurdle constant
-  # cv_goods_model$coefficients$zero["(Intercept)"] <- cv_goods_model$coefficients$zero["(Intercept)"] + CAL_CVTM_SCHED_GOODS
   
   # Simulate number of scheduled stops
   firmStops.Goods[, NStops := as.integer(montecarlo.predict(object = cv_goods_model, newdata = .SD, at = hurdle_support))]

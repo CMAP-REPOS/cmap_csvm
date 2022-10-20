@@ -81,7 +81,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
       ### List of utilities: these must use the same names as in mnl_settings, order is irrelevant
       V = list()
       V[['light']]  = 
-        asc_light + CAL_asc_light + 
+        asc_light
         beta_v1_industry_retail *	industry_retail +
         beta_v1_industry_wholesale * industry_wholesale +
         beta_v1_industry_construction *	industry_construction +
@@ -93,14 +93,14 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v1_industry_service_foodDrink * industry_service_foodDrink + 
         beta_v1_activity_deliver_pickup * activity_deliver_pickup +
         beta_v1_activity_service * activity_service +
-        beta_v1_dist_00_02 * dist_00_02 * CAL_beta_v1_dist_00_02 + 
-        beta_v1_dist_02_05 * dist_02_05 * CAL_beta_v1_dist_02_05 + 
-        beta_v1_dist_05_10 * dist_05_10 * CAL_beta_v1_dist_05_10 + 
-        beta_v1_dist_10_20 * dist_10_20 * CAL_beta_v1_dist_10_20 + 
-        beta_v1_dist_20_p  * dist_20_p * CAL_beta_v1_dist_20_p
+        beta_v1_dist_00_02 * dist_00_02 + 
+        beta_v1_dist_02_05 * dist_02_05 + 
+        beta_v1_dist_05_10 * dist_05_10 + 
+        beta_v1_dist_10_20 * dist_10_20 + 
+        beta_v1_dist_20_p  * dist_20_p 
       
       V[['medium']] = 
-        asc_medium + CAL_asc_medium +
+        asc_medium + 
         beta_v2_industry_retail *	industry_retail +
         beta_v2_industry_wholesale * industry_wholesale +
         beta_v2_industry_construction *	industry_construction +
@@ -112,13 +112,13 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v2_industry_service_foodDrink * industry_service_foodDrink +
         beta_v2_activity_deliver_pickup * activity_deliver_pickup +
         beta_v2_activity_service * activity_service +
-        beta_v2_dist_00_02 * dist_00_02 * CAL_beta_v2_dist_00_02 + 
-        beta_v2_dist_02_05 * dist_02_05 * CAL_beta_v2_dist_02_05+ 
-        beta_v2_dist_05_10 * dist_05_10 * CAL_beta_v2_dist_05_10 + 
-        beta_v2_dist_10_20 * dist_10_20 * CAL_beta_v2_dist_10_20 + 
-        beta_v2_dist_20_p  * dist_20_p * CAL_beta_v2_dist_20_p
+        beta_v2_dist_00_02 * dist_00_02 + 
+        beta_v2_dist_02_05 * dist_02_05 + 
+        beta_v2_dist_05_10 * dist_05_10 + 
+        beta_v2_dist_10_20 * dist_10_20 + 
+        beta_v2_dist_20_p  * dist_20_p 
       
-      V[['heavy']]  = asc_heavy + CAL_asc_heavy
+      V[['heavy']]  = asc_heavy
       
       ### Define settings for MNL model component
       mnl_settings = list(

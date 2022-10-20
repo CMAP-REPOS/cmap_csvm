@@ -31,14 +31,6 @@ cv_sim_process_inputs <- function(envir) {
   ScenarioFirms <- firm_sim_results[["ScenarioFirms"]][!is.na(TAZ)]
   setnames(ScenarioFirms, "n2", "EmpCatName")
 
-  ## Add calibrated parameters to environment individually
-  envir[["cv_calibrated_parameters"]]
-  for(i in 1:nrow(envir[["cv_calibrated_parameters"]])){
-         assign(envir[["cv_calibrated_parameters"]]$Variable[i],
-         envir[["cv_calibrated_parameters"]]$Value[i],
-         envir = envir)
-  }
-
   ### Load scenario input files
 
   ### Load skims
