@@ -110,19 +110,19 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   
   # Process and enumerate the CBP data
   progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
-  FirmsDomestic <- firm_synthesis_enumerate(cbp = cbp,
+  ScenarioFirms <- firm_synthesis_enumerate(cbp = cbp,
                                             EmpBounds = EmpBounds,
                                             emp_control_taz = emp_control_taz,
                                             cbp_ag = cbp_ag)
   
   # Allocate from counties to mesozones
   progressUpdate(prop = 2/4, dir = SCENARIO_LOG_PATH)
-  FirmsDomestic <- firm_synthesis_mesozones(Firms = FirmsDomestic,
+  ScenarioFirms <- firm_synthesis_mesozones(Firms = ScenarioFirms,
                                             mzemp = mzemp)
  
   # Scale the employment to TAZ controls
   progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
-  FirmsDomestic <- firm_synthesis_scaling(Firms = FirmsDomestic,
+  ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
                                           emp_control_taz = emp_control_taz,
                                           TAZ_System = TAZ_System,
                                           EmpBounds = EmpBounds)
@@ -138,12 +138,12 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
     progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
     
     load(SCENARIO_BASEFIRMS)
-    FirmsDomestic <- firm_sim_results$ScenarioFirms
+    ScenarioFirms <- firm_sim_results$ScenarioFirms
     rm(firm_sim_results)
     
     # Scale the emplyoment
     progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
-    FirmsDomestic <- firm_synthesis_scaling(Firms = FirmsDomestic,
+    ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
                                             emp_control_taz = emp_control_taz,
                                             TAZ_System = TAZ_System,
                                             EmpBounds = EmpBounds)
@@ -159,7 +159,7 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
 progressUpdate(prop = 4/4, dir = SCENARIO_LOG_PATH)
 cat("Adding Employment Group Variables", "\n")
 
-FirmsDomestic[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
+ScenarioFirms[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
             EmpCatGroupedName := i.EmpCatGroupedName,
             on = "n2"]
 
@@ -167,7 +167,7 @@ FirmsDomestic[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)],
 progressEnd(dir = SCENARIO_LOG_PATH)
 
 # Return results
-firm_sim_results <- list(ScenarioFirms = FirmsDomestic, 
+firm_sim_results <- list(ScenarioFirms = ScenarioFirms, 
             TAZLandUseCVTM = TAZLandUseCVTM)
 
 # End progress tracking
@@ -176,14 +176,6 @@ progressEnd(dir = SCENARIO_LOG_PATH)
 # Save inputs and results
 save(firm_sim_results, firm_inputs, file = file.path(SCENARIO_OUTPUT_PATH,
                                                      SYSTEM_FIRMSYN_OUTPUTNAME))
-lapply(1:length(firm_sim_results),
-       function(x) fwrite(firm_sim_results[[x]],
-                          file = file.path(SCENARIO_OUTPUT_PATH,
-                                           paste(SYSTEM_FIRMSYN_OUTPUTNAME,
-                                                 names(firm_sim_results)[x],
-                                                 "csv",
-                                                 sep = "."))))
-
 rm(list = names(firm_inputs)) # For scratch only, remove variables that were added from model component environment
 rm(firm_sim_results, firm_inputs, Establishments)
 gc(verbose = FALSE)
