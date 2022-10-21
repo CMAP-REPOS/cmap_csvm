@@ -133,7 +133,7 @@ choice_data[, industry_admin_support_waste := 1 * (model_emp_cat %in% c("Admin_S
 choice_data[, industry_ed_health_social_public := 1 * (model_emp_cat %in% c("Ed_Health_Social_Public"))]
 choice_data[, industry_service_other := 1 * (model_emp_cat %in% c("Service_Other"))]
 choice_data[, industry_office_professional := 1 * (model_emp_cat %in% c("Office_Professional"))]
-choice_data[, industry_service_foodDrink := 1 * (model_emp_cat %in% c("Service_FoodDrink"))]
+choice_data[, industry_service_fooddrink := 1 * (model_emp_cat %in% c("Service_FoodDrink"))]
 
 choice_data[, 
   .N,
@@ -145,7 +145,7 @@ choice_data[,
     industry_ed_health_social_public,
     industry_service_other,
     industry_office_professional,
-    industry_service_foodDrink)]
+    industry_service_fooddrink)]
 
 choice_data[, .N, STOP_ACTIVITY]
 
@@ -232,7 +232,7 @@ names_to_keep =
     "industry_ed_health_social_public",
     "industry_service_other",
     "industry_office_professional",
-    "industry_service_foodDrink",
+    "industry_service_fooddrink",
     "activity_deliver", "activity_pickup", "activity_service", 
     "dist_00_02", "dist_02_05", "dist_05_10", "dist_10_20", "dist_20_p")
 
