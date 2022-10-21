@@ -90,7 +90,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v1_industry_ed_health_social_public *	industry_ed_health_social_public +
         beta_v1_industry_service_other * industry_service_other + 
         beta_v1_industry_office_professional *	industry_office_professional +
-        beta_v1_industry_service_foodDrink * industry_service_fooddrink + 
+        beta_v1_industry_service_fooddrink * industry_service_fooddrink + 
         beta_v1_activity_deliver_pickup * activity_deliver_pickup +
         beta_v1_activity_service * activity_service +
         beta_v1_dist_00_02 * dist_00_02 + 
@@ -109,7 +109,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v2_industry_ed_health_social_public *	industry_ed_health_social_public +
         beta_v2_industry_service_other * industry_service_other + 
         beta_v2_industry_office_professional *	industry_office_professional +
-        beta_v2_industry_service_foodDrink * industry_service_fooddrink +
+        beta_v2_industry_service_fooddrink * industry_service_fooddrink +
         beta_v2_activity_deliver_pickup * activity_deliver_pickup +
         beta_v2_activity_service * activity_service +
         beta_v2_dist_00_02 * dist_00_02 + 

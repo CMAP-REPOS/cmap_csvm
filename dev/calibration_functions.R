@@ -382,36 +382,51 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
 }
 
-calibrate_cv_sim_vehicle_choice = 
+calibrate_cv_sim_vehicle = 
   function(
     submodel_calibrated, 
     submodel_results, 
     model_step_target){
   
-  
-    # Summarise the model results: overall and then using the categories for activity
-    # Overall by choice for adjustment of alternative specific constants
-    submodel_results_summary <- submodel_results[,.(ModelStops = .N), keyby = choice]
-    submodel_results_summary[, Model := ModelStops/sum(ModelStops)]
+    # Create a summary table from the submodel results
+    # Firm industry and employment and TAZ
+    # busines to stop distance
+    submodel_results[model_step_inputs$model_step_data[,.(BusID, TAZ, EmpCatGroupedName, Emp)],
+                     c("OTAZ", "EmpCatGroupedName", "Emp") := .(i.TAZ, i.EmpCatGroupedName, i.Emp),
+                     on = "BusID"]
     
-    # By activity type (service variables grouped <60, 60-75, 90+)
-    submodel_results_activity_summary <- submodel_results[,.(ModelStops = .N), keyby = .(choice, Activity)]
-    submodel_results_activity_summary[, Model := ModelStops/sum(ModelStops), by = Activity]
+    submodel_results[model_step_inputs$model_step_env$skims_tod,
+                     Distance := i.dist.avg,
+                     on = c("OTAZ", "DTAZ")]
+    
+    # Summarise the model results: overall, by categories for activity, by employment group
+    submodel_results_activity_emp_summary <- submodel_results[,.(ModelStops = .N), keyby = .(Vehicle, Activity, EmpCatGroupedName)]
+    submodel_results_activity_emp_summary[, Model := ModelStops/sum(ModelStops), by = .(Activity, EmpCatGroupedName)]
     
     # Create Comparison between the target data and the model results
-    model_step_target$duration_stops[, choice := .I]
+    # Remove any employment types not covered by the model
+    # Add any missing activity/vehicle categories with small target shares and recalculate 
     
-    submodel_comparison <- merge(model_step_target$duration_stops, 
-                                 submodel_results_summary, 
-                                 by = c("choice"), 
+    vehicle_activity_ind <- data.table(expand.grid(Vehicle = unique(submodel_results_activity_emp_summary$Vehicle),
+                                                   Activity = unique(submodel_results_activity_emp_summary$Activity),
+                                                   EmpCatGroupedName = unique(submodel_results_activity_emp_summary$EmpCatGroupedName)))
+    
+    vehicle_activity_ind[model_step_target$vehicle_stops_activity_ind[, .(Vehicle, Activity, EmpCatGroupedName = IndustryCat, FINAL_FACTOR)], 
+                         TargetStops := i.FINAL_FACTOR, on = c("Vehicle", "Activity", "EmpCatGroupedName")]
+    vehicle_activity_ind[is.na(TargetStops), TargetStops := 10]
+    
+    vehicle_activity_ind[, Target := TargetStops/sum(TargetStops), by = .(Activity, EmpCatGroupedName)]
+    
+    submodel_comparison <- merge(vehicle_activity_ind, 
+                                 submodel_results_activity_emp_summary, 
+                                 by = c("Vehicle", "Activity", "EmpCatGroupedName"), 
                                  all = TRUE)
     
     submodel_comparison[is.na(Target), Target := 0]
     submodel_comparison[is.na(Model), Model := 0]
     
     # Comparison: 
-    # The difference between the model and target shares by duration alternative
-    
+    # The difference between the model and target shares by vehicle alternative and activity/emp group combination
     submodel_comparison[, Difference := abs(Model - Target)]
     
     # Set a threshold for the model to reach
@@ -421,29 +436,97 @@ calibrate_cv_sim_vehicle_choice =
     
     # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
     submodel_parameters <- list()
-    submodel_choices_constants <- data.table(choice = 1:11,
-                                             coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate)[1:11])
     
     if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
       submodel_calibrated <- TRUE
     } else {
+      
       # Adjust the constants in the model
+      
+      if(submodel_iter %% 3 == 1){ # iter 1,4, etc
+        
+        # Alternative specific constants
+        # Normailize adjustment to keep heavy at zero
+        submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
+                                                          TargetStops = sum(TargetStops)), 
+                                                       keyby = .(Vehicle)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops)) ]
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[Vehicle == "Heavy"]$Adjustment]
+        submodel_comparison_adj[, coefficient := 
+                                  c("asc_light","asc_medium","asc_heavy")[match(Vehicle, c("Light", "Medium","Heavy"))]]
+        
+      } else if(submodel_iter %% 3 == 2){ # iter 2, 5, etc
+        
+        # Activity variables
+        # Normailize adjustment to keep heavy at zero
+        # Apply goods ajustments to alternative specific constants
+        # Make a further relative adjustment to the service variables to account for the asc adjustment
+        submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
+                                                          TargetStops = sum(TargetStops)), 
+                                                       keyby = .(Vehicle, Activity)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops)),
+                                by = Activity]
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        submodel_comparison_adj[submodel_comparison_adj[Vehicle == "Heavy"],
+                                Adjustment := Adjustment - i.Adjustment,
+                                on = "Activity"]
+        
+        submodel_comparison_adj[submodel_comparison_adj[Activity == "Goods",.(Adjustment, Vehicle, Activity = "Service")],
+                                Adjustment := Adjustment - i.Adjustment,
+                                on = c("Activity", "Vehicle")]
+        
+        submodel_comparison_adj[Activity == "Goods", coefficient := 
+                                  c("asc_light","asc_medium","asc_heavy")[match(Vehicle, c("Light", "Medium","Heavy"))]]
+        submodel_comparison_adj[Activity == "Service", coefficient := 
+                                  c("beta_v1_activity_service","beta_v2_activity_service","asc_heavy")[match(Vehicle, c("Light", "Medium","Heavy"))]]
+        
+      } else {  # iter 3,6, etc
+        
+        # Employment variables
+        # Normailize adjustment to keep heavy at zero
+        # Apply retail ajustments to alternative specific constants
+        # Make a further relative adjustment to the non-retail employment variables to account for the asc adjustment
+        submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
+                                                          TargetStops = sum(TargetStops)), 
+                                                       keyby = .(Vehicle, EmpCatGroupedName)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops)),
+                                by = EmpCatGroupedName]
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        submodel_comparison_adj[submodel_comparison_adj[Vehicle == "Heavy"],
+                                Adjustment := Adjustment - i.Adjustment,
+                                on = "EmpCatGroupedName"]
+        
+        submodel_comparison_adj[submodel_comparison_adj[EmpCatGroupedName == "Retail",.(Adjustment, Vehicle)],
+                                Adjustment := ifelse(EmpCatGroupedName != "Retail", Adjustment - i.Adjustment, Adjustment),
+                                on = "Vehicle"]
+        
+        submodel_comparison_adj[EmpCatGroupedName == "Retail", coefficient := 
+                                  c("asc_light","asc_medium","asc_heavy")[match(Vehicle, c("Light", "Medium","Heavy"))]]
+        submodel_comparison_adj[EmpCatGroupedName != "Retail", coefficient := 
+                                  c("beta_v1_industry_","beta_v2_industry_","asc_heavy")[match(Vehicle, c("Light", "Medium","Heavy"))]]
+        submodel_comparison_adj[EmpCatGroupedName != "Retail" & Vehicle %in% c("Light", "Medium"),
+                                coefficient := paste0(coefficient, tolower(EmpCatGroupedName))]
+        
+      }
+      
       coefficients = 
         data.table(
-          coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate), 
-          estimate = model_step_inputs$model_step_env$cv_stopduration_model$estimate)
+          coefficient = names(model_step_inputs$model_step_env$cv_vehicle_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_vehicle_model$estimate)
       
-      coefficients[submodel_choices_constants, choice := i.choice, on = "coefficient"]
-      submodel_comparison[, Adjustment := log(Target / Model)]
-      coefficients[submodel_comparison, adjustment := i.Adjustment, on = "choice"]
+      coefficients[submodel_comparison_adj, adjustment := i.Adjustment, on = "coefficient"]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
       new_coefficients = coefficients[, estimate]
       names(new_coefficients) = coefficients[, coefficient]
-      model_step_inputs$model_step_env$cv_stopduration_model$estimate = new_coefficients
+      model_step_inputs$model_step_env$cv_vehicle_model$estimate = new_coefficients
       
     }
     
-    submodel_parameters[["cv_stopduration_model"]] = model_step_inputs$model_step_env$cv_stopduration_model
+    submodel_parameters[["cv_vehicle_model"]] = model_step_inputs$model_step_env$cv_vehicle_model
     
   
   # return a list of items to support calibration and debugging
