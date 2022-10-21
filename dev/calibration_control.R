@@ -16,7 +16,7 @@ source("./dev/calibration_functions.R")
 # 10. Rerun to confirm calibration
 
 ### 1. Settings
-CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations
+CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations (gets set to model specific values)
 CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
 CALIBRATION_RUN <- "Calibration_Run_3"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
@@ -33,40 +33,49 @@ if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
 models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration = TRUE,
                                                             submodel_results_name = "TAZLandUseCVTM",
                                                             last_output_step = NULL,
-                                                            estimated_models = NULL),
+                                                            estimated_models = NULL,
+                                                            max_iterations = 1),
                                firm_sim_scale_employees = list(require_calibration = TRUE,
                                                                submodel_results_name = "ScenarioFirms",
                                                                last_output_step = NULL,
-                                                               estimated_models = NULL)),
+                                                               estimated_models = NULL,
+                                                               max_iterations = 1)),
                cv_sim = list(cv_sim_activities = list(require_calibration = TRUE,
                                                       submodel_results_name = "firmActivities",
                                                       last_output_step = NULL,
-                                                      estimated_models = NULL),
+                                                      estimated_models = NULL,
+                                                      max_iterations = 1),
                              cv_sim_scheduledstops = list(require_calibration = TRUE,
                                                           submodel_results_name = "firmStops",
                                                           last_output_step = "cv_sim_activities",
                                                           estimated_models = list(cv_goods_model = "cv_goods_model",
-                                                                                  cv_service_model = "cv_service_model")),
+                                                                                  cv_service_model = "cv_service_model"),
+                                                          max_iterations = 25),
                              cv_sim_vehicle = list(require_calibration = TRUE,
                                                    submodel_results_name = "firmStopsVeh",
                                                    last_output_step = "cv_sim_scheduledstops",
-                                                   estimated_models = NULL),
+                                                   estimated_models = list(cv_vehicle_model = "cv_vehicle_model"),
+                                                   max_iterations = 8),
                              cv_sim_stopduration = list(require_calibration = TRUE,
                                                         submodel_results_name = "firmStopsVehDur",
                                                         last_output_step = "cv_sim_vehicle",
-                                                        estimated_models = list(cv_stopduration_model = "cv_stopduration_model")),
+                                                        estimated_models = list(cv_stopduration_model = "cv_stopduration_model"),
+                                                        max_iterations = 8),
                              cv_sim_tours = list(require_calibration = FALSE,
                                                  submodel_results_name = "firmTourSequence",
                                                  last_output_step = "cv_sim_stopduration",
-                                                 estimated_models = NULL),
+                                                 estimated_models = NULL,
+                                                 max_iterations = 8),
                              cv_sim_scheduledtrips = list(require_calibration = FALSE,
                                                           submodel_results_name = "scheduledTrips",
                                                           last_output_step = "cv_sim_tours",
-                                                          estimated_models = NULL),
+                                                          estimated_models = NULL,
+                                                          max_iterations = 8),
                              cv_sim_intermediatestops = list(require_calibration = FALSE,
                                                              submodel_results_name = "allTrips",
                                                              last_output_step = "cv_sim_scheduledtrips",
-                                                             estimated_models = NULL))) 
+                                                             estimated_models = NULL,
+                                                             max_iterations = 8))) 
 
 ### 3. Run the model individual step by step cycling through the main model components and their submodels
 # steps required:
@@ -164,6 +173,7 @@ for(model_step_num in 1:length(models)){
     submodel_iter <- 1
     submodel_results_name <- models[[model_step_num]][[submodel_name]]$submodel_results_name
     submodel_calibrated_list = list()
+    CALIBRATION_MAX_ITER <- models[[model_step_num]][[submodel_name]]$max_iterations
     
     while(!submodel_calibrated & submodel_iter <= CALIBRATION_MAX_ITER){
     
@@ -187,6 +197,7 @@ for(model_step_num in 1:length(models)){
                                                         submodel_results = submodel_results, 
                                                         model_step_target = model_step_target[[submodel_name]]))
         
+        #submodel_calibrated_list$submodel_comparison
         submodel_calibrated <- submodel_calibrated_list$submodel_calibrated
         
         if(!submodel_calibrated) {

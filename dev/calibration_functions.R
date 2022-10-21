@@ -225,10 +225,13 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   submodel_results_emp_stops = rbind(submodel_results[,.(ModelStops = .N), keyby = .(Activity, EmpCatGroupedName)],
                                      submodel_results[,.(ModelStops = .N, EmpCatGroupedName = "Total"), keyby = .(Activity)])[order(Activity, EmpCatGroupedName)]
   
+  # remove any industries for which there are no stops from the emp total
   cols <- grep("NEmp_",names(model_step_inputs$model_step_env$TAZLandUseCVTM))
   industry_emp_totals <- colSums(model_step_inputs$model_step_env$TAZLandUseCVTM[,..cols])
   industry_emp_totals <- data.table(EmpCatGroupedName = sub("NEmp_" , "", names(industry_emp_totals)),
                                     Emp = industry_emp_totals)
+  industry_emp_totals = industry_emp_totals[EmpCatGroupedName %in% unique(submodel_results_emp_stops$EmpCatGroupedName)]
+  industry_emp_totals[EmpCatGroupedName == "Total", Emp := sum(industry_emp_totals[EmpCatGroupedName != "Total"]$Emp)]
   
   submodel_results_emp_stops[industry_emp_totals, Emp := i.Emp, on = "EmpCatGroupedName"]
   
@@ -333,15 +336,23 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
     
     # calibration approach: 
     # adjust intercept and then employment specific constants
-    if(submodel_iter <= CALIBRATION_MAX_ITER/2){
+    # odds intercept, even employment specific constants
+    if(submodel_iter %%2 == 0){ # even iterations
       
-      coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",.(Activity, coefficient = "(Intercept)", modelstep = "zero", Adjustment)], 
+      # Normalize the adjustments to zero out retail adjustment (it is the zero level)
+      submodel_comparison_emp_stops[submodel_comparison_emp_stops[EmpCatGroupedName == "Retail"], 
+                                    Adjustment := Adjustment - i.Adjustment,
+                                    on = "Activity"]
+      
+      # Apply the emp group adjustments to their parameters
+      coefficients[submodel_comparison_emp_stops[,.(Activity, coefficient = EmpCatGroupedName, modelstep = "zero", Adjustment)], 
                    adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
       
-    } else {
+    } else { # odd iterations
       
-      coefficients[submodel_comparison_emp_stops[,.(Activity, coefficient = EmpCatGroupedName, modelstep = "zero", Adjustment)], 
+      # Apply the total adjustment to the intercept
+      coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",.(Activity, coefficient = "(Intercept)", modelstep = "zero", Adjustment)], 
                    adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
       
@@ -378,66 +389,62 @@ calibrate_cv_sim_vehicle_choice =
     model_step_target){
   
   
-  # Identify any firms as goods, service, or both goods and service
-  submodel_results_summary <- dcast.data.table(submodel_results, 
-                                               BusID ~ Activity, 
-                                               fun.aggregate = length)
-  
-  submodel_results_summary[, GoodsAndService := ifelse(Goods == 1 & Service == 1, 1L, 0L)]
-  submodel_results_summary[GoodsAndService == 1, c("Goods", "Service") := 0L]
-  
-  submodel_results_summary <- melt(submodel_results_summary,
-                                   id.vars = "BusID",
-                                   variable.name = "Activity",
-                                   value.name = "Firms")
-  
-  # Summaries by employment category and calculate percentage of firms of each activity type
-  submodel_results_summary[model_step_inputs$model_step_data[,.(BusID, EmpCatName)],
-                           EmpCatName := i.EmpCatName,
-                           on = "BusID"]
-  
-  submodel_results_summary <- submodel_results_summary[,.(Firms = as.integer(sum(Firms))), 
-                                                       keyby = .(Activity, Category = EmpCatName)]
-  
-  submodel_results_summary[, Model := Firms/sum(Firms), by = Category]
-  
-  # Create Comparison between the target data and the model results
-  submodel_comparison <- merge(model_step_target, 
-                               submodel_results_summary, 
-                               by = c("Activity", "Category"), 
-                               all = TRUE)
-  
-  submodel_comparison[is.na(Target), Target := 0]
-  submodel_comparison[is.na(Model), Model := 0]
-  
-  # Comparison: 
-  # The difference between the model and target percentage of firms at a Activity/Category level
-  # should be small but is not expected to be zero due to simulation differences. 
-  
-  submodel_comparison[, Difference := abs(Model - Target)]
-  
-  # Set a threshold for the model to reach
-  # Number of Activity/Category combinations where the difference is greater than 5% for cases where there
-  # are less that 1000 of those firms in the region, and 2% where there are more
-  submodel_difference_threshold <- model_step_inputs$model_step_data[,.(Firms = .N), 
-                                                                     by = .(Category = EmpCatName)][, Threshold := ifelse(Firms < 1000, 0.05, 0.02)]
-  submodel_comparison[submodel_difference_threshold, Threshold := i.Threshold, on = "Category"]
-  
-  submodel_criteria <- 0
-  submodel_test <- submodel_comparison[Difference > Threshold,.N]
-  
-  # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
-  submodel_parameters <- list()
-  
-  if(submodel_test <= submodel_criteria) {
-    submodel_calibrated <- TRUE
-  } else {
-    # No parameter adjustments for this model, 
-    # difference means that there is an error somewhere in the code or inputs,
-    # or that the calibration criteria are unreasonably tight for this approach
-    # Manual inspection is required
-    submodel_parameters <- submodel_comparison[Difference > submodel_difference_threshold]
-  }
+    # Summarise the model results: overall and then using the categories for activity
+    # Overall by choice for adjustment of alternative specific constants
+    submodel_results_summary <- submodel_results[,.(ModelStops = .N), keyby = choice]
+    submodel_results_summary[, Model := ModelStops/sum(ModelStops)]
+    
+    # By activity type (service variables grouped <60, 60-75, 90+)
+    submodel_results_activity_summary <- submodel_results[,.(ModelStops = .N), keyby = .(choice, Activity)]
+    submodel_results_activity_summary[, Model := ModelStops/sum(ModelStops), by = Activity]
+    
+    # Create Comparison between the target data and the model results
+    model_step_target$duration_stops[, choice := .I]
+    
+    submodel_comparison <- merge(model_step_target$duration_stops, 
+                                 submodel_results_summary, 
+                                 by = c("choice"), 
+                                 all = TRUE)
+    
+    submodel_comparison[is.na(Target), Target := 0]
+    submodel_comparison[is.na(Model), Model := 0]
+    
+    # Comparison: 
+    # The difference between the model and target shares by duration alternative
+    
+    submodel_comparison[, Difference := abs(Model - Target)]
+    
+    # Set a threshold for the model to reach
+    submodel_difference_threshold <- 0.001
+    submodel_criteria <- 0
+    submodel_test <- submodel_comparison[, sqrt(mean((Difference)^2))]
+    
+    # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
+    submodel_parameters <- list()
+    submodel_choices_constants <- data.table(choice = 1:11,
+                                             coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate)[1:11])
+    
+    if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
+      submodel_calibrated <- TRUE
+    } else {
+      # Adjust the constants in the model
+      coefficients = 
+        data.table(
+          coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_stopduration_model$estimate)
+      
+      coefficients[submodel_choices_constants, choice := i.choice, on = "coefficient"]
+      submodel_comparison[, Adjustment := log(Target / Model)]
+      coefficients[submodel_comparison, adjustment := i.Adjustment, on = "choice"]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
+      new_coefficients = coefficients[, estimate]
+      names(new_coefficients) = coefficients[, coefficient]
+      model_step_inputs$model_step_env$cv_stopduration_model$estimate = new_coefficients
+      
+    }
+    
+    submodel_parameters[["cv_stopduration_model"]] = model_step_inputs$model_step_env$cv_stopduration_model
+    
   
   # return a list of items to support calibration and debugging
   return(list(submodel_calibrated = submodel_calibrated,
