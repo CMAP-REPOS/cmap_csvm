@@ -21,6 +21,9 @@ database = readRDS(file.path(base, "estimation_data.rds"))
 
 database[, ID := SITEID]
 
+# omit the transport industry records
+database <- database[!industry_transport_industry == 1]
+
 # should this be conditioned on something
 database[, av_light := 1]
 database[, av_medium := 1]
@@ -44,20 +47,20 @@ apollo_beta =
     beta_v1_industry_construction = 0,
     beta_v1_industry_transport_industry = 0,
     beta_v1_industry_admin_support_waste = 0,
-    beta_v1_industry_ed_health_social_public = 1,
+    beta_v1_industry_ed_health_social_public = 0,
     beta_v1_industry_service_other = 0,
     beta_v1_industry_office_professional = 0,
-    beta_v1_industry_service_fooddrink = 2,
+    beta_v1_industry_service_fooddrink = 0,
     
     beta_v2_industry_retail = 0,
     beta_v2_industry_wholesale = 0,
     beta_v2_industry_construction = 0,
     beta_v2_industry_transport_industry = 0,
     beta_v2_industry_admin_support_waste = 0,
-    beta_v2_industry_ed_health_social_public = 2,
+    beta_v2_industry_ed_health_social_public = 0,
     beta_v2_industry_service_other = 0,
     beta_v2_industry_office_professional = 0,
-    beta_v2_industry_service_fooddrink = 1,
+    beta_v2_industry_service_fooddrink = 0,
     
     beta_v1_activity_deliver_pickup = 0,
     beta_v1_activity_service = 0,
@@ -83,10 +86,11 @@ apollo_beta =
 apollo_fixed = 
   c("asc_heavy", 
     "beta_v1_industry_retail", "beta_v2_industry_retail",
-    "beta_v1_activity_deliver_pickup", "beta_v2_activity_deliver_pickup",
-    "beta_v1_dist_00_02", "beta_v2_dist_00_02",
+    "beta_v1_industry_transport_industry", "beta_v2_industry_transport_industry",
     "beta_v1_industry_service_fooddrink", "beta_v2_industry_service_fooddrink",
-    "beta_v1_industry_ed_health_social_public", "beta_v2_industry_ed_health_social_public")
+    "beta_v1_industry_ed_health_social_public", "beta_v2_industry_ed_health_social_public",
+    "beta_v1_activity_deliver_pickup", "beta_v2_activity_deliver_pickup",
+    "beta_v1_dist_00_02", "beta_v2_dist_00_02")
 
 # ################################################################# #
 #### GROUP AND VALIDATE INPUTS                                   ####
