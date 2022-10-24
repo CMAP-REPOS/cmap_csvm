@@ -49,7 +49,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
   model[['apollo_control']][['matrixMult']] = FALSE
   model[['apollo_control']][['subMaxV']] = TRUE
   
-  apollo_inputs = 
+  apollo_inputs =
     list(
       apollo_beta_names = names(model$apollo_beta),
       apollo_fixed = model$apollo_fixed,
@@ -62,7 +62,6 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
       class_specific = 0,
       silent = TRUE
     )
-  
   
   # Define probabilities function
   apollo_probabilities =
@@ -81,7 +80,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
       ### List of utilities: these must use the same names as in mnl_settings, order is irrelevant
       V = list()
       V[['light']]  = 
-        asc_light
+        asc_light +
         beta_v1_industry_retail *	industry_retail +
         beta_v1_industry_wholesale * industry_wholesale +
         beta_v1_industry_construction *	industry_construction +

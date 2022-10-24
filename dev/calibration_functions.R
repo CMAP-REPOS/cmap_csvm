@@ -446,7 +446,7 @@ calibrate_cv_sim_vehicle =
       if(submodel_iter %% 3 == 1){ # iter 1,4, etc
         
         # Alternative specific constants
-        # Normailize adjustment to keep heavy at zero
+        # Normalize adjustment to keep heavy at zero
         submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
                                                           TargetStops = sum(TargetStops)), 
                                                        keyby = .(Vehicle)]
@@ -460,7 +460,7 @@ calibrate_cv_sim_vehicle =
       } else if(submodel_iter %% 3 == 2){ # iter 2, 5, etc
         
         # Activity variables
-        # Normailize adjustment to keep heavy at zero
+        # Normalize adjustment to keep heavy at zero
         # Apply goods ajustments to alternative specific constants
         # Make a further relative adjustment to the service variables to account for the asc adjustment
         submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
@@ -486,7 +486,7 @@ calibrate_cv_sim_vehicle =
       } else {  # iter 3,6, etc
         
         # Employment variables
-        # Normailize adjustment to keep heavy at zero
+        # Normalize adjustment to keep heavy at zero
         # Apply retail ajustments to alternative specific constants
         # Make a further relative adjustment to the non-retail employment variables to account for the asc adjustment
         submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
