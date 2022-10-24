@@ -7,9 +7,11 @@ library(readxl)
 library(sf)
 
 # Get Data ----------------------------------------------------------------
-
+#base year
 HH <- read_csv('dev/Data_Processed/CBP_Emp_HH/HH_IN.TXT', col_names = FALSE)
 
+#future scenario
+#HH <- read_csv('dev/Data_Processed/Future_Year_Inputs/HH_IN.TXT', col_names = FALSE)
 
 HH_1 <- HH %>% 
   select(subzone17 = X1,
@@ -42,8 +44,12 @@ HH_summary2 <- HH_2 %>%
   group_by(Zone17) %>% 
   summarise(HH = sum(TotalHHinSZ), subzone17) %>% 
   select(-subzone17) %>% 
+  distinct() %>% 
   as.data.frame()
 
 # write the file ----------------------------------------------------------
-
+#base scenario
 write_csv(HH_summary2, 'scenarios/base/inputs/data_hh.csv')
+
+#future scenario
+#write_csv(HH_summary2, 'scenarios/future/inputs/data_hh.csv')
