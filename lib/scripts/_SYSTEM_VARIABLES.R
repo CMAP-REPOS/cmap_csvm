@@ -22,12 +22,13 @@ SYSTEM_PKGS_PATH      <- file.path(SYSTEM_APP_PATH, "lib", "pkgs", "library")
 .libPaths(c(SYSTEM_PKGS_PATH, .libPaths())) 
 Sys.setenv(R_LIBS = paste(SYSTEM_PKGS_PATH, Sys.getenv("R_LIBS"), sep=.Platform$path.sep))
 
-SYSTEM_PANDOC_PATH    <- file.path(SYSTEM_APP_PATH, "lib", "pkgs", "Pandoc")
-SYSTEM_DATA_PATH      <- file.path(SYSTEM_APP_PATH, "lib", "data")
-SYSTEM_TEMPLATES_PATH <- file.path(SYSTEM_APP_PATH, "lib", "templates")
-SYSTEM_SCRIPTS_PATH   <- file.path(SYSTEM_APP_PATH, "lib", "scripts")
-SYSTEM_DEV_PATH       <- file.path(SYSTEM_APP_PATH, "dev")
-SYSTEM_DOCS_PATH      <- file.path(SYSTEM_APP_PATH, "docs")
+SYSTEM_PANDOC_PATH      <- file.path(SYSTEM_APP_PATH, "lib", "pkgs", "Pandoc")
+SYSTEM_DATA_PATH        <- file.path(SYSTEM_APP_PATH, "lib", "data")
+SYSTEM_TEMPLATES_PATH   <- file.path(SYSTEM_APP_PATH, "lib", "templates")
+SYSTEM_SCRIPTS_PATH     <- file.path(SYSTEM_APP_PATH, "lib", "scripts")
+SYSTEM_DEV_PATH         <- file.path(SYSTEM_APP_PATH, "dev")
+SYSTEM_CALIBRATION_PATH <- file.path(SYSTEM_APP_PATH, "dev", "Calibration", "outputs")
+SYSTEM_DOCS_PATH        <- file.path(SYSTEM_APP_PATH, "docs")
 
 # Standard model component databases
 SYSTEM_FIRMSYN_OUTPUTNAME <- "1.Firms.RData"

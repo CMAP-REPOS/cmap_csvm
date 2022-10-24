@@ -25,6 +25,7 @@ if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   CALIBRATION_RUN_FOLDER <- file.path("./dev/Calibration", CALIBRATION_RUN)
   dir.create(CALIBRATION_RUN_FOLDER)
 }
+CALIBRATION_RUN_FOLDER_DB <- file.path("./dev/Calibration", "outputs")
 
 ### 2. Define flow of models
 # what are we going to calibrate?
@@ -250,6 +251,11 @@ for(model_step_num in 1:length(models)){
   print(paste("Application test for main model step complete using call:", model_step_rfreightcall))
 
 } # end loop on main model step
+
+# Copy the outputs from the current calibration folder to the outputs folders
+file.copy(from = list.files(CALIBRATION_RUN_FOLDER,full.names = TRUE),
+          to = CALIBRATION_RUN_FOLDER_DB,
+          overwrite = TRUE)
 
 # Run the remaining model steps: trip table and dashboard
 model_step_rfreightcall <- run_model_step("tt_build")

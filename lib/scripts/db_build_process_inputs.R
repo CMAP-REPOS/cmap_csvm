@@ -197,25 +197,16 @@ db_build_process_inputs <- function(envir){
   
   if(SCENARIO_DB_SPREADSHEET){
     
-    # Read in assignment outputs
-    time_periods <- c("DY", names(BASE_TOD_RANGES))
-    flow_list <- lapply(1:length(time_periods), 
-                        function(x) fread(file.path(SCENARIO_ASSIGN_FLOWS_PATH, 
-                                                    paste0("Flow_", time_periods[x], ".csv"))))
-    names(flow_list) <- time_periods
-    
-    # field naming case is inconsistent: convert all to upper case
-    lapply(flow_list, function(x) {setnames(x, toupper); invisible()})
-    
-    # add a time of day field
-    lapply(1:length(flow_list), 
-           function(x) flow_list[[x]][, TOD := names(flow_list)[x]])
-    
-    # combine the assignment results to a single table
-    model_flows <- rbindlist(flow_list, use.names = TRUE, fill = TRUE)
-    model_flows[, TOD := factor(TOD, levels = time_periods)]
-    envir[["model_flows"]] <- model_flows 
+    # code here for processing inputs required specifically to build the summary spreadsheet
    
+  }
+  
+  if(SCENARIO_DB_CALIBRATION){
+    
+    # Import the calibration results
+    cal_filepaths <- list.files(SYSTEM_CALIBRATION_PATH, full.names = TRUE)
+    cal_results <- lapply(cal_filepaths,readRDS)
+    names(cal_results) <- tools::file_path_sans_ext(list.files(SYSTEM_CALIBRATION_PATH))
   }
   
   ### Create files for mapping
