@@ -60,7 +60,7 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                                                         submodel_results_name = "firmStopsVehDur",
                                                         last_output_step = "cv_sim_vehicle",
                                                         estimated_models = list(cv_stopduration_model = "cv_stopduration_model"),
-                                                        max_iterations = 8),
+                                                        max_iterations = 10),
                              cv_sim_tours = list(require_calibration = FALSE,
                                                  submodel_results_name = "firmTourSequence",
                                                  last_output_step = "cv_sim_stopduration",
@@ -148,7 +148,7 @@ for(model_step_num in 1:length(models)){
   
   for(submodel_num in 1:length(model_step_submodels)){
     
-    #submodel_num <- 3
+    #submodel_num <- 4
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     
