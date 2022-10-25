@@ -31,11 +31,11 @@ db_build_process_inputs <- function(envir){
                                                                            EmpCatGroupedName)])
     setorder(envir[["c_n2_empcats"]],EmpCatName)
     
-    # Load the skims
-    envir[["skims"]] <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
+    # Load the skims for use in the processing steps below
+    skims <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
     # Put skims in extra-long format
-    tod.ranges <- attr(envir[["skims"]], "tod.ranges")
-    skims.long <- meltSkimTableByTOD(envir[["skims"]], 
+    tod.ranges <- attr(skims, "tod.ranges")
+    skims.long <- meltSkimTableByTOD(skims, 
                                      tod_names = names(tod.ranges))
     
   }

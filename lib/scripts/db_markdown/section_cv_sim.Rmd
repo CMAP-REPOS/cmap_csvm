@@ -1330,7 +1330,7 @@ dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(
 dat[, Model := ModelStops/sum(ModelStops), by = Activity]
 dat[, Target := TargetStops/sum(TargetStops), by = Activity]
 
-dat <- melt.data.table(dat[, .(choice, Activity, Model, Target)], id.vars = c("stop_duration", "Activity"), variable.name = "Source", value.name = "PctStops")
+dat <- melt.data.table(dat[, .(stop_duration, Activity, Model, Target)], id.vars = c("stop_duration", "Activity"), variable.name = "Source", value.name = "PctStops")
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity.csv"))
