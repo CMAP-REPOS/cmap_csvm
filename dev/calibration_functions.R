@@ -673,6 +673,13 @@ calibrate_cv_sim_stopduration =
     
     submodel_parameters[["cv_stopduration_model"]] = model_step_inputs$model_step_env$cv_stopduration_model
     
+    # Add labeling
+    submodel_comparison <- merge(duration_choice[,.(stop_duration = duration_group, choice)],
+                                 submodel_comparison[,.(choice, Vehicle, Activity, TargetStops, Target, ModelStops, Model, Difference)],
+                                 by = "choice",
+                                 all = TRUE)
+    submodel_comparison[, stop_duration := factor(stop_duration, levels = duration_choice$duration_group, ordered = TRUE)]
+    
     # return a list of items to support calibration and debugging
     return(list(submodel_calibrated = submodel_calibrated,
                 submodel_comparison = submodel_comparison,
