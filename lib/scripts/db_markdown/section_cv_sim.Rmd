@@ -1175,8 +1175,7 @@ assign("db_tab_cv_sim_scheduledstops_all_tab", dat, envir = db_inputs)
 # Table
 kable(dat, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+  row_spec(nrow(dat), background = "#f2f2f2") 
 
 ```
 
@@ -1198,8 +1197,7 @@ assign("db_tab_cv_sim_scheduledstops_goods_tab", dat, envir = db_inputs)
 # Table
 kable(dat, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+  row_spec(nrow(dat), background = "#f2f2f2") 
 
 ```
 
@@ -1221,8 +1219,7 @@ assign("db_tab_cv_sim_scheduledstops_service_tab", dat, envir = db_inputs)
 # Table
 kable(dat, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+  row_spec(nrow(dat), background = "#f2f2f2")
 
 ```
 
@@ -1248,6 +1245,8 @@ assign("db_tab_cv_sim_vehicle_activity", dat, envir = db_inputs)
 bar_plotter(dat, xvar = "Activity_Vehicle", yvar = "PctStops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Stops", xlabel = "Activity and Vehicle")
 
 ```
+
+> Vehicle Type Shares are by Activity (Goods and Service Stops)
 
 ### cv_sim_vehicle: Tabulation Goods Stops
 
@@ -1282,8 +1281,7 @@ assign("db_tab_cv_sim_vehicle_goods_tab", dat, envir = db_inputs)
 # Table
 kable(dat, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+  row_spec(nrow(dat), background = "#f2f2f2")
 
 ```
 
@@ -1320,8 +1318,7 @@ assign("db_tab_cv_sim_vehicle_service_tab", dat, envir = db_inputs)
 # Table
 kable(dat, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
-  column_spec(ncol(dat), background = "#f2f2f2")
+  row_spec(nrow(dat), background = "#f2f2f2") 
 
 ```
 
@@ -1329,18 +1326,18 @@ kable(dat, escape=FALSE) %>%
 
 ```{r Chart_cv_sim_stopduration_activity_goods}
 # Organize
-dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(choice, Activity)]
+dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(stop_duration, Activity)]
 dat[, Model := ModelStops/sum(ModelStops), by = Activity]
 dat[, Target := TargetStops/sum(TargetStops), by = Activity]
 
-dat <- melt.data.table(dat[, .(choice, Activity, Model, Target)], id.vars = c("choice", "Activity"), variable.name = "Source", value.name = "PctStops")
+dat <- melt.data.table(dat[, .(choice, Activity, Model, Target)], id.vars = c("stop_duration", "Activity"), variable.name = "Source", value.name = "PctStops")
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity.csv"))
 assign("db_tab_cv_sim_stopduration_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Activity == "Goods"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
+bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)")
 
 ```
 
@@ -1349,7 +1346,7 @@ bar_plotter(dat[Activity == "Goods"], xvar = "choice", yvar = "PctStops",  fill 
 ```{r Chart_cv_sim_stopduration_activity_service}
 
 # Plot
-bar_plotter(dat[Activity == "Service"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
+bar_plotter(dat[Activity == "Service"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)")
 
 ```
 
@@ -1358,18 +1355,18 @@ bar_plotter(dat[Activity == "Service"], xvar = "choice", yvar = "PctStops",  fil
 
 ```{r Chart_cv_sim_stopduration_vehicle_light}
 # Organize
-dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(choice, Vehicle)]
+dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(stop_duration, Vehicle)]
 dat[, Model := ModelStops/sum(ModelStops), by = Vehicle]
 dat[, Target := TargetStops/sum(TargetStops), by = Vehicle]
 
-dat <- melt.data.table(dat[, .(choice, Vehicle, Model, Target)], id.vars = c("choice", "Vehicle"), variable.name = "Source", value.name = "PctStops")
+dat <- melt.data.table(dat[, .(stop_duration, Vehicle, Model, Target)], id.vars = c("stop_duration", "Vehicle"), variable.name = "Source", value.name = "PctStops")
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_vehicle.csv"))
 assign("db_tab_cv_sim_stopduration_vehicle", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Vehicle == "Light"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
+bar_plotter(dat[Vehicle == "Light"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE)
 
 ```
 
@@ -1378,7 +1375,7 @@ bar_plotter(dat[Vehicle == "Light"], xvar = "choice", yvar = "PctStops",  fill =
 ```{r Chart_cv_sim_stopduration_vehicle_medium}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
+bar_plotter(dat[Vehicle == "Medium"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE)
 
 ```
 
@@ -1387,11 +1384,10 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "choice", yvar = "PctStops",  fill 
 ```{r Chart_cv_sim_stopduration_vehicle_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Heavy"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE)
 
 ```
 
-> Vehicle Type Shares are by Activity (Goods and Service Stops)
 
 <!-- ### Firm-to-Stop Distance -->
 
