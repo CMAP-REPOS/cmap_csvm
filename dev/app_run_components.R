@@ -353,12 +353,42 @@ for(n in ls(db_inputs, all.names=TRUE)) assign(n, get(n, db_inputs), environment
 
 # Generate dashboard and spreadsheet
 cat("Rendering Commercial Vehicle Dashboard and Spreadsheet", "\n")
-dashboardFileLoc <- suppressWarnings(suppressMessages(
-  run_sim(FUN = db_build, data = NULL,
-          packages = SYSTEM_PKGS, lib = SYSTEM_PKGS_PATH,
-          inputEnv = db_inputs
-  )
-))
+# dashboardFileLoc <- suppressWarnings(suppressMessages(
+#   run_sim(FUN = db_build, data = NULL,
+#           packages = SYSTEM_PKGS, lib = SYSTEM_PKGS_PATH,
+#           inputEnv = db_inputs
+#   )
+# ))
+
+
+# Pandoc location inside the model
+rmarkdown::find_pandoc(dir = SYSTEM_PANDOC_PATH)
+
+# Render the dashboard into HTML
+#db_build_render()
+
+dashboardName <- "ReportDashboard.html"
+
+# Generate dashboard
+rmarkdown::render(file.path(SYSTEM_SCRIPTS_PATH, "db_markdown", 
+                            "ReportDashboard.Rmd"),
+                  output_dir = SCENARIO_OUTPUT_PATH,
+                  output_file = dashboardName,
+                  quiet = TRUE)
+
+# The following lines change the rendering engine from SVG to Canvas, which
+# speeds up map rendering considerably.
+dashboardHTML <- readLines(file.path(SCENARIO_OUTPUT_PATH, dashboardName))
+idx <- which(dashboardHTML == "window.FlexDashboardComponents = [];")[1]
+dashboardHTML <- append(dashboardHTML, "L_PREFER_CANVAS = true;", after = idx)
+writeLines(dashboardHTML, file.path(SCENARIO_OUTPUT_PATH, dashboardName))
+
+# Create summary spreadsheet using model outputs including assignment flow tables
+if(SCENARIO_DB_SPREADSHEET & USER_SPREADSHEET_SUMMARIES){
+  db_build_spreadsheet()
+}
+
+dashboardFileLoc <- file.path(SCENARIO_OUTPUT_PATH, "ReportDashboard.html")
 
 # Save results to Rdata file
 cat("Saving Dashboard Tabulations Database", "\n")

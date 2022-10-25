@@ -1226,7 +1226,7 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
-Chart Column 3
+Chart Column 3 {.tabset}
 --------------------------------------------
 
 ### cv_sim_vehicle: Activity
