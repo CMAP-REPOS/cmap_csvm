@@ -207,6 +207,7 @@ db_build_process_inputs <- function(envir){
     cal_filepaths <- list.files(SYSTEM_CALIBRATION_PATH, full.names = TRUE)
     cal_results <- lapply(cal_filepaths,readRDS)
     names(cal_results) <- tools::file_path_sans_ext(list.files(SYSTEM_CALIBRATION_PATH))
+    envir[["cal_results"]] <- cal_results
   }
   
   ### Create files for mapping
