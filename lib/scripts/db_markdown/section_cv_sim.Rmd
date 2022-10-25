@@ -1245,7 +1245,7 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_activity.csv"
 assign("db_tab_cv_sim_vehicle_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Activity_Vehicle", yvar = "PctStops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Stops", Xlabel = "Activity and Vehicle")
+bar_plotter(dat, xvar = "Activity_Vehicle", yvar = "PctStops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Stops", xlabel = "Activity and Vehicle")
 
 ```
 
@@ -1340,7 +1340,7 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity
 assign("db_tab_cv_sim_stopduration_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Activity == "Goods"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", Xlabel = "Stop Duration")
+bar_plotter(dat[Activity == "Goods"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
 
 ```
 
@@ -1349,7 +1349,7 @@ bar_plotter(dat[Activity == "Goods"], xvar = "choice", yvar = "PctStops",  fill 
 ```{r Chart_cv_sim_stopduration_activity_service}
 
 # Plot
-bar_plotter(dat[Activity == "Service"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", Xlabel = "Stop Duration")
+bar_plotter(dat[Activity == "Service"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
 
 ```
 
@@ -1369,7 +1369,7 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_vehicle.
 assign("db_tab_cv_sim_stopduration_vehicle", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Vehicle == "Light"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", Xlabel = "Stop Duration")
+bar_plotter(dat[Vehicle == "Light"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
 
 ```
 
@@ -1378,7 +1378,7 @@ bar_plotter(dat[Vehicle == "Light"], xvar = "choice", yvar = "PctStops",  fill =
 ```{r Chart_cv_sim_stopduration_vehicle_medium}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", Xlabel = "Stop Duration")
+bar_plotter(dat[Vehicle == "Medium"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
 
 ```
 
@@ -1387,7 +1387,7 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "choice", yvar = "PctStops",  fill 
 ```{r Chart_cv_sim_stopduration_vehicle_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Heavy"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", Xlabel = "Stop Duration")
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "choice", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration")
 
 ```
 
