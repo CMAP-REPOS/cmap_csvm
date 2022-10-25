@@ -1099,7 +1099,7 @@ bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "PctFirms",  f
 ```{r Chart_cv_sim_activities_industry_goodsservice}
 
 # Plot
-bar_plotter(dat[Activity == "GoodAndService"], xvar = "Industry", yvar = "PctFirms",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Firms")
+bar_plotter(dat[Activity == "GoodsAndService"], xvar = "Industry", yvar = "PctFirms",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Firms")
 
 ```
 
