@@ -224,7 +224,7 @@ bar_plotter <- function(data, xvar, yvar,
                         xlabel = xvar, ylabel = yvar, 
                         xrotate = FALSE, yrotate = FALSE, 
                         coord_flip = FALSE, legend_label = TRUE,
-                        yvalue=FALSE) {
+                        yvalue = FALSE, png_name = NULL) {
   
   if (fill == "") {
     p <- ggplot(data, aes_q(x = quote(get(xvar)), y = quote(get(yvar)))) +
@@ -262,6 +262,10 @@ bar_plotter <- function(data, xvar, yvar,
   if (!legend_label) {
     p <- p + labs(fill = "")
   }
+  if(!is.null(png_name)){
+    ggsave(filename = file.path(SCENARIO_OUTPUT_PATH, png_name), plot = p)
+  }
+  
   p <- plotly_build(p)
   p[["x"]][["data"]] <- lapply(p[["x"]][["data"]], function(x) {
     x[["text"]] <- gsub(x[["text"]], pattern = "get\\(xvar\\)", replacement = xlabel)
