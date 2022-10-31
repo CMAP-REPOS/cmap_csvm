@@ -65,8 +65,8 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                              cv_sim_tours = list(require_calibration = FALSE,
                                                  submodel_results_name = "firmTourSequence",
                                                  last_output_step = "cv_sim_stopduration",
-                                                 estimated_models = NULL,
-                                                 max_iterations = 8),
+                                                 estimated_models = list(cv_tours_model = "cv_tours_model"),
+                                                 max_iterations = 10),
                              cv_sim_scheduledtrips = list(require_calibration = FALSE,
                                                           submodel_results_name = "scheduledTrips",
                                                           last_output_step = "cv_sim_tours",
@@ -132,7 +132,8 @@ for(model_step_num in 1:length(models)){
   
   # create environment, source and run the process inputs script, and add the model step function
   model_step_inputs <- process_inputs(model_step = model_step_name)
-  # Manually import any additional inputs by model step into the environment, e.g., skims if they are not loaded
+
+    # Manually import any additional inputs by model step into the environment, e.g., skims if they are not loaded
   if(model_step_num == 2){
     model_step_inputs$model_step_env$skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
   }
@@ -147,9 +148,9 @@ for(model_step_num in 1:length(models)){
   # Use the repeated process: load outputs from previous step, run step, save results
   # Loop over the submodels
   
-  for(submodel_num in 2:4) {#1:length(model_step_submodels)){
+  for(submodel_num in 1:length(model_step_submodels)){
     
-    #submodel_num <- 4
+    #submodel_num <- 5
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     

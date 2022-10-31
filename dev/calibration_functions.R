@@ -690,6 +690,153 @@ calibrate_cv_sim_stopduration =
     
   }
 
+
+calibrate_cv_sim_tours = 
+  function(
+    submodel_calibrated, 
+    submodel_results, 
+    model_step_target){
+    
+    # Summarise the model results: activity and vehicle type 
+    submodel_results_veh_summary <- submodel_results[SequenceID == 1,.(ModelTours = .N), keyby = .(Vehicle, TourType)]
+    submodel_results_veh_summary[, Model := ModelTours/sum(ModelTours), by = .(Vehicle)]
+    
+    # Create Comparison between the target data and the model results
+    vehicle_tourtype <- data.table(expand.grid(Vehicle = unique(submodel_results_veh_summary$Vehicle),
+                                               TourType = unique(submodel_results_veh_summary$TourType)))
+    
+    vehicle_tourtype[model_step_target$tour_types_vehicle[,.(TourType = tour_type_choice, Vehicle, FINAL_FACTOR)], 
+                     TargetTours := i.FINAL_FACTOR, on = c("Vehicle", "TourType")]
+    vehicle_tourtype[is.na(TargetTours), TargetTours := 10]
+    
+    vehicle_tourtype[, Target := TargetTours/sum(TargetTours), by = .(Vehicle)]
+    
+    submodel_comparison <- merge(vehicle_tourtype, 
+                                 submodel_results_veh_summary, 
+                                 by = c("TourType", "Vehicle"), 
+                                 all = TRUE)
+    
+    submodel_comparison[is.na(Target), Target := 0]
+    submodel_comparison[is.na(Model), Model := 0]
+    
+    # Comparison: 
+    # The difference between the model and target shares by duration alternative
+    
+    submodel_comparison[, Difference := abs(Model - Target)]
+    
+    # Set a threshold for the model to reach
+    submodel_difference_threshold <- 0.001
+    submodel_criteria <- 0
+    submodel_test <- submodel_comparison[, sqrt(mean((Difference)^2))]
+    
+    # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
+    submodel_parameters <- list()
+    
+    if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
+      submodel_calibrated <- TRUE
+    } else {
+      ###############TODO update this section
+      
+      # Adjust the constants in the model
+      
+      if(submodel_iter %% 3 == 1){ # iter 1,4, etc
+        
+        # Alternative specific constants
+        # Normalize adjustment to keep asc_15 at zero
+        submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
+                                                          TargetStops = sum(TargetStops)), 
+                                                       keyby = .(choice)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops)) ]
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[choice == 1]$Adjustment]
+        
+        submodel_comparison_adj[, coefficient := 
+                                  names(model_step_inputs$model_step_env$cv_stopduration_model$estimate)[1:11][match(choice, 1:11)]]
+        
+      } else if(submodel_iter %% 3 == 2){ # iter 2, 5, etc
+        
+        # Activity variables
+        # Normalize adjustments to base level at zero
+        
+        duration_choice[, coefficient := c(rep("b_activity_service_0_45",3),
+                                           rep("b_activity_service_60_75",2),
+                                           rep("b_activity_service_90_plus",6))]
+        
+        submodel_comparison[duration_choice, coefficient := i.coefficient, on = "choice"]
+        
+        submodel_comparison_adj <- submodel_comparison[Activity == "Service",.(ModelStops = sum(ModelStops), 
+                                                                               TargetStops = sum(TargetStops)), 
+                                                       keyby = coefficient]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops))]
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "b_activity_service_0_45"]$Adjustment]
+        
+      } else {  # iter 3,6, etc
+        
+        # Vehicle variables
+        # Normalize adjustments to base level at zero
+        
+        duration_choice[, coefficient_med := c(rep("asc_15",1),
+                                               rep("b_is_med_veh_30_75",4),
+                                               rep("b_is_med_veh_90_plus",6))]
+        duration_choice[, coefficient_hvy := c(rep("asc_15",1),
+                                               rep("b_is_hvy_veh_30_90",5),
+                                               rep("b_is_hvy_veh_150_plus",5))]
+        
+        duration_choice_veh <- rbind(duration_choice[, .(choice, coefficient = coefficient_med, Vehicle = "Medium")],
+                                     duration_choice[, .(choice, coefficient = coefficient_hvy, Vehicle = "Heavy")])
+        
+        submodel_comparison[duration_choice_veh, coefficient := i.coefficient, on = c("choice", "Vehicle")]
+        
+        submodel_comparison_adj <- submodel_comparison[Vehicle %in% c("Medium", "Heavy"),.(ModelStops = sum(ModelStops), 
+                                                                                           TargetStops = sum(TargetStops)), 
+                                                       keyby = .(coefficient, Vehicle)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops)),
+                                by = "Vehicle"]
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        
+        submodel_comparison_adj[submodel_comparison_adj[coefficient == "asc_15"],
+                                Adjustment := Adjustment - i.Adjustment, on = "Vehicle"]
+        
+      }
+      
+      coefficients = 
+        data.table(
+          coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_stopduration_model$estimate)
+      
+      coefficients[submodel_comparison_adj, adjustment := i.Adjustment, on = "coefficient"]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
+      new_coefficients = coefficients[, estimate]
+      names(new_coefficients) = coefficients[, coefficient]
+      model_step_inputs$model_step_env$cv_stopduration_model$estimate = new_coefficients
+      
+    }
+    
+    submodel_parameters[["cv_stopduration_model"]] = model_step_inputs$model_step_env$cv_stopduration_model
+    
+    # Add labeling
+    submodel_comparison <- merge(duration_choice[,.(stop_duration = duration_group, choice)],
+                                 submodel_comparison[,.(choice, Vehicle, Activity, TargetStops, Target, ModelStops, Model, Difference)],
+                                 by = "choice",
+                                 all = TRUE)
+    submodel_comparison[, stop_duration := factor(stop_duration, levels = duration_choice$duration_group, ordered = TRUE)]
+    
+    # return a list of items to support calibration and debugging
+    return(list(submodel_calibrated = submodel_calibrated,
+                submodel_comparison = submodel_comparison,
+                submodel_difference_threshold = submodel_difference_threshold,
+                submodel_criteria = submodel_criteria,
+                submodel_test = submodel_test,
+                submodel_parameters = submodel_parameters))
+    
+  }
+
+
 # generic function for calibrating logit-based choice model
 calibrate_logit_based_model = 
   function(
