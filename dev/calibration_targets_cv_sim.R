@@ -44,7 +44,6 @@ good_stop_counts
 load("./dev/Estimation/cv_stops/Stop_Counts_Service.RData") 
 service_stop_counts
 
-
 # Vehicle choice data
 cv_vehicle_data <- readRDS(file.path("./dev/Estimation/cv_vehicle/cv_vehicle_processed_data.rds"))
 
@@ -58,13 +57,12 @@ cv_tours_data <- readRDS(file.path("./dev/Estimation/cv_tours/cv_tours_processed
 
 ###TODO for calibration replace with arrival data from the GPS data
 # Arrival time
-# cv_arrival_data <- readRDS(file.path("./dev/Estimation/cv_arrival/cv_arrival_processed_data.rds"))
+cv_arrival_data <- readRDS(file.path("./dev/Estimation/cv_arrival/cv_arrival_processed_data.rds"))
 
 ###TODO for calibration summaries from the SEMCOG original estimation (not updated here?)
 # Intermediate stops
-# cv_intermediate_data <- readRDS(file.path("./dev/Estimation/cv_intermediate/cv_intermediate_processed_data.rds"))
+cv_intermediate_data <- readRDS(file.path("./dev/Estimation/cv_intermediate/cv_intermediate_processed_data.rds"))
 cv_intermediate_attraction_data <- readRDS(file.path("./dev/Estimation/cv_intermediate/cv_intermediate_attraction_processed_data.rds"))
-
 
 ### 3. Simulate Commercial Vehicle Movements -------------------------------------------------
 model_step_targets_cv_sim <- list()
@@ -711,7 +709,7 @@ model_step_targets_cv_sim[["cv_sim_stopduration"]] <- list(duration_stops = dura
 # The expanded SEMCOG CVS data should provide a sufficient sample from which to 
 # derive target distributions for total tour duration, segmented by vehicle types. 
 
-# The passive GPS data can also be used for heavy vehicles. 
+# The passive GPS data can also be used for vehicles classes present in those data. 
 
 # The algorithm does not distinguish between stop activities, since there may be 
 # multiple stop activity types on the same tour, so the lack of activity information 
