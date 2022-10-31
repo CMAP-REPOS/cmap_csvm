@@ -37,34 +37,6 @@ NAICS3_to_EmpCats <- read.csv('dev/Data_Processed/SEMCOG_Data/NAICS3_SEMCOGEmpCa
 #TAZSocioEconomics
 TAZSocioEconomics <- read.csv('dev/Data_Processed/SEMCOG_Data/TAZSocioEconomics.csv')
 
-
- # # Processed table of ATRI data (for II heavy truck targets)
-# mut_od <- readRDS(file = file.path(SYSTEM_DEV_DATA_PATH, 
-#                                    "ATRI", 
-#                                    "Outputs", 
-#                                    "SEMCOG_ATRI_OD_Processed_Table.RDS"))
-
-# # Processed CVS data
-# est <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-#                          "Survey",
-#                          "Outputs",
-#                          "semcog_cvs_est.RDS"))
-# 
-# veh <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-#                          "Survey",
-#                          "Outputs",
-#                          "semcog_cvs_veh.RDS"))
-# 
-# trip <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-#                          "Survey",
-#                          "Outputs",
-#                          "semcog_cvs_trip.RDS"))
-# 
-# tour <- readRDS(file.path(SYSTEM_DEV_DATA_PATH,
-#                           "Survey",
-#                           "Outputs",
-#                           "semcog_cvs_tour.RDS"))
-
 # Datasets processed for estimation
 # Stop Counts (SEMCOG data)
 load("./dev/Estimation/cv_stops/Stop_Counts_Goods.RData") 
