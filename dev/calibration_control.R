@@ -18,7 +18,7 @@ source("./dev/calibration_functions.R")
 ### 1. Settings
 CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations (gets set to model specific values)
 CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
-CALIBRATION_RUN <- "Calibration_Run_3"
+CALIBRATION_RUN <- "Calibration_Run_4"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   stop("Calibration Folder Exists. Update the CALIBRATION_RUN name")
 } else {
@@ -103,9 +103,9 @@ if(CALIBRATION_RESET_TO_ESTIMATED){
                                                    "cv_vehicle/final_model/cv_vehicle_model.rds",
                                                    "cv_duration/cv_stopduration_model.rds",
                                                    "cv_tours/cv_tours_model.rds",
-                                                   # "cv_arrival/cv_arrival_model.rds",
-                                                   # "cv_intermediate/cv_intermediate_model.rds",
-                                                   # "cv_intermediate/cv_intermediate_deviations.rds",
+                                                   "cv_arrival/cv_arrival_model.rds",
+                                                   "cv_intermediate/cv_intermediate_model.rds",
+                                                   "cv_intermediate/cv_intermediate_deviations.rds",
                                                    "cv_intermediate/cv_intermediate_model_attraction.rds"))
 
   file.copy(from = paths_to_models,
