@@ -640,10 +640,10 @@ calibrate_cv_sim_stopduration =
                                                rep("b_is_hvy_veh_30_90",5),
                                                rep("b_is_hvy_veh_150_plus",5))]
         
-        duration_choice <- rbind(duration_choice[, .(choice, coefficient = coefficient_med, Vehicle = "Medium")],
+        duration_choice_veh <- rbind(duration_choice[, .(choice, coefficient = coefficient_med, Vehicle = "Medium")],
                                  duration_choice[, .(choice, coefficient = coefficient_hvy, Vehicle = "Heavy")])
         
-        submodel_comparison[duration_choice, coefficient := i.coefficient, on = c("choice", "Vehicle")]
+        submodel_comparison[duration_choice_veh, coefficient := i.coefficient, on = c("choice", "Vehicle")]
         
         submodel_comparison_adj <- submodel_comparison[Vehicle %in% c("Medium", "Heavy"),.(ModelStops = sum(ModelStops), 
                                                           TargetStops = sum(TargetStops)), 
