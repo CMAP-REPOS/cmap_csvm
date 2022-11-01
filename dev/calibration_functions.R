@@ -697,23 +697,26 @@ calibrate_cv_sim_tours =
     submodel_results, 
     model_step_target){
     
-    # Summarise the model results: activity and vehicle type 
+    # Summarise the model results: vehicle type, and by single/multistop within tour type as need to adjust seperately 
     submodel_results_veh_summary <- submodel_results[SequenceID == 1,.(ModelTours = .N), keyby = .(Vehicle, TourType)]
-    submodel_results_veh_summary[, Model := ModelTours/sum(ModelTours), by = .(Vehicle)]
+    submodel_results_veh_summary[, SingleMultiple := ifelse(TourType %in% c("bbs", "bns", "nbs", "nns"), "Single", "Multiple")]
+    submodel_results_veh_summary[, Model := ModelTours/sum(ModelTours), by = .(Vehicle, SingleMultiple)]
     
     # Create Comparison between the target data and the model results
     vehicle_tourtype <- data.table(expand.grid(Vehicle = unique(submodel_results_veh_summary$Vehicle),
                                                TourType = unique(submodel_results_veh_summary$TourType)))
+    vehicle_tourtype[, SingleMultiple := ifelse(TourType %in% c("bbs", "bns", "nbs", "nns"), "Single", "Multiple")]
+    
     
     vehicle_tourtype[model_step_target$tour_types_vehicle[,.(TourType = tour_type_choice, Vehicle, FINAL_FACTOR)], 
                      TargetTours := i.FINAL_FACTOR, on = c("Vehicle", "TourType")]
     vehicle_tourtype[is.na(TargetTours), TargetTours := 10]
     
-    vehicle_tourtype[, Target := TargetTours/sum(TargetTours), by = .(Vehicle)]
+    vehicle_tourtype[, Target := TargetTours/sum(TargetTours), by = .(Vehicle, SingleMultiple)]
     
     submodel_comparison <- merge(vehicle_tourtype, 
                                  submodel_results_veh_summary, 
-                                 by = c("TourType", "Vehicle"), 
+                                 by = c("TourType", "SingleMultiple", "Vehicle"), 
                                  all = TRUE)
     
     submodel_comparison[is.na(Target), Target := 0]
@@ -740,18 +743,25 @@ calibrate_cv_sim_tours =
       if(submodel_iter %% 2 == 1){ # iter 1,3, etc
         
         # Alternative specific constants
-        # Normalize adjustment to keep asc_bbm at zero
+        # Normalize adjustment to keep asc_bbm at zero for multiple stop tours
+        # Normalize adjustment to keep asc_bbs at initial value for single stop tours
         submodel_comparison_adj <- submodel_comparison[,.(ModelTours = sum(ModelTours), 
                                                           TargetTours = sum(TargetTours)), 
-                                                       keyby = .(TourType)]
+                                                       keyby = .(TourType, SingleMultiple)]
+        
         submodel_comparison_adj[, c("Model", "Target") := .(ModelTours/sum(ModelTours), 
-                                                            TargetTours/sum(TargetTours)) ]
+                                                            TargetTours/sum(TargetTours)),
+                                by = SingleMultiple]
         
         submodel_comparison_adj[, coefficient := paste0("asc_", TourType)]
         
         submodel_comparison_adj[, Adjustment := log(Target/Model)]
         
-        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_bbm"]$Adjustment]
+        submodel_comparison_adj[SingleMultiple == "Multiple", 
+                                Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_bbm"]$Adjustment]
+        
+        submodel_comparison_adj[SingleMultiple == "Single", 
+                                Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_bbs"]$Adjustment]
         
       } else {  # iter 2,4, etc
         
@@ -764,14 +774,16 @@ calibrate_cv_sim_tours =
         
         submodel_comparison_adj <- submodel_comparison[,.(ModelTours = sum(ModelTours), 
                                                        TargetTours = sum(TargetTours)), 
-                                                       keyby = .(coefficient, Vehicle, TourType)]
+                                                       keyby = .(coefficient, Vehicle, TourType, SingleMultiple)]
+        
         submodel_comparison_adj[, c("Model", "Target") := .(ModelTours/sum(ModelTours), 
                                                             TargetTours/sum(TargetTours)),
-                                by = "Vehicle"]
-        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+                                by = .(Vehicle, SingleMultiple)]
         
-        submodel_comparison_adj[submodel_comparison_adj[TourType == "bbm"],
-                                Adjustment := Adjustment - i.Adjustment, on = "Vehicle"]
+        submodel_comparison_adj[, Adjustment := log(Target/Model), by = SingleMultiple]
+        
+        submodel_comparison_adj[submodel_comparison_adj[TourType %in% c("bbm", "bbs")],
+                                Adjustment := Adjustment - i.Adjustment, on = c("Vehicle", "SingleMultiple")]
         
       }
       
