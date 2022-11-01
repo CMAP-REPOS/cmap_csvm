@@ -67,11 +67,11 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                                                  last_output_step = "cv_sim_stopduration",
                                                  estimated_models = list(cv_tours_model = "cv_tours_model"),
                                                  max_iterations = 10),
-                             cv_sim_scheduledtrips = list(require_calibration = FALSE,
+                             cv_sim_scheduledtrips = list(require_calibration = TRUE,
                                                           submodel_results_name = "scheduledTrips",
                                                           last_output_step = "cv_sim_tours",
-                                                          estimated_models = NULL,
-                                                          max_iterations = 8),
+                                                          estimated_models = list(cv_arrival_model = "cv_arrival_model"),
+                                                          max_iterations = 10),
                              cv_sim_intermediatestops = list(require_calibration = FALSE,
                                                              submodel_results_name = "allTrips",
                                                              last_output_step = "cv_sim_scheduledtrips",
@@ -150,7 +150,7 @@ for(model_step_num in 1:length(models)){
   
   for(submodel_num in 1:length(model_step_submodels)){
     
-    #submodel_num <- 5
+    #submodel_num <- 6
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     

@@ -813,6 +813,122 @@ calibrate_cv_sim_tours =
   }
 
 
+calibrate_cv_sim_scheduledtrips = 
+  function(
+    submodel_calibrated, 
+    submodel_results, 
+    model_step_target){
+    
+    # Summarise the model results: by model choice (remove NAs, only choice on first tour stop), and vehicle type 
+    submodel_results_veh_summary <- submodel_results[!is.na(model_choice),.(ModelTours = .N), keyby = .(Vehicle, model_choice)]
+    submodel_results_veh_summary[, Model := ModelTours/sum(ModelTours), by = Vehicle]
+    
+    # Create Comparison between the target data and the model results
+    vehicle_arrival <- data.table(expand.grid(Vehicle = unique(submodel_results_veh_summary$Vehicle),
+                                               model_choice = unique(submodel_results_veh_summary$model_choice)))
+    
+    vehicle_arrival[model_step_target$tour_arrival_vehicle[,.(model_choice = arrival_choice, Vehicle, FINAL_FACTOR)], 
+                     TargetTours := i.FINAL_FACTOR, on = c("Vehicle", "model_choice")]
+    vehicle_arrival[is.na(TargetTours), TargetTours := 10]
+    
+    vehicle_arrival[, Target := TargetTours/sum(TargetTours), by = Vehicle]
+    
+    submodel_comparison <- merge(vehicle_arrival, 
+                                 submodel_results_veh_summary, 
+                                 by = c("Vehicle", "model_choice"), 
+                                 all = TRUE)
+    
+    submodel_comparison[is.na(TargetTours), TargetTours := 0]
+    submodel_comparison[is.na(ModelTours), ModelTours := 0]
+    submodel_comparison[is.na(Target), Target := 0]
+    submodel_comparison[is.na(Model), Model := 0]
+    
+    # Comparison: 
+    # The difference between the model and target shares by duration alternative
+    
+    submodel_comparison[, Difference := abs(Model - Target)]
+    
+    # Set a threshold for the model to reach
+    submodel_difference_threshold <- 0.001
+    submodel_criteria <- 0
+    submodel_test <- submodel_comparison[, sqrt(mean((Difference)^2))]
+    
+    # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
+    submodel_parameters <- list()
+    
+    if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
+      submodel_calibrated <- TRUE
+    } else {
+      # Adjust the constants in the model
+      
+      if(submodel_iter %% 2 == 1){ # iter 1,3, etc
+        
+        # Alternative specific constants
+        # Normalize adjustment to keep asc_overnight at zero
+        submodel_comparison_adj <- submodel_comparison[,.(ModelTours = sum(ModelTours), 
+                                                          TargetTours = sum(TargetTours)), 
+                                                       keyby = .(model_choice)]
+        
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelTours/sum(ModelTours), 
+                                                            TargetTours/sum(TargetTours))]
+        
+        submodel_comparison_adj[, coefficient := paste0("asc_", model_choice)]
+        
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_overnight"]$Adjustment]
+        
+      } else {  # iter 2,4, etc
+        
+        # Vehicle variables
+        # Normalize adjustments to base level at zero
+        
+        submodel_comparison[, coefficient := paste0("asc_", model_choice)]
+        submodel_comparison[Vehicle %in% c("Medium", "Heavy") & model_choice != "overnight",
+                            coefficient := sub("asc_", "asc_is_med_hvy_veh_", coefficient)]
+        
+        submodel_comparison[Vehicle %in% c("Medium", "Heavy") & model_choice %in% c("1900", "2000", "2100"),
+                            coefficient := "asc_is_med_hvy_veh_1900_2100"]
+        
+        submodel_comparison_adj <- submodel_comparison[Vehicle %in% c("Medium", "Heavy"),
+                                                       .(ModelTours = sum(ModelTours), 
+                                                          TargetTours = sum(TargetTours)), 
+                                                       keyby = coefficient]
+        
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelTours/sum(ModelTours), 
+                                                            TargetTours/sum(TargetTours))]
+        
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_overnight"]$Adjustment]
+        
+      }
+      
+      coefficients = 
+        data.table(
+          coefficient = names(model_step_inputs$model_step_env$cv_arrival_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_arrival_model$estimate)
+      
+      coefficients[submodel_comparison_adj, adjustment := i.Adjustment, on = "coefficient"]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
+      new_coefficients = coefficients[, estimate]
+      names(new_coefficients) = coefficients[, coefficient]
+      model_step_inputs$model_step_env$cv_tours_model$estimate = new_coefficients
+      
+    }
+    
+    submodel_parameters[["cv_arrival_model"]] = model_step_inputs$model_step_env$cv_arrival_model
+    
+    # return a list of items to support calibration and debugging
+    return(list(submodel_calibrated = submodel_calibrated,
+                submodel_comparison = submodel_comparison,
+                submodel_difference_threshold = submodel_difference_threshold,
+                submodel_criteria = submodel_criteria,
+                submodel_test = submodel_test,
+                submodel_parameters = submodel_parameters))
+    
+  }
+
 # generic function for calibrating logit-based choice model
 calibrate_logit_based_model = 
   function(
