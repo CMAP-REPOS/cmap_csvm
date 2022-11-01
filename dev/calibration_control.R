@@ -72,11 +72,12 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                                                           last_output_step = "cv_sim_tours",
                                                           estimated_models = list(cv_arrival_model = "cv_arrival_model"),
                                                           max_iterations = 10),
-                             cv_sim_intermediatestops = list(require_calibration = FALSE,
+                             cv_sim_intermediatestops = list(require_calibration = TRUE,
                                                              submodel_results_name = "allTrips",
                                                              last_output_step = "cv_sim_scheduledtrips",
-                                                             estimated_models = NULL,
-                                                             max_iterations = 8))) 
+                                                             estimated_models = list(cv_intermediate_model = "cv_intermediate_model",
+                                                                                     cv_intermediate_attraction_model = "cv_intermediate_attraction_model"),
+                                                             max_iterations = 10))) 
 
 ### 3. Run the model individual step by step cycling through the main model components and their submodels
 # steps required:
@@ -150,7 +151,7 @@ for(model_step_num in 1:length(models)){
   
   for(submodel_num in 1:length(model_step_submodels)){
     
-    #submodel_num <- 6
+    #submodel_num <- 7
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     

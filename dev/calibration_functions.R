@@ -929,6 +929,132 @@ calibrate_cv_sim_scheduledtrips =
     
   }
 
+calibrate_cv_sim_intermediatestops = 
+  function(
+    submodel_calibrated, 
+    submodel_results, 
+    model_step_target){
+    
+    stop_type  <- data.table(Activity = levels(submodel_results$Activity),
+                             intermediate_stop_type = c(rep("No Int. Stop", 3), "Driver Needs", "Vehicle Service", "Other Int. Stop"), 
+                             stop_abb = c(rep("ns",3),"dn", "vs", "ot"))
+    
+    # Summarise the model results: by stop type, and vehicle type 
+    submodel_results_veh_summary <- submodel_results[,.(ModelStops = .N), keyby = .(Vehicle, Activity)]
+    submodel_results_veh_summary[stop_type, stop_abb := i.stop_abb, on = "Activity"]
+    submodel_results_veh_summary <- submodel_results_veh_summary[,.(ModelStops = sum(ModelStops)), keyby = .(Vehicle, stop_abb)]
+    submodel_results_veh_summary[, Model := ModelStops/sum(ModelStops), by = Vehicle]
+    
+    # Create Comparison between the target data and the model results
+    vehicle_stop_type <- data.table(expand.grid(Vehicle = unique(submodel_results_veh_summary$Vehicle),
+                                                stop_abb = unique(submodel_results_veh_summary$stop_abb)))
+    
+    vehicle_stop_type[stop_type, intermediate_stop_type := i.intermediate_stop_type, on = "stop_abb"]
+    
+    vehicle_stop_type[model_step_target$intermediate_stops_type_veh[,.(intermediate_stop_type, Vehicle, FINAL_FACTOR)], 
+                    TargetStops := i.FINAL_FACTOR, on = c("Vehicle", "intermediate_stop_type")]
+    vehicle_stop_type[is.na(TargetStops), TargetStops := 10]
+    
+    vehicle_stop_type[, Target := TargetStops/sum(TargetStops), by = Vehicle]
+    
+    submodel_comparison <- merge(vehicle_stop_type, 
+                                 submodel_results_veh_summary, 
+                                 by = c("Vehicle", "stop_abb"), 
+                                 all = TRUE)
+    
+    submodel_comparison[is.na(TargetStops), TargetStops := 0]
+    submodel_comparison[is.na(ModelStops), ModelStops := 0]
+    submodel_comparison[is.na(Target), Target := 0]
+    submodel_comparison[is.na(Model), Model := 0]
+    
+    # Comparison: 
+    # The difference between the model and target shares by duration alternative
+    
+    submodel_comparison[, Difference := abs(Model - Target)]
+    
+    # Set a threshold for the model to reach
+    submodel_difference_threshold <- 0.001
+    submodel_criteria <- 0
+    submodel_test <- submodel_comparison[, sqrt(mean((Difference)^2))]
+    
+    # Evaluate whether the model is calibrated and either set submodel_calibrated to true or adjust parameters
+    submodel_parameters <- list()
+    
+    if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
+      submodel_calibrated <- TRUE
+    } else {
+      # Adjust the constants in the model
+      
+      if(submodel_iter %% 2 == 1){ # iter 1,3, etc
+        
+        # Alternative specific constants
+        # Normalize adjustment to keep asc_ns at zero
+        submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
+                                                          TargetStops = sum(TargetStops)), 
+                                                       keyby = .(stop_abb)]
+        
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops))]
+        
+        submodel_comparison_adj[, coefficient := paste0("asc_", stop_abb)]
+        
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_ns"]$Adjustment]
+        
+      } else {  # iter 2,4, etc
+        
+        # Vehicle variables on vs and ot stops
+        # Normalize adjustments to base level (combination  of ns/dn) at zero
+        
+        submodel_comparison[, coefficient := "base"]
+        submodel_comparison[Vehicle == "Medium" & stop_abb %in% c("vs", "ot"),
+                            coefficient := paste0("b_med_veh_", stop_abb)]
+        submodel_comparison[Vehicle == "Heavy" & stop_abb %in% c("vs", "ot"),
+                            coefficient := paste0("b_hvy_veh_", stop_abb)]
+        
+        submodel_comparison_adj <- submodel_comparison[Vehicle %in% c("Medium", "Heavy"),
+                                                       .(ModelStops = sum(ModelStops), 
+                                                         TargetStops = sum(TargetStops)), 
+                                                       keyby = .(Vehicle, coefficient)]
+        
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
+                                                            TargetStops/sum(TargetStops)),
+                                by = Vehicle]
+        
+        submodel_comparison_adj[, Adjustment := log(Target/Model)]
+        
+        submodel_comparison_adj[submodel_comparison_adj[coefficient == "base"], Adjustment := Adjustment - i.Adjustment, on = "Vehicle"]
+        
+      }
+      
+      coefficients = 
+        data.table(
+          coefficient = names(model_step_inputs$model_step_env$cv_intermediate_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_intermediate_model$estimate)
+      
+      coefficients[submodel_comparison_adj, adjustment := i.Adjustment, on = "coefficient"]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
+      new_coefficients = coefficients[, estimate]
+      names(new_coefficients) = coefficients[, coefficient]
+      model_step_inputs$model_step_env$cv_intermediate_model$estimate = new_coefficients
+      
+    }
+    
+    submodel_parameters[["cv_intermediate_model"]] = model_step_inputs$model_step_env$cv_intermediate_model
+    
+    # return a list of items to support calibration and debugging
+    return(list(submodel_calibrated = submodel_calibrated,
+                submodel_comparison = submodel_comparison,
+                submodel_difference_threshold = submodel_difference_threshold,
+                submodel_criteria = submodel_criteria,
+                submodel_test = submodel_test,
+                submodel_parameters = submodel_parameters))
+    
+  }
+
+
+
 # generic function for calibrating logit-based choice model
 calibrate_logit_based_model = 
   function(
