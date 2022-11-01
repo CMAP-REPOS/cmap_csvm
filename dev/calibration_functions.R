@@ -1042,6 +1042,7 @@ calibrate_cv_sim_intermediatestops =
     }
     
     submodel_parameters[["cv_intermediate_model"]] = model_step_inputs$model_step_env$cv_intermediate_model
+    submodel_parameters[["cv_intermediate_attraction_model"]] = model_step_inputs$model_step_env$cv_intermediate_attraction_model
     
     # return a list of items to support calibration and debugging
     return(list(submodel_calibrated = submodel_calibrated,
