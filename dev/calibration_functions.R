@@ -735,96 +735,60 @@ calibrate_cv_sim_tours =
     if(submodel_test - submodel_difference_threshold <= submodel_criteria) {
       submodel_calibrated <- TRUE
     } else {
-      ###############TODO update this section
-      
       # Adjust the constants in the model
       
-      if(submodel_iter %% 3 == 1){ # iter 1,4, etc
+      if(submodel_iter %% 2 == 1){ # iter 1,3, etc
         
         # Alternative specific constants
-        # Normalize adjustment to keep asc_15 at zero
-        submodel_comparison_adj <- submodel_comparison[,.(ModelStops = sum(ModelStops), 
-                                                          TargetStops = sum(TargetStops)), 
-                                                       keyby = .(choice)]
-        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
-                                                            TargetStops/sum(TargetStops)) ]
-        submodel_comparison_adj[, Adjustment := log(Target/Model)]
-        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[choice == 1]$Adjustment]
+        # Normalize adjustment to keep asc_bbm at zero
+        submodel_comparison_adj <- submodel_comparison[,.(ModelTours = sum(ModelTours), 
+                                                          TargetTours = sum(TargetTours)), 
+                                                       keyby = .(TourType)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelTours/sum(ModelTours), 
+                                                            TargetTours/sum(TargetTours)) ]
         
-        submodel_comparison_adj[, coefficient := 
-                                  names(model_step_inputs$model_step_env$cv_stopduration_model$estimate)[1:11][match(choice, 1:11)]]
+        submodel_comparison_adj[, coefficient := paste0("asc_", TourType)]
         
-      } else if(submodel_iter %% 3 == 2){ # iter 2, 5, etc
-        
-        # Activity variables
-        # Normalize adjustments to base level at zero
-        
-        duration_choice[, coefficient := c(rep("b_activity_service_0_45",3),
-                                           rep("b_activity_service_60_75",2),
-                                           rep("b_activity_service_90_plus",6))]
-        
-        submodel_comparison[duration_choice, coefficient := i.coefficient, on = "choice"]
-        
-        submodel_comparison_adj <- submodel_comparison[Activity == "Service",.(ModelStops = sum(ModelStops), 
-                                                                               TargetStops = sum(TargetStops)), 
-                                                       keyby = coefficient]
-        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
-                                                            TargetStops/sum(TargetStops))]
         submodel_comparison_adj[, Adjustment := log(Target/Model)]
         
-        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "b_activity_service_0_45"]$Adjustment]
+        submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_bbm"]$Adjustment]
         
-      } else {  # iter 3,6, etc
+      } else {  # iter 2,4, etc
         
         # Vehicle variables
         # Normalize adjustments to base level at zero
         
-        duration_choice[, coefficient_med := c(rep("asc_15",1),
-                                               rep("b_is_med_veh_30_75",4),
-                                               rep("b_is_med_veh_90_plus",6))]
-        duration_choice[, coefficient_hvy := c(rep("asc_15",1),
-                                               rep("b_is_hvy_veh_30_90",5),
-                                               rep("b_is_hvy_veh_150_plus",5))]
+        submodel_comparison[, coefficient := paste0("asc_", TourType)]
+        submodel_comparison[Vehicle == "Medium", coefficient := paste0(coefficient, "_is_med_veh")]
+        submodel_comparison[Vehicle == "Heavy", coefficient := paste0(coefficient, "_is_hvy_veh")]
         
-        duration_choice_veh <- rbind(duration_choice[, .(choice, coefficient = coefficient_med, Vehicle = "Medium")],
-                                     duration_choice[, .(choice, coefficient = coefficient_hvy, Vehicle = "Heavy")])
-        
-        submodel_comparison[duration_choice_veh, coefficient := i.coefficient, on = c("choice", "Vehicle")]
-        
-        submodel_comparison_adj <- submodel_comparison[Vehicle %in% c("Medium", "Heavy"),.(ModelStops = sum(ModelStops), 
-                                                                                           TargetStops = sum(TargetStops)), 
-                                                       keyby = .(coefficient, Vehicle)]
-        submodel_comparison_adj[, c("Model", "Target") := .(ModelStops/sum(ModelStops), 
-                                                            TargetStops/sum(TargetStops)),
+        submodel_comparison_adj <- submodel_comparison[,.(ModelTours = sum(ModelTours), 
+                                                       TargetTours = sum(TargetTours)), 
+                                                       keyby = .(coefficient, Vehicle, TourType)]
+        submodel_comparison_adj[, c("Model", "Target") := .(ModelTours/sum(ModelTours), 
+                                                            TargetTours/sum(TargetTours)),
                                 by = "Vehicle"]
         submodel_comparison_adj[, Adjustment := log(Target/Model)]
         
-        submodel_comparison_adj[submodel_comparison_adj[coefficient == "asc_15"],
+        submodel_comparison_adj[submodel_comparison_adj[TourType == "bbm"],
                                 Adjustment := Adjustment - i.Adjustment, on = "Vehicle"]
         
       }
       
       coefficients = 
         data.table(
-          coefficient = names(model_step_inputs$model_step_env$cv_stopduration_model$estimate), 
-          estimate = model_step_inputs$model_step_env$cv_stopduration_model$estimate)
+          coefficient = names(model_step_inputs$model_step_env$cv_tours_model$estimate), 
+          estimate = model_step_inputs$model_step_env$cv_tours_model$estimate)
       
       coefficients[submodel_comparison_adj, adjustment := i.Adjustment, on = "coefficient"]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
       new_coefficients = coefficients[, estimate]
       names(new_coefficients) = coefficients[, coefficient]
-      model_step_inputs$model_step_env$cv_stopduration_model$estimate = new_coefficients
+      model_step_inputs$model_step_env$cv_tours_model$estimate = new_coefficients
       
     }
     
-    submodel_parameters[["cv_stopduration_model"]] = model_step_inputs$model_step_env$cv_stopduration_model
-    
-    # Add labeling
-    submodel_comparison <- merge(duration_choice[,.(stop_duration = duration_group, choice)],
-                                 submodel_comparison[,.(choice, Vehicle, Activity, TargetStops, Target, ModelStops, Model, Difference)],
-                                 by = "choice",
-                                 all = TRUE)
-    submodel_comparison[, stop_duration := factor(stop_duration, levels = duration_choice$duration_group, ordered = TRUE)]
+    submodel_parameters[["cv_tours_model"]] = model_step_inputs$model_step_env$cv_tours_model
     
     # return a list of items to support calibration and debugging
     return(list(submodel_calibrated = submodel_calibrated,

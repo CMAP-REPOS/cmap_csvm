@@ -62,7 +62,7 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                                                         last_output_step = "cv_sim_vehicle",
                                                         estimated_models = list(cv_stopduration_model = "cv_stopduration_model"),
                                                         max_iterations = 10),
-                             cv_sim_tours = list(require_calibration = FALSE,
+                             cv_sim_tours = list(require_calibration = TRUE,
                                                  submodel_results_name = "firmTourSequence",
                                                  last_output_step = "cv_sim_stopduration",
                                                  estimated_models = list(cv_tours_model = "cv_tours_model"),
