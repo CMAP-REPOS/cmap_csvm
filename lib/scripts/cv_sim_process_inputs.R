@@ -18,7 +18,7 @@ cv_sim_process_inputs <- function(envir) {
                         cv_tours_model            = file.path(SYSTEM_DATA_PATH, "cv_tours_model.RDS"),
                         cv_arrival_model          = file.path(SYSTEM_DATA_PATH, "cv_arrival_model.RDS"),
                         cv_intermediate_model     = file.path(SYSTEM_DATA_PATH, "cv_intermediate_model.RDS"),
-                        cv_intermediate_attraction_model = file.path(SYSTEM_DATA_PATH, "cv_intermediate_model_attraction.RDS"),
+                        cv_intermediate_attraction_model = file.path(SYSTEM_DATA_PATH, "cv_intermediate_attraction_model.RDS"),
                         intstop.deviations        = file.path(SYSTEM_DATA_PATH, "cv_intermediate_deviations.rds"),
                         settings                  = file.path(SYSTEM_DATA_PATH, "cv_settings.RData"),
                         skims_names               = file.path(SYSTEM_DATA_PATH, 'data_skim_names.csv'))

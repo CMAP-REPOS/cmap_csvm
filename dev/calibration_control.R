@@ -107,7 +107,7 @@ if(CALIBRATION_RESET_TO_ESTIMATED){
                                                    "cv_arrival/cv_arrival_model.rds",
                                                    "cv_intermediate/cv_intermediate_model.rds",
                                                    "cv_intermediate/cv_intermediate_deviations.rds",
-                                                   "cv_intermediate/cv_intermediate_model_attraction.rds"))
+                                                   "cv_intermediate/cv_intermediate_attraction_model.rds"))
 
   file.copy(from = paths_to_models,
             to = "./lib/data",
