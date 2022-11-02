@@ -10,6 +10,8 @@ rm(list = ls())
 SYSTEM_COMMAND_ARGS <- c("base", 2019)
 # Alternative base using the freeflow skims (need to set skim condition variable in BASE_VARIABLES)
 # SYSTEM_COMMAND_ARGS <- c("base_freeflow", 2019)
+# Future scenario
+# SYSTEM_COMMAND_ARGS <- c("future", 2050)
 
 ### Initialize Application -------------------------------------------------------------------
 

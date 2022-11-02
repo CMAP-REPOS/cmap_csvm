@@ -17,7 +17,7 @@ Column {.tabset}
 
 **Commercial Vehicle Touring Model, Stops Models: Calibration Summaries**
 
-Firm synthesis output comparisons with input and control data, for the first four models in the component that simulate firm stop activity (before the set of models that simulate linking stops together into tours)
+Commercial vehicle touring model output comparisons with input and control data, for the first four models in the component that simulate firm stop activity (before the set of models that simulate linking stops together into tours)
 
 - cv_sim_activities identifies which firms make goods stops, service stops, both types of stops, or neither. Calibration checks are confirmatory to ensure that the model is drawing from an observed distribution correctly.
 - cv_sim_schedule stops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ. Calibration is by adjustment of constants and model parameters to match survey stops targets by stop activity, firm industry, firm to TAZ distance, and county.
@@ -342,6 +342,179 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "stop_duration", yvar = "PctStops",
 
 # Plot
 bar_plotter(dat[Vehicle == "Heavy"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_heavy.png")
+
+```
+
+Calibration Tours {data-navmenu="Commercial Vehicle Touring Model"}
+============================================
+
+Column {.tabset}
+--------------------------------------------
+
+**Commercial Vehicle Touring Model, Tour Models: Calibration Summaries**
+
+Commercial vehicle touring model comparisons with input and control data, for the last three models in the component that simulate tours
+
+- cv_sim_tours identifies the group of stops to form each tour, the tour type, and the sequence of stops in the tour. Calibration is by adjustment of parameters to control the clustering of stops into tours, the selection of tour type, and the extent to which tour sequencing is optimised.
+- cv_sim_scheduletrips simulates the arrival time at the first stop on the tour and based on that, stop durations, and trip travel times, calculates the depature and arrival time of every trip in the tour. Calibration is by adjustment of constants and model parameters to match survey arrival time distribution targets by vehicle type.
+- cv_sim_intermediatestops estimates whether each trip includes an intermediate stop (e.g., for vehicle servicing or driver needs) and if so, how long that stop takes and whether that stop is located. All tours are retimed to account for intermediate stops. Calibration is by adjustment of constants and model parameters to match surveyed number and location of intermediate stops targets by stop activity and vehicle type.
+
+### cv_sim_tours: Light Vehicles
+
+```{r Chart_cv_sim_tours_light}
+# Organize
+dat <- cal_results$cv_sim_tours$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(NumStops = SingleMultiple, TourType, Vehicle)]
+
+dat <- melt.data.table(dat, id.vars = c("NumStops", "TourType", "Vehicle"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_tours_type_vehicle.csv"))
+assign("db_tab_cv_sim_tours_type_vehicle", dat, envir = db_inputs)
+
+# Plot
+dat[, Stops_Type := paste(NumStops, toupper(TourType), sep = "_")] 
+bar_plotter(dat[Vehicle == "Light"], xvar = "Stops_Type", yvar = "PctTours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Tours", png_name = "p_cv_sim_tours_type_vehicle_light.png")
+
+```
+
+### cv_sim_tours: Medium Trucks
+
+```{r Chart_cv_sim_tours_medium}
+
+# Plot
+bar_plotter(dat[Vehicle == "Medium"], xvar = "Stops_Type", yvar = "PctTours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Tours", png_name = "p_cv_sim_tours_type_vehicle_medium.png")
+
+```
+
+### cv_sim_tours: Heavy Trucks
+
+```{r Chart_cv_sim_tours_heavy}
+
+# Plot
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "Stops_Type", yvar = "PctTours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Tours", png_name = "p_cv_sim_tours_type_vehicle_heavy.png")
+
+```
+
+
+Chart Column 2 {.tabset}
+--------------------------------------------
+
+### cv_sim_scheduledtrips: Arrival Time (All Tours)
+
+```{r Chart_cv_sim_scheduledtrips}
+# Organize
+dat <- cal_results$cv_sim_scheduledtrips$submodel_comparison[, .(ModelTours = sum(ModelTours), TargetTours = sum(TargetTours)), keyby = .(TimePeriod = model_choice)]
+dat[is.na(ModelTours), ModelTours := 0]
+dat[is.na(TargetTours), TargetTours := 0]
+dat[, c("Model", "Target") := .(ModelTours/sum(ModelTours), TargetTours/sum(TargetTours))]
+
+dat <- melt.data.table(dat[, .(TimePeriod, Model, Target)], id.vars = c("TimePeriod"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledtrips_all.csv"))
+assign("db_tab_cv_sim_scheduledtrips_all", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_all.png", xrotate = TRUE)
+
+```
+
+### cv_sim_scheduledtrips: Arrival Time (Light Vehicles)
+
+```{r Chart_cv_sim_scheduledtrips_light}
+# Organize
+dat <- cal_results$cv_sim_scheduledtrips$submodel_comparison[, .(ModelTours = sum(ModelTours), TargetTours = sum(TargetTours)), keyby = .(TimePeriod = model_choice, Vehicle)]
+dat[is.na(ModelTours), ModelTours := 0]
+dat[is.na(TargetTours), TargetTours := 0]
+dat[, c("Model", "Target") := .(ModelTours/sum(ModelTours), TargetTours/sum(TargetTours)), by = Vehicle]
+
+dat <- melt.data.table(dat[, .(TimePeriod, Vehicle, Model, Target)], id.vars = c("TimePeriod", "Vehicle"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledtrips_vehicle.csv"))
+assign("db_tab_cv_sim_scheduledtrips_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[Vehicle == "Light"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_light.png", xrotate = TRUE)
+
+```
+
+### cv_sim_scheduledtrips: Arrival Time (Medium Trucks)
+
+```{r Chart_cv_sim_scheduledtrips_medium}
+
+# Plot
+bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_medium.png", xrotate = TRUE)
+
+```
+
+### cv_sim_scheduledtrips: Arrival Time (Heavy Trucks)
+
+```{r Chart_cv_sim_scheduledtrips_heavy}
+
+# Plot
+bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_heavy.png", xrotate = TRUE)
+
+```
+
+Chart Column 3 {.tabset}
+--------------------------------------------
+
+### cv_sim_intermediatestops: Stop Type (All)
+
+```{r Chart_cv_sim_intermediatestops}
+# Organize
+dat <- cal_results$cv_sim_intermediatestops$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(StopType = intermediate_stop_type)]
+dat[is.na(ModelStops), ModelStops := 0]
+dat[is.na(TargetStops), TargetStops := 0]
+dat[, c("Model", "Target") := .(ModelStops/sum(ModelStops), TargetStops/sum(TargetStops))]
+
+dat <- melt.data.table(dat[, .(StopType, Model, Target)], id.vars = c("StopType"), variable.name = "Source", value.name = "PctStops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_intermediatestops_all.csv"))
+assign("db_tab_cv_sim_intermediatestops_all", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_all.png", xrotate = TRUE)
+
+```
+
+### cv_sim_intermediatestops: Stop Type (Light Vehicles)
+
+```{r Chart_cv_intermediatestops_light}
+# Organize
+dat <- cal_results$cv_sim_intermediatestops$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle, StopType = intermediate_stop_type)]
+dat[is.na(ModelStops), ModelStops := 0]
+dat[is.na(TargetStops), TargetStops := 0]
+dat[, c("Model", "Target") := .(ModelStops/sum(ModelStops), TargetStops/sum(TargetStops)), by = Vehicle]
+
+dat <- melt.data.table(dat[, .(Vehicle, StopType, Model, Target)], id.vars = c("Vehicle", "StopType"), variable.name = "Source", value.name = "PctStops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_intermediatestops_vehicle.csv"))
+assign("db_tab_cv_sim_intermediatestops_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[Vehicle == "Light"], xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_light.png", xrotate = TRUE)
+
+```
+
+### cv_sim_intermediatestops: Stop Type (Medium Trucks)
+
+```{r Chart_cv_intermediatestops_medium}
+
+# Plot
+bar_plotter(dat[Vehicle == "Medium"], xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_medium.png", xrotate = TRUE)
+
+```
+
+### cv_sim_intermediatestops: Stop Type (Heavy Trucks)
+
+```{r Chart_cv_intermediatestops_heavy}
+
+# Plot
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_heavy.png", xrotate = TRUE)
 
 ```
 
