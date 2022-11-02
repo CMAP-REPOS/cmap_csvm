@@ -1,0 +1,347 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+
+Calibration Stops {data-navmenu="Commercial Vehicle Touring Model"}
+============================================
+
+Column {.tabset}
+--------------------------------------------
+
+**Commercial Vehicle Touring Model, Stops Models: Calibration Summaries**
+
+Firm synthesis output comparisons with input and control data, for the first four models in the component that simulate firm stop activity (before the set of models that simulate linking stops together into tours)
+
+- cv_sim_activities identifies which firms make goods stops, service stops, both types of stops, or neither. Calibration checks are confirmatory to ensure that the model is drawing from an observed distribution correctly.
+- cv_sim_schedule stops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ. Calibration is by adjustment of constants and model parameters to match survey stops targets by stop activity, firm industry, firm to TAZ distance, and county.
+- cv_sim_scheduledstops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ. Calibration is by adjustment of constants and model parameters to match surveyed number of stops targets by stop activity, firm industry, firm to TAZ distance, and county.
+- cv_sim_vehicle estimates the vehicle type for each stop as a function of firm industry, distance from the firm to the TAZ, and stop activity. Calibration is by adjustment of constants and model parameters to match surveyed stop vehicle type targets by stop activity, firm industry, firm to TAZ distance, and county.
+- cv_sim_stopduration estimates the length of each stop as a function of stop activity and vehicle type. Calibration is by adjustment of constants and model parameters to match surveyed stop duration distribution targets by stop activity and vehicle type.
+
+### cv_sim_activities: Goods
+
+```{r Chart_cv_sim_activities_industry_goods}
+# Organize
+dat <- cal_results$cv_sim_activities$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(Industry = Category, Activity)]
+
+dat <- melt.data.table(dat, id.vars = c("Industry", "Activity"), variable.name = "Source", value.name = "PctFirms")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_activities_industry.csv"))
+assign("db_tab_cv_sim_activities_industry", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[Activity == "Goods"], xvar = "Industry", yvar = "PctFirms",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Firms", png_name = "p_cv_sim_activities_industry_goods.png")
+
+```
+
+### cv_sim_activities: Service
+
+```{r Chart_cv_sim_activities_industry_service}
+
+# Plot
+bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "PctFirms",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Firms", png_name = "p_cv_sim_activities_industry_service.png")
+
+```
+
+### cv_sim_activities: Goods and Service
+
+```{r Chart_cv_sim_activities_industry_goodsservice}
+
+# Plot
+bar_plotter(dat[Activity == "GoodsAndService"], xvar = "Industry", yvar = "PctFirms",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Firms", png_name = "p_cv_sim_activities_industry_goodsandservice.png")
+
+```
+
+### cv_sim_activities: No Activity
+
+```{r Chart_cv_sim_activities_industry_other}
+
+# Plot
+bar_plotter(dat[Activity == "Other"], xvar = "Industry", yvar = "PctFirms",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Firms", png_name = "p_cv_sim_activities_industry_noactivity.png")
+
+```
+
+Chart Column 2 {.tabset}
+--------------------------------------------
+
+### cv_sim_scheduledstops: Industry (All Stops)
+
+```{r Chart_cv_sim_scheduledstops_industry_all}
+# Organize
+dat <- cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total", .(Model = sum(ModelStops), Target = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName)]
+
+dat <- melt.data.table(dat, id.vars = c("Industry"), variable.name = "Source", value.name = "Stops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_industry_all.csv"))
+assign("db_tab_cv_sim_scheduledstops_industry_all", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Industry", yvar = "Stops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Stops", png_name = "p_cv_sim_scheduledstops_industry_all.png")
+
+```
+
+### cv_sim_scheduledstops: Industry (Goods Stops)
+
+```{r Chart_cv_sim_scheduledstops_industry_goods}
+# Organize
+dat <- cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total", .(Model = sum(ModelStops), Target = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName, Activity)]
+
+dat <- melt.data.table(dat, id.vars = c("Industry", "Activity"), variable.name = "Source", value.name = "Stops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_industry_activity.csv"))
+assign("db_tab_cv_sim_scheduledstops_industry_activity", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[Activity == "Goods"], xvar = "Industry", yvar = "Stops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Stops", png_name = "p_cv_sim_scheduledstops_industry_goods.png")
+
+```
+
+### cv_sim_scheduledstops: Industry (Service Stops)
+
+```{r Chart_cv_sim_scheduledstops_industry_service}
+# Plot
+bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "Stops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Stops", png_name = "p_cv_sim_scheduledstops_industry_service.png")
+
+```
+
+### cv_sim_scheduledstops: Tabulation All Stops
+
+```{r Table_cv_sim_scheduledstops_all}
+
+# Organize
+dat <- add_totals(cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total", .(Employment = sum(Emp/2), ModelStops = sum(ModelStops), TargetStops = round(sum(TargetStops))), keyby = .(Industry = EmpCatGroupedName)],rowtotal = FALSE)
+
+dat[, Difference := round(ModelStops - TargetStops)]
+dat[, Ratio := round(ModelStops/TargetStops,3)]
+dat[, StopsPerEmp := round(ModelStops/Employment,2)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_all_tab.csv"), row.names = FALSE)
+assign("db_tab_cv_sim_scheduledstops_all_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") 
+
+```
+
+### cv_sim_scheduledstops: Tabulation Goods Stops
+
+```{r Table_cv_sim_scheduledstops_goods}
+
+# Organize
+dat <- add_totals(cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total" & Activity == "Goods", .(Employment = sum(Emp), ModelStops = sum(ModelStops), TargetStops = round(sum(TargetStops))), keyby = .(Industry = EmpCatGroupedName)],rowtotal = FALSE)
+
+dat[, Difference := round(ModelStops - TargetStops)]
+dat[, Ratio := round(ModelStops/TargetStops,3)]
+dat[, StopsPerEmp := round(ModelStops/Employment,2)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_goods_tab.csv"), row.names = FALSE)
+assign("db_tab_cv_sim_scheduledstops_goods_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") 
+
+```
+
+### cv_sim_scheduledstops: Tabulation Service Stops
+
+```{r Table_cv_sim_scheduledstops_service}
+
+# Organize
+dat <- add_totals(cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total" & Activity == "Service", .(Employment = sum(Emp), ModelStops = sum(ModelStops), TargetStops = round(sum(TargetStops))), keyby = .(Industry = EmpCatGroupedName)],rowtotal = FALSE)
+
+dat[, Difference := round(ModelStops - TargetStops)]
+dat[, Ratio := round(ModelStops/TargetStops,3)]
+dat[, StopsPerEmp := round(ModelStops/Employment,2)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_service_tab.csv"), row.names = FALSE)
+assign("db_tab_cv_sim_scheduledstops_service_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2")
+
+```
+
+Chart Column 3 {.tabset}
+--------------------------------------------
+
+### cv_sim_vehicle: Activity
+
+```{r Chart_cv_sim_vehicle_activity}
+# Organize
+dat <- cal_results$cv_sim_vehicle$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle, Activity)]
+dat[, Model := ModelStops/sum(ModelStops), by = Activity]
+dat[, Target := TargetStops/sum(TargetStops), by = Activity]
+dat[, Activity_Vehicle := paste(Activity, Vehicle, sep = "_")]
+
+dat <- melt.data.table(dat[, .(Activity_Vehicle, Model, Target)], id.vars = c("Activity_Vehicle"), variable.name = "Source", value.name = "PctStops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_activity.csv"))
+assign("db_tab_cv_sim_vehicle_activity", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Activity_Vehicle", yvar = "PctStops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Stops", xlabel = "Activity and Vehicle", png_name = "p_cv_sim_vehicle_activity.png")
+
+```
+
+> Vehicle Type Shares are by Activity (Goods and Service Stops)
+
+### cv_sim_vehicle: Tabulation Goods Stops
+
+```{r Table_cv_sim_vehicle_goods}
+
+# Organize
+dat <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Goods", .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName, Vehicle)]
+
+dat_tot <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Goods", .(Industry = "Total", ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle)]
+
+dat[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
+dat[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
+dat_tot[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
+dat_tot[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
+
+dat <- dcast.data.table(dat,
+                        Industry ~ Vehicle,
+                        fun.aggregate = sum,
+                        value.var = c("Model", "Target"))
+
+dat_tot <- dcast.data.table(dat_tot,
+                        Industry ~ Vehicle,
+                        fun.aggregate = sum,
+                        value.var = c("Model", "Target"))
+
+dat <- rbind(dat, dat_tot)
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_goods_tab.csv"), row.names = FALSE)
+assign("db_tab_cv_sim_vehicle_goods_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2")
+
+```
+
+### cv_sim_vehicle: Tabulation Service Stops
+
+```{r Table_cv_sim_vehicle_service}
+
+# Organize
+dat <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Service", .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName, Vehicle)]
+
+dat_tot <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Service", .(Industry = "Total", ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle)]
+
+dat[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
+dat[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
+dat_tot[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
+dat_tot[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
+
+dat <- dcast.data.table(dat,
+                        Industry ~ Vehicle,
+                        fun.aggregate = sum,
+                        value.var = c("Model", "Target"))
+
+dat_tot <- dcast.data.table(dat_tot,
+                        Industry ~ Vehicle,
+                        fun.aggregate = sum,
+                        value.var = c("Model", "Target"))
+
+dat <- rbind(dat, dat_tot)
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_service_tab.csv"), row.names = FALSE)
+assign("db_tab_cv_sim_vehicle_service_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") 
+
+```
+
+### cv_sim_stopduration: Good Stops
+
+```{r Chart_cv_sim_stopduration_activity_goods}
+# Organize
+dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(stop_duration, Activity)]
+dat[, Model := ModelStops/sum(ModelStops), by = Activity]
+dat[, Target := TargetStops/sum(TargetStops), by = Activity]
+
+dat <- melt.data.table(dat[, .(stop_duration, Activity, Model, Target)], id.vars = c("stop_duration", "Activity"), variable.name = "Source", value.name = "PctStops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity.csv"))
+assign("db_tab_cv_sim_stopduration_activity", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_goods.png")
+
+```
+
+### cv_sim_stopduration: Service Stops
+
+```{r Chart_cv_sim_stopduration_activity_service}
+
+# Plot
+bar_plotter(dat[Activity == "Service"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_service.png")
+
+```
+
+
+### cv_sim_stopduration: Light Vehicles
+
+```{r Chart_cv_sim_stopduration_vehicle_light}
+# Organize
+dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(stop_duration, Vehicle)]
+dat[, Model := ModelStops/sum(ModelStops), by = Vehicle]
+dat[, Target := TargetStops/sum(TargetStops), by = Vehicle]
+
+dat <- melt.data.table(dat[, .(stop_duration, Vehicle, Model, Target)], id.vars = c("stop_duration", "Vehicle"), variable.name = "Source", value.name = "PctStops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_vehicle.csv"))
+assign("db_tab_cv_sim_stopduration_vehicle", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[Vehicle == "Light"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_light.png")
+
+```
+
+### cv_sim_stopduration: Medium Trucks
+
+```{r Chart_cv_sim_stopduration_vehicle_medium}
+
+# Plot
+bar_plotter(dat[Vehicle == "Medium"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_medium.png")
+
+```
+
+### cv_sim_stopduration: Heavy Trucks
+
+```{r Chart_cv_sim_stopduration_vehicle_heavy}
+
+# Plot
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_heavy.png")
+
+```
+
