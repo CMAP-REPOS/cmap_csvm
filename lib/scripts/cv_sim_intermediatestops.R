@@ -281,8 +281,9 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
                     by = c("OTAZ", "StopTAZ"))
     
     # Get skims to possible intermediate zones
+    # Only include zones with land use data
     tempDT <- merge(tempDT, 
-                    skims_tod[DTAZ %in% BASE_TAZ_INTERNAL & dist.avg <= min.distance, 
+                    skims_tod[DTAZ %in% TAZLandUseCVTM$TAZ & dist.avg <= min.distance, 
                               .(OTAZ, DTAZ, T_ik = time.avg, D_ik = dist.avg)],
                     by = "OTAZ", allow.cartesian = TRUE)
     
