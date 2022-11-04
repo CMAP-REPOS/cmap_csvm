@@ -21,11 +21,11 @@ The CSVM runs in ```R 4.1.2```, available from the CRAN R Project website at htt
 Installation Instructions 
 ======================================================================
 
-The current release zip file of the CSVM, ```cmap_csvm-v0.4.2.zip``` is
+The current release zip file of the CSVM, ```cmap_csvm-v0.4.3.zip``` is
 installed and set up to run using the following steps:
 
-1. Download the ```cmap_csvm-v0.4.2.zip``` file from https://github.com/CMAP-REPOS/cmap_csvm/archive/refs/tags/v0.4.2.zip
-2. Extract the contents of ```cmap_csvm-v0.4.2.zip``` into the parent directory that you wish to use for running the CSVM.
+1. Download the ```cmap_csvm-v0.4.3.zip``` file from https://github.com/CMAP-REPOS/cmap_csvm/archive/refs/tags/v0.4.3.zip
+2. Extract the contents of ```cmap_csvm-v0.4.3.zip``` into the parent directory that you wish to use for running the CSVM.
 3. Copy in three skim OMX files (```htruck_congested_skim.omx```, ```ltruck_congested_skim.omx```, ```mtruck_congested_skim.omx```) to the base scenario's inputs folder (```scenarios/base/inputs```)
 4. Install the version of ```R``` that has been tested with this model, which is currently ```R 4.1.2```, from the CRAN R Project website at https://cran.r-project.org/bin/windows/base/R-4.1.2-win.exe.
 5. Set the appropriate number of cores for the size of computer that the model is installed on. The file ```lib/scripts/_USER_VARIABLES.R``` constains a setting ```USER_PROCESSOR_CORES```. If this is set to a value more than 1, several of the steps in the model will run in parallel. While this reduces run time, it requires more memory, and, in certain circumstances, the overhead of parallel process data copying and management can reduce or remove the benefit of parallelization. 
@@ -40,8 +40,8 @@ Running the Model
 Links to Resources
 ======================================================================
 
-- Base year visualization dashboard: https://cmap-repos.github.io/cmap_csvm/ReportDashboard.html.
-- Future year visualization dashboard: to be added
+- Base year visualization dashboard: https://cmap-repos.github.io/cmap_csvm/ReportDashboardBase.html.
+- Future year visualization dashboard: https://cmap-repos.github.io/cmap_csvm/ReportDashboardFuture.html.
 - User guide: to be added
 
 
