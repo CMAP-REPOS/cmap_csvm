@@ -44,9 +44,8 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_all.
 assign("db_tab_tt_build_county_origins_all", dat, envir = db_inputs)
 
 # Table
-kable(dat, escape=FALSE, digits = 0) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2")
+kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
@@ -72,9 +71,8 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_dest_all.csv
 assign("db_tab_tt_build_county_dest_all", dat, envir = db_inputs)
 
 # Table
-kable(dat, escape=FALSE, digits = 0) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2")
+kable(dat[,.(DestinationCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
@@ -99,9 +97,8 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_ligh
 assign("db_tab_tt_build_county_origins_light", dat, envir = db_inputs)
 
 # Table
-kable(dat, escape=FALSE, digits = 0) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2")
+kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
@@ -126,9 +123,8 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_medi
 assign("db_tab_tt_build_county_origins_medium", dat, envir = db_inputs)
 
 # Table
-kable(dat, escape=FALSE, digits = 0) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2")
+kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
 
 ```
 
@@ -159,7 +155,8 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```{r Chart_Percent_Trips_By_County_OD_obs}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n), Target = sum(Target)), keyby = .(OriginCounty = OCounty, DestinationCounty = DCounty)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty, DestinationCounty = DCounty)]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
 dat <- add_totals(dcast.data.table(dat_obs,
                                   OriginCounty ~ DestinationCounty,
                                    fun.aggregate = sum,
@@ -196,7 +193,6 @@ assign("db_tab_tt_build_county_od_val_diff", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
-  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") 
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
 
 ```
