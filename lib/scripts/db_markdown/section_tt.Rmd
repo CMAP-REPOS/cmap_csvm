@@ -334,3 +334,13 @@ kable(dat, escape=FALSE, digits = 3) %>%
 <!--   column_spec(ncol(dat), background = "#f2f2f2") -->
 
 <!-- ``` -->
+
+
+
+```{r section_build_tt_cal, results='asis', eval=SCENARIO_DB_CALIBRATION}
+section_tt_cal <- knitr::knit_child('section_tt_cal.Rmd',
+                              envir = environment(),
+                              quiet = TRUE)
+cat(unlist(section_tt_cal), sep = '\n')
+```
+
