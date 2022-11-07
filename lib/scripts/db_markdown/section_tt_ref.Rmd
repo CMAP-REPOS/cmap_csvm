@@ -1,0 +1,198 @@
+---
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+    css: "ReportDashboardStyles.css"
+editor_options: 
+  chunk_output_type: console
+---
+Comparison {data-navmenu="Trip Tables"}
+============================================
+
+Highlights {data-width=150}
+--------------------------------------------
+
+**Trip Tables: Comparison with Reference Scenario**
+
+Daily trip table validation, comparing trip table characteristics such as county to county OD patterns with those derived from observed data such as truck GPS data.
+
+```
+
+Column {data-width=600, .tabset}
+--------------------------------------------
+
+### County Origins (All Vehicles) 
+
+```{r Chart_tt_val_county_origins}
+# Organize
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty)]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+
+dat <- merge(dat_obs, dat_mod, by= "OriginCounty", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat[, Difference := Model - Target]
+dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_all.csv"))
+assign("db_tab_tt_build_county_origins_all", dat, envir = db_inputs)
+
+# Table
+kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+
+```
+
+
+### County Destinations (All Vehicles) 
+
+```{r Chart_tt_val_county_dest}
+# Organize
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(DestinationCounty = DCounty)]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationCounty = DSummaryGeog)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+
+dat <- merge(dat_obs, dat_mod, by= "DestinationCounty", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat[, Difference := Model - Target]
+dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_dest_all.csv"))
+assign("db_tab_tt_build_county_dest_all", dat, envir = db_inputs)
+
+# Table
+kable(dat[,.(DestinationCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+
+```
+
+### County Origins (Light Vehicles) 
+
+```{r Chart_tt_val_county_origins_light}
+# Organize
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_light[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty)]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+dat_mod <- TripTable[Vehicle == "Light", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+
+dat <- merge(dat_obs, dat_mod, by= "OriginCounty", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat[, Difference := Model - Target]
+dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_light.csv"))
+assign("db_tab_tt_build_county_origins_light", dat, envir = db_inputs)
+
+# Table
+kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+
+```
+
+### County Origins (Medium Trucks) 
+
+```{r Chart_tt_val_county_origins_medium}
+# Organize
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_medium[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty)]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+dat_mod <- TripTable[Vehicle == "Medium", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+
+dat <- merge(dat_obs, dat_mod, by= "OriginCounty", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat[, Difference := Model - Target]
+dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_medium.csv"))
+assign("db_tab_tt_build_county_origins_medium", dat, envir = db_inputs)
+
+# Table
+kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
+
+```
+
+### Percent Trips by County OD: Model
+
+```{r Chart_Percent_Trips_By_County_OD_val_mod}
+# Organize
+dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+dat <- add_totals(dcast.data.table(dat_mod,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Model"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_val_mod.csv"))
+assign("db_tab_tt_build_county_od_val_mod", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+### Percent Trips by County OD: Observed
+
+```{r Chart_Percent_Trips_By_County_OD_obs}
+# Organize
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty, DestinationCounty = DCounty)]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+dat <- add_totals(dcast.data.table(dat_obs,
+                                  OriginCounty ~ DestinationCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Target"))
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_val_obs.csv"))
+assign("db_tab_tt_build_county_od_val_obs", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  column_spec(ncol(dat), background = "#f2f2f2")
+
+```
+
+
+### Percent Trips by County OD: Difference (Model - Observed)
+
+```{r Chart_Percent_Trips_By_County_OD_diff}
+# Organize
+dat_diff <- merge(dat_obs, dat_mod, by = c("OriginCounty", "DestinationCounty"))
+dat_diff[, Difference := Model - Target]
+
+dat <- dcast.data.table(dat_diff,
+       OriginCounty ~ DestinationCounty,
+       fun.aggregate = sum,
+       value.var = "Difference")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_val_diff.csv"))
+assign("db_tab_tt_build_county_od_val_diff", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
+
+```

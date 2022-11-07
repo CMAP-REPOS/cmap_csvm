@@ -344,3 +344,9 @@ section_tt_cal <- knitr::knit_child('section_tt_cal.Rmd',
 cat(unlist(section_tt_cal), sep = '\n')
 ```
 
+```{r section_build_tt_ref, results='asis', eval=SCENARIO_DB_REFERENCE}
+section_tt_ref <- knitr::knit_child('section_tt_ref.Rmd',
+                              envir = environment(),
+                              quiet = TRUE)
+cat(unlist(section_tt_ref), sep = '\n')
+```

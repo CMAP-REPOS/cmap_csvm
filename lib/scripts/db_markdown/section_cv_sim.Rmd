@@ -1274,3 +1274,11 @@ section_cv_sim_cal <- knitr::knit_child('section_cv_sim_cal.Rmd',
 cat(unlist(section_cv_sim_cal), sep = '\n')
 ```
 
+
+```{r section_build_cv_sim_ref, results='asis', eval=SCENARIO_DB_REFERENCE}
+section_cv_sim_ref <- knitr::knit_child('section_cv_sim_ref.Rmd',
+                              envir = environment(),
+                              quiet = TRUE)
+cat(unlist(section_cv_sim_ref), sep = '\n')
+```
+
