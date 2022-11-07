@@ -208,6 +208,32 @@ db_build_process_inputs <- function(envir){
     cal_results <- lapply(cal_filepaths,readRDS)
     names(cal_results) <- tools::file_path_sans_ext(list.files(SYSTEM_CALIBRATION_PATH))
     envir[["cal_results"]] <- cal_results
+    
+  }
+  
+  if(SCENARIO_DB_REFERENCE){
+    
+    # Import the base year dashboard tabulations (or other run scenario)
+    # to create comparisons between the current scenario and the reference year scenarios
+    REFERENCE_OUTPUT <- file.path(SYSTEM_APP_PATH, "scenarios", SCENARIO_REFERENCE_NAME, "outputs", SYSTEM_DB_OUTPUTNAME)
+    
+    if(file.exists(REFERENCE_OUTPUT)){
+      
+      db_reference <- new.env()  
+      load(REFERENCE_OUTPUT, envir = db_reference)
+      
+      #extract some of the reference tables and remove the other inputs, functions, etc, that are in the env.
+      ref_obj <- ls(db_reference$db_inputs, all.names=TRUE)
+      ref_obj <- ref_obj[grep("db_tab_", ref_obj)]
+      ref_obj <- c("ScenarioFirms", "TAZLandUseCVTM", "cv_trips", "TripTable", "tmh_vtods", "truck_trip_gen", ref_obj)
+      for(n in ref_obj) assign(paste0("ref_", n), get(n, db_reference$db_inputs), envir)
+      
+    } else {
+      
+      SCENARIO_DB_REFERENCE <- FALSE
+      
+    }
+    
   }
   
   ### Create files for mapping
