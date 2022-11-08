@@ -430,7 +430,7 @@ Scenarios being compared:
 ```{r Chart_cv_sim_tours_light}
 # Organize
 dat_scen <- cv_trips[TripID == 1, .(Tours = .N), keyby = .(TourType, Vehicle)]
-dat_ref <- cv_trips[TripID == 1, .(Tours = .N), keyby = .(TourType, Vehicle)]
+dat_ref <- ref_cv_trips[TripID == 1, .(Tours = .N), keyby = .(TourType, Vehicle)]
 dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
 dat[, NumStops := ifelse(substr(TourType,3,3) == "s", "Single", "Multiple")]
 
@@ -470,9 +470,10 @@ Chart Column 2 {.tabset}
 
 ```{r Chart_cv_sim_scheduledtrips}
 # Organize
-dat_scen <- cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(Vehicle, Hour = floor(MAMArrive/60))]
-dat_ref <- ref_cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(Vehicle, Hour = floor(MAMArrive/60))]
-dat <- rbind(dat_scen[, .(Tours = sum(Tours), keyby = Hour)][, Source := SCENARIO_NAME], dat_ref[, .(Tours = sum(Tours), keyby = Hour)][, Source := SCENARIO_REFERENCE_NAME])
+dat_scen <- cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(Vehicle, Hour = floor(as.numeric(MAMArrive)/60))]
+dat_ref <- ref_cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(Vehicle, Hour = floor(as.numeric(MAMArrive)/60))]
+dat <- rbind(dat_scen[, .(Tours = sum(Tours)), keyby = Hour][, Source := SCENARIO_NAME], dat_ref[, .(Tours = sum(Tours)), keyby = Hour][, Source := SCENARIO_REFERENCE_NAME])
+dat[, Hour := factor(Hour)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledtrips_all.csv"))
@@ -488,6 +489,7 @@ bar_plotter(dat, xvar = "Hour", yvar = "Tours",  fill = "Source", position = "do
 ```{r Chart_cv_sim_scheduledtrips_light}
 # Organize
 dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
+dat[, Hour := factor(Hour)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledtrips_vehicle.csv"))
