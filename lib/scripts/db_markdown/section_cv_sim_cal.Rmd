@@ -453,7 +453,7 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  f
 ```{r Chart_cv_sim_scheduledtrips_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_heavy.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_heavy.png", xrotate = TRUE)
 
 ```
 

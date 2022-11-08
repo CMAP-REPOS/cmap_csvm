@@ -15,21 +15,37 @@ Comparison {data-navmenu="Firm Synthesis Model"}
 firm_sim_taz_land_use {data-width=400 .tabset}
 --------------------------------------------
 
-**Firm Synthesis Model: Comparisons with Reference Scenario*
+**Firm Synthesis Model: Comparisons with Reference Scenario**
 
-Firm synthesis output comparisons with reference scenario ouputs.
+Firm synthesis output comparisons with reference scenario ouputs:
 
-- firm_sim_taz_land_use processes land use inputs and prepares a database for use in later steps of the model. Calibration checks are confirmatory to ensure that the databse matches the input data.
-- firm_sim_scale_employees scales the synthesized establishment list to match TAZ employment totals by industry. Calibration checks are confirmatory to ensure that the employment totals are matched.
+- firm_sim_taz_land_use processes land use inputs and prepares a database for use in later steps of the model. 
+- firm_sim_scale_employees scales the synthesized establishment list to match TAZ employment totals by industry.
+
+Scenarios being compared:
+
+- the current scenario is **`r SCENARIO_NAME`**
+- the reference scenario is **`r SCENARIO_REFERENCE_NAME`**
+
 
 ### firm_sim_taz_land_use: Industry
 
 ```{r Chart_firm_sim_taz_land_use_industry}
-# Organize
-dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[!Category %in% c("HH", "NEmp_Total"), .(Model = sum(Model), Target = sum(Target)), keyby = .(Industry = Category)]
 
-dat <- melt.data.table(dat, id.vars = "Industry", variable.name = "Source", value.name = "Employment")
-dat[, Industry := sub("NEmp_", "", Industry)]
+# Organize
+# Current scenario
+dat_scen <- melt.data.table(TAZLandUseCVTM, id.vars = c("TAZ", "Mesozone", "CountyFIPS"), variable.name = "Industry", value.name = "Employment")[!Industry %in% c("HH", "NEmp_Total")]
+dat_scen[, Industry := sub("NEmp_", "", Industry)]
+dat_scen <- dat_scen[, .(Employment = sum(Employment), Source = SCENARIO_NAME), keyby = Industry] 
+
+# Reference scenario
+dat_ref <- melt.data.table(ref_TAZLandUseCVTM, id.vars = c("TAZ", "Mesozone", "CountyFIPS"), variable.name = "Industry", value.name = "Employment")[!Industry %in% c("HH", "NEmp_Total")]
+dat_ref[, Industry := sub("NEmp_", "", Industry)]
+dat_ref <- dat_ref[, .(Employment = sum(Employment), Source = SCENARIO_REFERENCE_NAME), keyby = Industry] 
+
+# Combine
+dat <- rbind(dat_scen, dat_ref)
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_industry.csv"))
@@ -43,10 +59,25 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 ### firm_sim_taz_land_use: Employment by County
 
 ```{r Chart_firm_sim_taz_land_use_emp_county}
-# Organize
-dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[TAZ_TYPE == "CMAP 7 County Area" & Category %in% c("NEmp_Total"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
 
-dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Employment")
+# Organize
+# Current scenario
+dat_scen <- melt.data.table(TAZLandUseCVTM, id.vars = c("TAZ", "Mesozone", "CountyFIPS"), variable.name = "Industry", value.name = "Employment")[Industry %in% c("HH", "NEmp_Total")]
+dat_scen[, Industry := sub("NEmp_", "", Industry)]
+dat_scen[TAZ_System, County := i.county_state, on = "TAZ"]
+dat_scen[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP 7 County Area", "Rest of Model Region")]
+dat_scen <- dat_scen[TAZ_TYPE == "CMAP 7 County Area", .(Employment = sum(Employment), Source = SCENARIO_NAME), keyby = .(Industry, County)] 
+
+# Reference scenario
+dat_ref <- melt.data.table(ref_TAZLandUseCVTM, id.vars = c("TAZ", "Mesozone", "CountyFIPS"), variable.name = "Industry", value.name = "Employment")[Industry %in% c("HH", "NEmp_Total")]
+dat_ref[, Industry := sub("NEmp_", "", Industry)]
+dat_ref[TAZ_System, County := i.county_state, on = "TAZ"]
+dat_ref[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP 7 County Area", "Rest of Model Region")]
+dat_ref <- dat_ref[TAZ_TYPE == "CMAP 7 County Area", .(Employment = sum(Employment), Source = SCENARIO_REFERENCE_NAME), keyby = .(Industry, County)] 
+
+# Combine
+dat <- rbind(dat_scen[Industry == "Total"], dat_ref[Industry == "Total"])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_emp_county.csv"))
@@ -61,9 +92,10 @@ bar_plotter(dat, xvar = "County", yvar = "Employment", fill = "Source", position
 
 ```{r Chart_firm_sim_taz_land_use_hh_county}
 # Organize
-dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[TAZ_TYPE == "CMAP 7 County Area" & Category %in% c("HH"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
-
-dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Households")
+# Combine
+dat <- rbind(dat_scen[Industry == "HH"], dat_ref[Industry == "HH"])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
+setnames(dat, c("Industry", "Employment"), c("Landuse", "Households"))
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_hh_county.csv"))
@@ -81,9 +113,15 @@ firm_sim_scale_employees {data-width=400 .tabset}
 
 ```{r Chart_firm_sim_scale_employees_industry}
 # Organize
-dat <- cal_results$firm_sim_scale_employees$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(Industry = CatLabel)]
+# Current scenario
+dat_scen <- ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_NAME), keyby = .(Industry = EmpCatGroupedName)] 
 
-dat <- melt.data.table(dat, id.vars = "Industry", variable.name = "Source", value.name = "Employment")
+# Reference scenario
+dat_ref <- ref_ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_REFERENCE_NAME), keyby = .(Industry = EmpCatGroupedName)] 
+
+# Combine
+dat <- rbind(dat_scen, dat_ref)
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_scale_employees_industry.csv"))
@@ -98,9 +136,16 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 
 ```{r Chart_firm_sim_scale_employees_county}
 # Organize
-dat <- cal_results$firm_sim_scale_employees$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
+# Current scenario
+dat_scen <- ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_NAME), keyby = .(County = Region)] 
 
-dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Employment")
+# Reference scenario
+dat_ref <- ref_ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_REFERENCE_NAME), keyby = .(County = Region)] 
+
+# Combine
+dat <- rbind(dat_scen, dat_ref)
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
+
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_scale_employees_county.csv"))

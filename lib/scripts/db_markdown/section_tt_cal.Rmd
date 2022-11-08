@@ -18,7 +18,6 @@ Highlights {data-width=150}
 
 Daily trip table validation, comparing trip table characteristics such as county to county OD patterns with those derived from observed data such as truck GPS data.
 
-```
 
 Column {data-width=600, .tabset}
 --------------------------------------------

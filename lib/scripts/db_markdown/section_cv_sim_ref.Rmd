@@ -17,21 +17,49 @@ Column {.tabset}
 
 **Commercial Vehicle Touring Model, Stops Models: Comparisons with Reference Scenario**
 
-Commercial vehicle touring model output comparisons with input and control data, for the first four models in the component that simulate firm stop activity (before the set of models that simulate linking stops together into tours)
+Commercial vehicle touring model output comparisons between the current scenario and the reference scenario
+for the first four models in the component that simulate firm stop activity (before the set of models that simulate linking stops together into tours)
 
-- cv_sim_activities identifies which firms make goods stops, service stops, both types of stops, or neither. Calibration checks are confirmatory to ensure that the model is drawing from an observed distribution correctly.
-- cv_sim_schedule stops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ. Calibration is by adjustment of constants and model parameters to match survey stops targets by stop activity, firm industry, firm to TAZ distance, and county.
-- cv_sim_scheduledstops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ. Calibration is by adjustment of constants and model parameters to match surveyed number of stops targets by stop activity, firm industry, firm to TAZ distance, and county.
-- cv_sim_vehicle estimates the vehicle type for each stop as a function of firm industry, distance from the firm to the TAZ, and stop activity. Calibration is by adjustment of constants and model parameters to match surveyed stop vehicle type targets by stop activity, firm industry, firm to TAZ distance, and county.
-- cv_sim_stopduration estimates the length of each stop as a function of stop activity and vehicle type. Calibration is by adjustment of constants and model parameters to match surveyed stop duration distribution targets by stop activity and vehicle type.
+- cv_sim_activities identifies which firms make goods stops, service stops, both types of stops, or neither.
+- cv_sim_schedule stops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ.
+- cv_sim_scheduledstops estimates the number of stops each firm makes in each TAZ as a function of firm characteristics, TAZ land use, and distance from the firm to the TAZ. 
+- cv_sim_vehicle estimates the vehicle type for each stop as a function of firm industry, distance from the firm to the TAZ, and stop activity. 
+- cv_sim_stopduration estimates the length of each stop as a function of stop activity and vehicle type. 
+
+Scenarios being compared:
+
+- the current scenario is **`r SCENARIO_NAME`**
+- the reference scenario is **`r SCENARIO_REFERENCE_NAME`**
+
 
 ### cv_sim_activities: Goods
 
 ```{r Chart_cv_sim_activities_industry_goods}
 # Organize
-dat <- cal_results$cv_sim_activities$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(Industry = Category, Activity)]
+dat_scen <- cv_trips[Activity %in% c("Goods", "Service"),.(Stops = .N), keyby = .(Activity, BusID)]
+dat_scen <- dcast.data.table(dat_scen, BusID ~ Activity, fun.aggregate = length, value.var = "Stops")
+dat_scen[, GoodsAndService := ifelse(Goods == 1 & Service == 1, 1, 0)]
+dat_scen[, c("Goods", "Service") := .(ifelse(GoodsAndService == 1,0,Goods), ifelse(GoodsAndService == 1,0,Service))]
+dat_scen[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_scen <- melt.data.table(dat_scen, id.vars = c("BusID", "Industry"), variable.name = "Activity", value.name = "Firms")
+dat_scen <- dat_scen[, .(Firms = sum(Firms)), keyby = .(Industry, Activity)]
+dat_scen <- rbind(dat_scen,
+                  ScenarioFirms[!BusID %in% unique(cv_trips$BusID), .(Firms = .N, Activity = "Other"), by = .(Industry = EmpCatGroupedName)])
 
-dat <- melt.data.table(dat, id.vars = c("Industry", "Activity"), variable.name = "Source", value.name = "PctFirms")
+dat_ref <- ref_cv_trips[Activity %in% c("Goods", "Service"),.(Stops = .N), keyby = .(Activity, BusID)]
+dat_ref <- dcast.data.table(dat_ref, BusID ~ Activity, fun.aggregate = length, value.var = "Stops")
+dat_ref[, GoodsAndService := ifelse(Goods == 1 & Service == 1, 1, 0)]
+dat_ref[, c("Goods", "Service") := .(ifelse(GoodsAndService == 1,0,Goods), ifelse(GoodsAndService == 1,0,Service))]
+dat_ref[ref_ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_ref <- melt.data.table(dat_ref, id.vars = c("BusID", "Industry"), variable.name = "Activity", value.name = "Firms")
+dat_ref <- dat_ref[, .(Firms = sum(Firms)), keyby = .(Industry, Activity)]
+dat_ref <- rbind(dat_ref,
+                  ref_ScenarioFirms[!BusID %in% unique(cv_trips$BusID), .(Firms = .N, Activity = "Other"), by = .(Industry = EmpCatGroupedName)])
+
+# Combine
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
+dat[, PctFirms := Firms/sum(Firms), by = .(Industry, Source)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_activities_industry.csv"))
@@ -76,9 +104,18 @@ Chart Column 2 {.tabset}
 
 ```{r Chart_cv_sim_scheduledstops_industry_all}
 # Organize
-dat <- cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total", .(Model = sum(ModelStops), Target = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName)]
+dat_scen <- cv_trips[Activity %in% c("Goods", "Service"), .(Stops = .N), by = .(BusID, Activity)]
+dat_scen[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_scen <- dat_scen[, .(Stops = sum(Stops)), by = .(Activity, Industry)]
 
-dat <- melt.data.table(dat, id.vars = c("Industry"), variable.name = "Source", value.name = "Stops")
+dat_ref <- ref_cv_trips[Activity %in% c("Goods", "Service"), .(Stops = .N), by = .(BusID, Activity)]
+dat_ref[ref_ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_ref <- dat_ref[, .(Stops = sum(Stops)), by = .(Activity, Industry)]
+
+# Combine
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
+dat <- dat[, .(Stops = sum(Stops)), by = .(Industry, Source)]
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_industry_all.csv"))
@@ -93,9 +130,9 @@ bar_plotter(dat, xvar = "Industry", yvar = "Stops",  fill = "Source", position =
 
 ```{r Chart_cv_sim_scheduledstops_industry_goods}
 # Organize
-dat <- cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total", .(Model = sum(ModelStops), Target = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName, Activity)]
-
-dat <- melt.data.table(dat, id.vars = c("Industry", "Activity"), variable.name = "Source", value.name = "Stops")
+# Combine
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_industry_activity.csv"))
@@ -119,11 +156,12 @@ bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "Stops",  fill
 ```{r Table_cv_sim_scheduledstops_all}
 
 # Organize
-dat <- add_totals(cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total", .(Employment = sum(Emp/2), ModelStops = sum(ModelStops), TargetStops = round(sum(TargetStops))), keyby = .(Industry = EmpCatGroupedName)],rowtotal = FALSE)
+dat <- rbind(dat_scen[, Source := "Scenario"], dat_ref[, Source := "Reference"])
+dat <- dat[, .(Stops = sum(Stops)), by = .(Industry, Source)]
+dat <- add_totals(dcast.data.table(dat, Industry ~ Source, fun.aggregate = sum, value.var = "Stops"),rowtotal = FALSE)
 
-dat[, Difference := round(ModelStops - TargetStops)]
-dat[, Ratio := round(ModelStops/TargetStops,3)]
-dat[, StopsPerEmp := round(ModelStops/Employment,2)]
+dat[, Difference := round(Scenario - Reference)]
+dat[, Ratio := round(Scenario/Reference,3)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_all_tab.csv"), row.names = FALSE)
@@ -141,11 +179,12 @@ kable(dat, escape=FALSE) %>%
 ```{r Table_cv_sim_scheduledstops_goods}
 
 # Organize
-dat <- add_totals(cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total" & Activity == "Goods", .(Employment = sum(Emp), ModelStops = sum(ModelStops), TargetStops = round(sum(TargetStops))), keyby = .(Industry = EmpCatGroupedName)],rowtotal = FALSE)
+dat <- rbind(dat_scen[Activity == "Goods", Source := "Scenario"], dat_ref[Activity == "Goods", Source := "Reference"])
+dat <- dat[, .(Stops = sum(Stops)), by = .(Industry, Source)]
+dat <- add_totals(dcast.data.table(dat, Industry ~ Source, fun.aggregate = sum, value.var = "Stops"),rowtotal = FALSE)
 
-dat[, Difference := round(ModelStops - TargetStops)]
-dat[, Ratio := round(ModelStops/TargetStops,3)]
-dat[, StopsPerEmp := round(ModelStops/Employment,2)]
+dat[, Difference := round(Scenario - Reference)]
+dat[, Ratio := round(Scenario/Reference,3)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_goods_tab.csv"), row.names = FALSE)
@@ -163,11 +202,12 @@ kable(dat, escape=FALSE) %>%
 ```{r Table_cv_sim_scheduledstops_service}
 
 # Organize
-dat <- add_totals(cal_results$cv_sim_scheduledstops$submodel_comparison[EmpCatGroupedName != "Total" & Activity == "Service", .(Employment = sum(Emp), ModelStops = sum(ModelStops), TargetStops = round(sum(TargetStops))), keyby = .(Industry = EmpCatGroupedName)],rowtotal = FALSE)
+dat <- rbind(dat_scen[Activity == "Service", Source := "Scenario"], dat_ref[Activity == "Service", Source := "Reference"])
+dat <- dat[, .(Stops = sum(Stops)), by = .(Industry, Source)]
+dat <- add_totals(dcast.data.table(dat, Industry ~ Source, fun.aggregate = sum, value.var = "Stops"),rowtotal = FALSE)
 
-dat[, Difference := round(ModelStops - TargetStops)]
-dat[, Ratio := round(ModelStops/TargetStops,3)]
-dat[, StopsPerEmp := round(ModelStops/Employment,2)]
+dat[, Difference := round(Scenario - Reference)]
+dat[, Ratio := round(Scenario/Reference,3)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_service_tab.csv"), row.names = FALSE)
@@ -187,49 +227,41 @@ Chart Column 3 {.tabset}
 
 ```{r Chart_cv_sim_vehicle_activity}
 # Organize
-dat <- cal_results$cv_sim_vehicle$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle, Activity)]
-dat[, Model := ModelStops/sum(ModelStops), by = Activity]
-dat[, Target := TargetStops/sum(TargetStops), by = Activity]
-dat[, Activity_Vehicle := paste(Activity, Vehicle, sep = "_")]
+dat_scen <- cv_trips[Activity %in% c("Goods", "Service"), .(Stops = .N), keyby = .(BusID, Vehicle, Activity)]
+dat_scen[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_scen <- dat_scen[, .(Stops = sum(Stops)), by = .(Industry, Activity, Vehicle)]
+dat_scen[, Activity_Vehicle := paste(Activity, Vehicle, sep = "_")]
 
-dat <- melt.data.table(dat[, .(Activity_Vehicle, Model, Target)], id.vars = c("Activity_Vehicle"), variable.name = "Source", value.name = "PctStops")
+dat_ref <- ref_cv_trips[Activity %in% c("Goods", "Service"), .(Stops = .N), keyby = .(BusID, Vehicle, Activity)]
+dat_ref[ref_ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_ref <- dat_ref[, .(Stops = sum(Stops)), by = .(Industry, Activity, Vehicle)]
+dat_ref[, Activity_Vehicle := paste(Activity, Vehicle, sep = "_")]
+
+# Combine
+dat <- rbind(dat_scen[,.(Stops = sum(Stops)), keyby = Activity_Vehicle][, Source := SCENARIO_NAME], dat_ref[,.(Stops = sum(Stops)), keyby = Activity_Vehicle][, Source := SCENARIO_REFERENCE_NAME])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_activity.csv"))
 assign("db_tab_cv_sim_vehicle_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Activity_Vehicle", yvar = "PctStops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Stops", xlabel = "Activity and Vehicle", png_name = "p_cv_sim_vehicle_activity.png")
+bar_plotter(dat, xvar = "Activity_Vehicle", yvar = "Stops",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Stops", xlabel = "Activity and Vehicle", png_name = "p_cv_sim_vehicle_activity.png")
 
 ```
-
-> Vehicle Type Shares are by Activity (Goods and Service Stops)
 
 ### cv_sim_vehicle: Tabulation Goods Stops
 
 ```{r Table_cv_sim_vehicle_goods}
 
 # Organize
-dat <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Goods", .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName, Vehicle)]
+dat <- rbind(dat_scen[Activity == "Goods"][, Source := "Scenario"], dat_ref[Activity == "Goods"][, Source := "Reference"])
 
-dat_tot <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Goods", .(Industry = "Total", ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle)]
-
-dat[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
-dat[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
-dat_tot[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
-dat_tot[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
-
-dat <- dcast.data.table(dat,
-                        Industry ~ Vehicle,
+dat <- add_totals(dcast.data.table(dat,
+                        Industry ~ Source + Vehicle,
                         fun.aggregate = sum,
-                        value.var = c("Model", "Target"))
-
-dat_tot <- dcast.data.table(dat_tot,
-                        Industry ~ Vehicle,
-                        fun.aggregate = sum,
-                        value.var = c("Model", "Target"))
-
-dat <- rbind(dat, dat_tot)
+                        value.var = c("Stops")),
+                  rowtotal = FALSE)
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_goods_tab.csv"), row.names = FALSE)
@@ -247,26 +279,13 @@ kable(dat, escape=FALSE) %>%
 ```{r Table_cv_sim_vehicle_service}
 
 # Organize
-dat <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Service", .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Industry = EmpCatGroupedName, Vehicle)]
+dat <- rbind(dat_scen[Activity == "Service"][, Source := "Scenario"], dat_ref[Activity == "Service"][, Source := "Reference"])
 
-dat_tot <- cal_results$cv_sim_vehicle$submodel_comparison[Activity == "Service", .(Industry = "Total", ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle)]
-
-dat[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
-dat[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
-dat_tot[, Model := round(ModelStops/sum(ModelStops),2), by = Industry]
-dat_tot[, Target := round(TargetStops/sum(TargetStops),2), by = Industry]
-
-dat <- dcast.data.table(dat,
-                        Industry ~ Vehicle,
+dat <- add_totals(dcast.data.table(dat,
+                        Industry ~ Source + Vehicle,
                         fun.aggregate = sum,
-                        value.var = c("Model", "Target"))
-
-dat_tot <- dcast.data.table(dat_tot,
-                        Industry ~ Vehicle,
-                        fun.aggregate = sum,
-                        value.var = c("Model", "Target"))
-
-dat <- rbind(dat, dat_tot)
+                        value.var = c("Stops")),
+                  rowtotal = FALSE)
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_vehicle_service_tab.csv"), row.names = FALSE)
@@ -275,7 +294,7 @@ assign("db_tab_cv_sim_vehicle_service_tab", dat, envir = db_inputs)
 # Table
 kable(dat, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") 
+  row_spec(nrow(dat), background = "#f2f2f2")
 
 ```
 
@@ -283,18 +302,60 @@ kable(dat, escape=FALSE) %>%
 
 ```{r Chart_cv_sim_stopduration_activity_goods}
 # Organize
-dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(stop_duration, Activity)]
-dat[, Model := ModelStops/sum(ModelStops), by = Activity]
-dat[, Target := TargetStops/sum(TargetStops), by = Activity]
 
-dat <- melt.data.table(dat[, .(stop_duration, Activity, Model, Target)], id.vars = c("stop_duration", "Activity"), variable.name = "Source", value.name = "PctStops")
+stop_duration_labels <- c(paste(c(1,seq(16, 91, by = 15), 151, 211, 271),
+                                c(seq(15, 90, by = 15), 150, 210, 270, 390),
+                                sep = "-"), "391+")
+
+cv_trips[, duration_15min := ceiling(StopDuration / 15) * 15]
+
+cv_trips[,
+  stop_duration :=
+    fcase(
+      duration_15min %in% 15, 1,
+      duration_15min %in% 30, 2,
+      duration_15min %in% 45, 3,
+      duration_15min %in% 60, 4,
+      duration_15min %in% 75, 5,
+      duration_15min %in% 90, 6,
+      duration_15min %in% c(90 + 1:4 * 15), 7,
+      duration_15min %in% c(150 + 1:4 * 15), 8,
+      duration_15min %in% c(210 + 1:4 * 15), 9,
+      duration_15min %in% c(270 + 1:8 * 15), 10,
+      duration_15min %in% c(390 + 1:14 * 15) | duration_15min > 600, 11)]
+
+ref_cv_trips[, duration_15min := ceiling(StopDuration / 15) * 15]
+
+ref_cv_trips[,
+  stop_duration :=
+    fcase(
+      duration_15min %in% 15, 1,
+      duration_15min %in% 30, 2,
+      duration_15min %in% 45, 3,
+      duration_15min %in% 60, 4,
+      duration_15min %in% 75, 5,
+      duration_15min %in% 90, 6,
+      duration_15min %in% c(90 + 1:4 * 15), 7,
+      duration_15min %in% c(150 + 1:4 * 15), 8,
+      duration_15min %in% c(210 + 1:4 * 15), 9,
+      duration_15min %in% c(270 + 1:8 * 15), 10,
+      duration_15min %in% c(390 + 1:14 * 15) | duration_15min > 600, 11)]
+
+dat_scen <- cv_trips[Activity %in% c("Goods", "Service"), .(Stops = .N), keyby = .(stop_duration, Vehicle, Activity)]
+dat_ref <- ref_cv_trips[Activity %in% c("Goods", "Service"), .(Stops = .N), keyby = .(stop_duration, Vehicle, Activity)]
+
+# Combine
+dat <- rbind(dat_scen[,.(Stops = sum(Stops)), keyby = .(Activity, stop_duration)][, Source := SCENARIO_NAME], dat_ref[,.(Stops = sum(Stops)), keyby = .(Activity, stop_duration)][, Source := SCENARIO_REFERENCE_NAME])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
+dat[, stop_duration_label := stop_duration_labels[stop_duration]]
+dat[, stop_duration_label := factor(stop_duration_label, levels = stop_duration_labels)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity.csv"))
 assign("db_tab_cv_sim_stopduration_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_goods.png")
+bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_goods.png")
 
 ```
 
@@ -303,7 +364,7 @@ bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",
 ```{r Chart_cv_sim_stopduration_activity_service}
 
 # Plot
-bar_plotter(dat[Activity == "Service"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_service.png")
+bar_plotter(dat[Activity == "Service"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_service.png")
 
 ```
 
@@ -312,18 +373,18 @@ bar_plotter(dat[Activity == "Service"], xvar = "stop_duration", yvar = "PctStops
 
 ```{r Chart_cv_sim_stopduration_vehicle_light}
 # Organize
-dat <- cal_results$cv_sim_stopduration$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(stop_duration, Vehicle)]
-dat[, Model := ModelStops/sum(ModelStops), by = Vehicle]
-dat[, Target := TargetStops/sum(TargetStops), by = Vehicle]
-
-dat <- melt.data.table(dat[, .(stop_duration, Vehicle, Model, Target)], id.vars = c("stop_duration", "Vehicle"), variable.name = "Source", value.name = "PctStops")
+# Combine
+dat <- rbind(dat_scen[,.(Stops = sum(Stops)), keyby = .(Vehicle, stop_duration)][, Source := SCENARIO_NAME], dat_ref[,.(Stops = sum(Stops)), keyby = .(Vehicle, stop_duration)][, Source := SCENARIO_REFERENCE_NAME])
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
+dat[, stop_duration_label := stop_duration_labels[stop_duration]]
+dat[, stop_duration_label := factor(stop_duration_label, levels = stop_duration_labels)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_vehicle.csv"))
 assign("db_tab_cv_sim_stopduration_vehicle", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Vehicle == "Light"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_light.png")
+bar_plotter(dat[Vehicle == "Light"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_light.png")
 
 ```
 
@@ -332,7 +393,7 @@ bar_plotter(dat[Vehicle == "Light"], xvar = "stop_duration", yvar = "PctStops", 
 ```{r Chart_cv_sim_stopduration_vehicle_medium}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_medium.png")
+bar_plotter(dat[Vehicle == "Medium"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_medium.png")
 
 ```
 
@@ -341,7 +402,7 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "stop_duration", yvar = "PctStops",
 ```{r Chart_cv_sim_stopduration_vehicle_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Heavy"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_heavy.png")
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_vehicle_heavy.png")
 
 ```
 
@@ -353,27 +414,33 @@ Column {.tabset}
 
 **Commercial Vehicle Touring Model, Tour Models: Comparison with Reference Sceario**
 
-Commercial vehicle touring model comparisons with input and control data, for the last three models in the component that simulate tours
+Commercial vehicle touring model comparisons between the current scenario and the reference scenario for the last three models in the component that simulate tours
 
-- cv_sim_tours identifies the group of stops to form each tour, the tour type, and the sequence of stops in the tour. Calibration is by adjustment of parameters to control the clustering of stops into tours, the selection of tour type, and the extent to which tour sequencing is optimised.
-- cv_sim_scheduletrips simulates the arrival time at the first stop on the tour and based on that, stop durations, and trip travel times, calculates the depature and arrival time of every trip in the tour. Calibration is by adjustment of constants and model parameters to match survey arrival time distribution targets by vehicle type.
-- cv_sim_intermediatestops estimates whether each trip includes an intermediate stop (e.g., for vehicle servicing or driver needs) and if so, how long that stop takes and whether that stop is located. All tours are retimed to account for intermediate stops. Calibration is by adjustment of constants and model parameters to match surveyed number and location of intermediate stops targets by stop activity and vehicle type.
+- cv_sim_tours identifies the group of stops to form each tour, the tour type, and the sequence of stops in the tour.
+- cv_sim_scheduletrips simulates the arrival time at the first stop on the tour and based on that, stop durations, and trip travel times, calculates the depature and arrival time of every trip in the tour.
+- cv_sim_intermediatestops estimates whether each trip includes an intermediate stop (e.g., for vehicle servicing or driver needs) and if so, how long that stop takes and whether that stop is located. All tours are retimed to account for intermediate stops.
+
+Scenarios being compared:
+
+- the current scenario is **`r SCENARIO_NAME`**
+- the reference scenario is **`r SCENARIO_REFERENCE_NAME`**
 
 ### cv_sim_tours: Light Vehicles
 
 ```{r Chart_cv_sim_tours_light}
 # Organize
-dat <- cal_results$cv_sim_tours$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(NumStops = SingleMultiple, TourType, Vehicle)]
-
-dat <- melt.data.table(dat, id.vars = c("NumStops", "TourType", "Vehicle"), variable.name = "Source", value.name = "PctTours")
+dat_scen <- cv_trips[TripID == 1, .(Tours = .N), keyby = .(TourType, Vehicle)]
+dat_ref <- cv_trips[TripID == 1, .(Tours = .N), keyby = .(TourType, Vehicle)]
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
+dat[, NumStops := ifelse(substr(TourType,3,3) == "s", "Single", "Multiple")]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_tours_type_vehicle.csv"))
 assign("db_tab_cv_sim_tours_type_vehicle", dat, envir = db_inputs)
 
 # Plot
-dat[, Stops_Type := paste(NumStops, toupper(TourType), sep = "_")] 
-bar_plotter(dat[Vehicle == "Light"], xvar = "Stops_Type", yvar = "PctTours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Tours", png_name = "p_cv_sim_tours_type_vehicle_light.png")
+dat[, Stops_Type := paste(NumStops, toupper(TourType), sep = "_")]
+bar_plotter(dat[Vehicle == "Light"], xvar = "Stops_Type", yvar = "Tours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Tours", png_name = "p_cv_sim_tours_type_vehicle_light.png")
 
 ```
 
@@ -382,7 +449,7 @@ bar_plotter(dat[Vehicle == "Light"], xvar = "Stops_Type", yvar = "PctTours",  fi
 ```{r Chart_cv_sim_tours_medium}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "Stops_Type", yvar = "PctTours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Tours", png_name = "p_cv_sim_tours_type_vehicle_medium.png")
+bar_plotter(dat[Vehicle == "Medium"], xvar = "Stops_Type", yvar = "Tours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Tours", png_name = "p_cv_sim_tours_type_vehicle_medium.png")
 
 ```
 
@@ -391,7 +458,7 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "Stops_Type", yvar = "PctTours",  f
 ```{r Chart_cv_sim_tours_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Heavy"], xvar = "Stops_Type", yvar = "PctTours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Percentage of Tours", png_name = "p_cv_sim_tours_type_vehicle_heavy.png")
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "Stops_Type", yvar = "Tours",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Number of Tours", png_name = "p_cv_sim_tours_type_vehicle_heavy.png")
 
 ```
 
@@ -403,19 +470,16 @@ Chart Column 2 {.tabset}
 
 ```{r Chart_cv_sim_scheduledtrips}
 # Organize
-dat <- cal_results$cv_sim_scheduledtrips$submodel_comparison[, .(ModelTours = sum(ModelTours), TargetTours = sum(TargetTours)), keyby = .(TimePeriod = model_choice)]
-dat[is.na(ModelTours), ModelTours := 0]
-dat[is.na(TargetTours), TargetTours := 0]
-dat[, c("Model", "Target") := .(ModelTours/sum(ModelTours), TargetTours/sum(TargetTours))]
-
-dat <- melt.data.table(dat[, .(TimePeriod, Model, Target)], id.vars = c("TimePeriod"), variable.name = "Source", value.name = "PctTours")
+dat_scen <- cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(Vehicle, Hour = floor(MAMArrive/60))]
+dat_ref <- ref_cv_trips[TripID == MinTripID, .(Tours = .N), keyby = .(Vehicle, Hour = floor(MAMArrive/60))]
+dat <- rbind(dat_scen[, .(Tours = sum(Tours), keyby = Hour)][, Source := SCENARIO_NAME], dat_ref[, .(Tours = sum(Tours), keyby = Hour)][, Source := SCENARIO_REFERENCE_NAME])
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledtrips_all.csv"))
 assign("db_tab_cv_sim_scheduledtrips_all", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_all.png", xrotate = TRUE)
+bar_plotter(dat, xvar = "Hour", yvar = "Tours",  fill = "Source", position = "dodge", ylabel = "Number of Tours", png_name = "p_cv_sim_scheduledtrips_all.png", xrotate = TRUE)
 
 ```
 
@@ -423,19 +487,14 @@ bar_plotter(dat, xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", posit
 
 ```{r Chart_cv_sim_scheduledtrips_light}
 # Organize
-dat <- cal_results$cv_sim_scheduledtrips$submodel_comparison[, .(ModelTours = sum(ModelTours), TargetTours = sum(TargetTours)), keyby = .(TimePeriod = model_choice, Vehicle)]
-dat[is.na(ModelTours), ModelTours := 0]
-dat[is.na(TargetTours), TargetTours := 0]
-dat[, c("Model", "Target") := .(ModelTours/sum(ModelTours), TargetTours/sum(TargetTours)), by = Vehicle]
-
-dat <- melt.data.table(dat[, .(TimePeriod, Vehicle, Model, Target)], id.vars = c("TimePeriod", "Vehicle"), variable.name = "Source", value.name = "PctTours")
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledtrips_vehicle.csv"))
 assign("db_tab_cv_sim_scheduledtrips_vehicle", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Vehicle == "Light"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_light.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Light"], xvar = "Hour", yvar = "Tours",  fill = "Source", position = "dodge", ylabel = "Number of Tours", png_name = "p_cv_sim_scheduledtrips_light.png", xrotate = TRUE)
 
 ```
 
@@ -444,7 +503,7 @@ bar_plotter(dat[Vehicle == "Light"], xvar = "TimePeriod", yvar = "PctTours",  fi
 ```{r Chart_cv_sim_scheduledtrips_medium}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_medium.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Medium"], xvar = "Hour", yvar = "Tours",  fill = "Source", position = "dodge", ylabel = "Number of Tours", png_name = "p_cv_sim_scheduledtrips_medium.png", xrotate = TRUE)
 
 ```
 
@@ -453,7 +512,7 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  f
 ```{r Chart_cv_sim_scheduledtrips_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "TimePeriod", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_cv_sim_scheduledtrips_heavy.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "Hour", yvar = "Tours",  fill = "Source", position = "dodge", ylabel = "Number of Tours", png_name = "p_cv_sim_scheduledtrips_heavy.png", xrotate = TRUE)
 
 ```
 
@@ -464,19 +523,16 @@ Chart Column 3 {.tabset}
 
 ```{r Chart_cv_sim_intermediatestops}
 # Organize
-dat <- cal_results$cv_sim_intermediatestops$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(StopType = intermediate_stop_type)]
-dat[is.na(ModelStops), ModelStops := 0]
-dat[is.na(TargetStops), TargetStops := 0]
-dat[, c("Model", "Target") := .(ModelStops/sum(ModelStops), TargetStops/sum(TargetStops))]
-
-dat <- melt.data.table(dat[, .(StopType, Model, Target)], id.vars = c("StopType"), variable.name = "Source", value.name = "PctStops")
+dat_scen <- cv_trips[Activity %in% c("Break/Meal", "Vehicle Service", "Other"), .(Stops = .N), keyby = .(StopType = Activity, Vehicle)]
+dat_ref <- ref_cv_trips[Activity %in% c("Break/Meal", "Vehicle Service", "Other"), .(Stops = .N), keyby = .(StopType = Activity, Vehicle)]
+dat <- rbind(dat_scen[, .(Stops = sum(Stops)), keyby = StopType][, Source := SCENARIO_NAME], dat_ref[, .(Stops = sum(Stops)), keyby = StopType][, Source := SCENARIO_REFERENCE_NAME])
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_intermediatestops_all.csv"))
 assign("db_tab_cv_sim_intermediatestops_all", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_all.png", xrotate = TRUE)
+bar_plotter(dat, xvar = "StopType", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", png_name = "p_cv_sim_intermediatestops_all.png", xrotate = TRUE)
 
 ```
 
@@ -484,19 +540,14 @@ bar_plotter(dat, xvar = "StopType", yvar = "PctStops",  fill = "Source", positio
 
 ```{r Chart_cv_intermediatestops_light}
 # Organize
-dat <- cal_results$cv_sim_intermediatestops$submodel_comparison[, .(ModelStops = sum(ModelStops), TargetStops = sum(TargetStops)), keyby = .(Vehicle, StopType = intermediate_stop_type)]
-dat[is.na(ModelStops), ModelStops := 0]
-dat[is.na(TargetStops), TargetStops := 0]
-dat[, c("Model", "Target") := .(ModelStops/sum(ModelStops), TargetStops/sum(TargetStops)), by = Vehicle]
-
-dat <- melt.data.table(dat[, .(Vehicle, StopType, Model, Target)], id.vars = c("Vehicle", "StopType"), variable.name = "Source", value.name = "PctStops")
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_intermediatestops_vehicle.csv"))
 assign("db_tab_cv_sim_intermediatestops_vehicle", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Vehicle == "Light"], xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_light.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Light"], xvar = "StopType", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", png_name = "p_cv_sim_intermediatestops_light.png", xrotate = TRUE)
 
 ```
 
@@ -505,7 +556,7 @@ bar_plotter(dat[Vehicle == "Light"], xvar = "StopType", yvar = "PctStops",  fill
 ```{r Chart_cv_intermediatestops_medium}
 
 # Plot
-bar_plotter(dat[Vehicle == "Medium"], xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_medium.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Medium"], xvar = "StopType", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", png_name = "p_cv_sim_intermediatestops_medium.png", xrotate = TRUE)
 
 ```
 
@@ -514,7 +565,7 @@ bar_plotter(dat[Vehicle == "Medium"], xvar = "StopType", yvar = "PctStops",  fil
 ```{r Chart_cv_intermediatestops_heavy}
 
 # Plot
-bar_plotter(dat[Vehicle == "Heavy"], xvar = "StopType", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", png_name = "p_cv_sim_intermediatestops_heavy.png", xrotate = TRUE)
+bar_plotter(dat[Vehicle == "Heavy"], xvar = "StopType", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", png_name = "p_cv_sim_intermediatestops_heavy.png", xrotate = TRUE)
 
 ```
 
