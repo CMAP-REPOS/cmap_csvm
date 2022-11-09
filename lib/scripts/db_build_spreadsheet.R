@@ -2,14 +2,14 @@
 db_build_spreadsheet <- function(){
   
   # Spreadsheet contains:
-  # Summary of current scenario Firms, LD trips, CV tour and trip list, CV trip tables, CV assignment outputs
+  # Summary of current scenario Firms,CV tour and trip list, CV trip tables
   # Summary of comparison scenario outputs or reference data summaries
-  # Comparison sheets comparing key metrics between current scenario and comparison scenario or refernce data
-  # Spreadsheet is saved in the Output/CVM folder of the current scenario
-  # Naming convention includes names of current and comparison scenarios and date/time for unique naming
+  # Comparison sheets comparing key metrics between current scenario and comparison scenario or reference data
+  # Spreadsheet is saved in the outputs folder of the current scenario
+  # Naming convention includes names of current and reference scenarios and date/time for unique naming
   # "Summary_" is summary of the current scenario
   # "Comparison_" is a comparison between the current scencario and a comparison scenario
-  # "Validation_" is a comparison between the current scenario and refernce data
+  # "Validation_" is a comparison between the current scenario and validation data
   
   ### Scenarios to Compare and Settings 
 
@@ -19,9 +19,9 @@ db_build_spreadsheet <- function(){
 
   # Paths to scenario results
   if(SCENARIO_1 == "Validation"){
-    SCENARIO_1_OUTPUT_PATH <- SYSTEM_DATA_PATH # Preproccessed observed data are all in the common inputs folder
+    SCENARIO_1_OUTPUT_PATH <- SYSTEM_CALIBRATION_PATH # Preproccessed calibration summmaries 
   } else {
-    SCENARIO_1_OUTPUT_PATH <- file.path(SCENARIO_FOLDER_PATH, SCENARIO_REFERENCE_NAME, SCENARIO_OUTPUT_DIR_NAME, "CVM")
+    SCENARIO_1_OUTPUT_PATH <- file.path(SYSTEM_APP_PATH, "scenarios", SCENARIO_REFERENCE_NAME, "outputs")
   }
   SCENARIO_2_OUTPUT_PATH <- SCENARIO_OUTPUT_PATH
 
@@ -61,12 +61,6 @@ db_build_spreadsheet <- function(){
                                                scenario_2_tt_list = Scenario_2_Truck_Trips_List)
   }
     
-  # 5. Assignment Validation Comparison
-  if(SCENARIO_1 == "Validation"){
-    Assignment_Validation_List <- createAssignmentSummaries(scenario = SCENARIO_2, 
-                                                            model_flows)
-  }
-  
   ### Create spreadsheet with outputs 
 
   # Spreadsheet object and formatting
@@ -74,7 +68,7 @@ db_build_spreadsheet <- function(){
   # Aggregate summaries
   # TAZ summaries
   wb <- createWorkbook()
-  introtext1 <- "SEMCOG CV Model"
+  introtext1 <- "CMAP Commercial Services Vehicle Model"
   
   # Build the spreadsheet using the defined function
   
@@ -113,21 +107,21 @@ db_build_spreadsheet <- function(){
     
   }
   
-  # Validation comparisons
-  if(SCENARIO_1 == "Validation"){
-    
-    wb <- addScenarioSummarySheet(wb, 
-                                  paste0(SCENARIO_2, "_Assn_Val"), 
-                                  Assignment_Validation_List[3:8], 
-                                  tabletitles = Assignment_Validation_List$tabletitles[3:8],
-                                  introtext = list(introtext1,
-                                                   "Alternative Scenario Assignment Validation",
-                                                   paste("Alternative Scenario is", Assignment_Validation_List$scenario)),
-                                  fmtlist = data.table(table = c(rep(1:4, each = 5),rep(5:6, each = 3)),
-                                                       format = rep("nfpct",26),
-                                                       col = c(rep(26:30, 3), 25:29, 15:17, 17:19)))
-    
-  }
+  # # Validation comparisons
+  # if(SCENARIO_1 == "Validation"){
+  #   
+  #   wb <- addScenarioSummarySheet(wb, 
+  #                                 paste0(SCENARIO_2, "_Val"), 
+  #                                 Assignment_Validation_List[3:8], 
+  #                                 tabletitles = Assignment_Validation_List$tabletitles[3:8],
+  #                                 introtext = list(introtext1,
+  #                                                  "Alternative Scenario Assignment Validation",
+  #                                                  paste("Alternative Scenario is", Assignment_Validation_List$scenario)),
+  #                                 fmtlist = data.table(table = c(rep(1:4, each = 5),rep(5:6, each = 3)),
+  #                                                      format = rep("nfpct",26),
+  #                                                      col = c(rep(26:30, 3), 25:29, 15:17, 17:19)))
+  #   
+  # }
   
   # Summaries for scenario 1 (when it is not validation data)
   if(SCENARIO_2 != SCENARIO_1 & SCENARIO_1 != "Validation") {
