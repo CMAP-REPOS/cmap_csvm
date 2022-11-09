@@ -60,6 +60,16 @@ db_build_spreadsheet <- function(){
     Compare_Truck_Trips_List <- compareTripTable(scenario_1_tt_list = Scenario_1_Truck_Trips_List,
                                                scenario_2_tt_list = Scenario_2_Truck_Trips_List)
   }
+  
+  # 5. Validation Summaries
+  if(SCENARIO_1 == "Validation") {
+    
+    # Pass the name of the scenario being validated (Scenario 2) and the path to the scenario validation outputs
+    # For now, the validation outputs are preprocessed in the calibration scripts 
+    # and loaded from cal_results object in db_process_inputs
+    Validation_List <- createValidationSummaries(scenario = SCENARIO_2,
+                                                 scenario_output_path = SCENARIO_1_OUTPUT_PATH)
+  }
     
   ### Create spreadsheet with outputs 
 
@@ -107,22 +117,6 @@ db_build_spreadsheet <- function(){
     
   }
   
-  # # Validation comparisons
-  # if(SCENARIO_1 == "Validation"){
-  #   
-  #   wb <- addScenarioSummarySheet(wb, 
-  #                                 paste0(SCENARIO_2, "_Val"), 
-  #                                 Validation_List[3:8], 
-  #                                 tabletitles = Validation_List$tabletitles[3:8],
-  #                                 introtext = list(introtext1,
-  #                                                  "Alternative Scenario Validation",
-  #                                                  paste("Alternative Scenario is", Validation_List$scenario)),
-  #                                 fmtlist = data.table(table = c(rep(1:4, each = 5),rep(5:6, each = 3)),
-  #                                                      format = rep("nfpct",26),
-  #                                                      col = c(rep(26:30, 3), 25:29, 15:17, 17:19)))
-  #   
-  # }
-  
   # Summaries for scenario 1 (when it is not validation data)
   if(SCENARIO_2 != SCENARIO_1 & SCENARIO_1 != "Validation") {
     
@@ -161,8 +155,18 @@ db_build_spreadsheet <- function(){
                                                  "Alternative Scenario TAZ Summaries",
                                                  paste("Alternative Scenario is", Scenario_2_TAZ_List$scenario)))
   
+  # Validation comparisons
+  if(SCENARIO_1 == "Validation"){
     
-  
+    wb <- addScenarioSummarySheet(wb,
+                                  paste0(SCENARIO_2, "_Val"),
+                                  Validation_List[1:(length(Validation_List)-2)],
+                                  tabletitles = Validation_List$tabletitles,
+                                  introtext = list(introtext1,
+                                                   "Alternative Scenario Validation",
+                                                   paste("Alternative Scenario is", Validation_List$scenario)))
+    
+  }
   
   # Save the spreadsheet
   current_time <- gsub("-", "_", gsub(":", "_",gsub(" ", "_", Sys.time())))

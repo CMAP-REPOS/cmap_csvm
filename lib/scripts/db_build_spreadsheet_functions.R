@@ -415,6 +415,24 @@ compareTripTable <- function(scenario_1_tt_list, scenario_2_tt_list){
   
 }
 
+# Function to organize validation summaries
+createValidationSummaries <- function(scenario, scenario_output_path){
+  
+  # In the db_inputs environment there should be an object called cal results that contains the validation summaries
+  validation_list <- lapply(cal_results, "[[", "submodel_comparison")
+  validation_list[["calibration_targets_tt_sim"]] <- NULL # remove any targets tables, etc.
+  
+  # Table titles
+  tabletitles = names(validation_list)
+  
+  # Return tables, titles, and scenario names/years
+  return(c(validation_list,
+           list(tabletitles = tabletitles,
+              scenario = scenario)))
+  
+}
+
+
 # Function to add a sheet and a list of summary tables
 addScenarioSummarySheet <- function(wb, sheetname, tableslist, 
                                     tabletitles = names(tableslist), 
