@@ -14,7 +14,7 @@ db_build <- function(data = NULL){
   db_build_render()
 
   # Create summary spreadsheet using model outputs including assignment flow tables
-  if(SCENARIO_DB_SPREADSHEET & USER_SPREADSHEET_SUMMARIES){
+  if(SCENARIO_DB_SPREADSHEET){
     db_build_spreadsheet()
   }
   
