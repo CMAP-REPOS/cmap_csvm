@@ -386,7 +386,7 @@ dashboardHTML <- append(dashboardHTML, "L_PREFER_CANVAS = true;", after = idx)
 writeLines(dashboardHTML, file.path(SCENARIO_OUTPUT_PATH, dashboardName))
 
 # Create summary spreadsheet using model outputs including assignment flow tables
-if(SCENARIO_DB_SPREADSHEET & USER_SPREADSHEET_SUMMARIES){
+if(SCENARIO_DB_SPREADSHEET){
   db_build_spreadsheet()
 }
 

@@ -35,7 +35,7 @@ db_build_spreadsheet <- function(){
   if(SCENARIO_1 != "Validation" & SCENARIO_2 != SCENARIO_1){
     Scenario_1_TAZ_List <- createTAZSummaries(scenario = SCENARIO_1, 
                                               scenario_output_path = SCENARIO_1_OUTPUT_PATH,
-                                              load_db_workspace = TRUE)
+                                              ref_scenario = TRUE)
   }
   
   # 2. Trip Table Summaries
@@ -46,7 +46,7 @@ db_build_spreadsheet <- function(){
   if(SCENARIO_1 != "Validation" & SCENARIO_2 != SCENARIO_1){
     Scenario_1_Truck_Trips_List <- createTripTableSummaries(scenario = SCENARIO_1,
                                                           scenario_output_path = SCENARIO_1_OUTPUT_PATH,
-                                                          load_db_workspace = TRUE)
+                                                          ref_scenario = TRUE)
   }
   
   # 3. TAZ Comparison
@@ -98,8 +98,8 @@ db_build_spreadsheet <- function(){
 
     wb <- addScenarioSummarySheet(wb,
                                   "Compare_TAZ_Det",
-                                  Compare_TAZ_List[c(3, 5, 7, 9)],
-                                  tabletitles = Compare_TAZ_List$tabletitles[c(3, 5, 7, 9)],
+                                  Compare_TAZ_List[c(3, 5, 7)],
+                                  tabletitles = Compare_TAZ_List$tabletitles[c(3, 5, 7)],
                                   introtext = list(introtext1,
                                                    "Comparisons by TAZ",
                                                    paste("Reference Scenario is", Compare_TAZ_List$scenario_1),
@@ -112,11 +112,11 @@ db_build_spreadsheet <- function(){
   #   
   #   wb <- addScenarioSummarySheet(wb, 
   #                                 paste0(SCENARIO_2, "_Val"), 
-  #                                 Assignment_Validation_List[3:8], 
-  #                                 tabletitles = Assignment_Validation_List$tabletitles[3:8],
+  #                                 Validation_List[3:8], 
+  #                                 tabletitles = Validation_List$tabletitles[3:8],
   #                                 introtext = list(introtext1,
-  #                                                  "Alternative Scenario Assignment Validation",
-  #                                                  paste("Alternative Scenario is", Assignment_Validation_List$scenario)),
+  #                                                  "Alternative Scenario Validation",
+  #                                                  paste("Alternative Scenario is", Validation_List$scenario)),
   #                                 fmtlist = data.table(table = c(rep(1:4, each = 5),rep(5:6, each = 3)),
   #                                                      format = rep("nfpct",26),
   #                                                      col = c(rep(26:30, 3), 25:29, 15:17, 17:19)))
@@ -128,7 +128,7 @@ db_build_spreadsheet <- function(){
     
     wb <- addScenarioSummarySheet(wb,
                                   paste0(SCENARIO_1, "_Truck_Trips"),
-                                  Scenario_1_Truck_Trips_List[1:9],
+                                  Scenario_1_Truck_Trips_List[1:6],
                                   tabletitles = Scenario_1_Truck_Trips_List$tabletitles,
                                   introtext = list(introtext1,
                                                    "Reference Scenario Truck Trips",
@@ -136,8 +136,8 @@ db_build_spreadsheet <- function(){
 
     wb <- addScenarioSummarySheet(wb, 
                                   paste0(SCENARIO_1, "_TAZ"), 
-                                  Scenario_1_TAZ_List[c(2, 6, 10, 14)], 
-                                  tabletitles = Scenario_1_TAZ_List$tabletitles[c(2, 6, 10, 14)],
+                                  Scenario_1_TAZ_List[c(2, 6, 10)], 
+                                  tabletitles = Scenario_1_TAZ_List$tabletitles[c(2, 6, 10)],
                                   introtext = list(introtext1,
                                                    "Reference Scenario TAZ Summaries",
                                                    paste("Reference Scenario is", Scenario_1_TAZ_List$scenario)))
@@ -147,7 +147,7 @@ db_build_spreadsheet <- function(){
   
   wb <- addScenarioSummarySheet(wb,
                               paste0(SCENARIO_2, "_Truck_Trips"),
-                              Scenario_2_Truck_Trips_List[1:9],
+                              Scenario_2_Truck_Trips_List[1:6],
                               tabletitles = Scenario_2_Truck_Trips_List$tabletitles,
                               introtext = list(introtext1,
                                                "Alternative Scenario Truck Trips",
@@ -155,8 +155,8 @@ db_build_spreadsheet <- function(){
 
   wb <- addScenarioSummarySheet(wb, 
                                 paste0(SCENARIO_2, "_TAZ"), 
-                                Scenario_2_TAZ_List[c(2, 6, 10, 14)], 
-                                tabletitles = Scenario_2_TAZ_List$tabletitles[c(2, 6, 10, 14)],
+                                Scenario_2_TAZ_List[c(2, 6, 10)], 
+                                tabletitles = Scenario_2_TAZ_List$tabletitles[c(2, 6, 10)],
                                 introtext = list(introtext1,
                                                  "Alternative Scenario TAZ Summaries",
                                                  paste("Alternative Scenario is", Scenario_2_TAZ_List$scenario)))

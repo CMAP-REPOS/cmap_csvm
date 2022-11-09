@@ -2,60 +2,40 @@
 # of data for the summary spreadsheet
 
 # Function to create TAZ levels summaries for Model Region from component outputs
-createTAZSummaries <- function(scenario, scenario_output_path, load_db_workspace = FALSE){ 
+createTAZSummaries <- function(scenario, scenario_output_path, ref_scenario = FALSE){ 
   
-  # Load the db workspace if this is an alternative scenario
-  if(load_db_workspace){
-    load(file.path(scenario_output_path, SYSTEM_DB_OUTPUTNAME))
-    ScenarioFirms <- db_inputs$ScenarioFirms
-    TAZSocioEconomics <- db_inputs$TAZSocioEconomics
-    ld_trips <- db_inputs$ld_trips
-    cv_trips <- db_inputs$cv_trips
-    TripTable <- db_inputs$TripTable
+  # Use the reference version of objects if this is a reference scenario
+  if(ref_scenario){
+    ScenarioFirms <- db_inputs$ref_ScenarioFirms
+    TAZLandUseCVTM <- db_inputs$ref_TAZLandUseCVTM
+    cv_trips <- db_inputs$ref_cv_trips
+    TripTable <- db_inputs$ref_TripTable
   }
   
   # Create TAZ level summaries
   
   # Firm synthesis: firms and employment, compared with SE data
   firm_sim_taz <- ScenarioFirms[,.(Firms = .N, Emp = sum(Employees)), 
-                                                 keyby = .(EmpCatID, EmpCatName , TAZ)]
+                                                 keyby = .(EmpCatGroupedName, TAZ)]
   
-  firm_sim_se <- TAZSocioEconomics
+  firm_sim_se <- TAZLandUseCVTM
   firm_sim_se <- melt.data.table(firm_sim_se,
-                                 id.vars = c("TAZ", "HH", "POP"),
-                                 variable.name = "EmpCatName",
+                                 id.vars = c("TAZ", "Mesozone", "CountyFIPS", "HH", "NEmp_Total"),
+                                 variable.name = "EmpCatGroupedName",
                                  value.name = "SE")
+  firm_sim_se[, EmpCatGroupedName := sub("NEmp_","",EmpCatGroupedName) ]
   firm_sim_taz <- merge(firm_sim_taz,
-                        firm_sim_se[,.(TAZ, EmpCatName, SE)],
-                        by = c("TAZ", "EmpCatName"),
+                        firm_sim_se[,.(TAZ, EmpCatGroupedName, SE)],
+                        by = c("TAZ", "EmpCatGroupedName"),
                         all = TRUE)
   firm_sim_taz[is.na(firm_sim_taz)] <- 0
   
   firm_sim_taz[, Diff := Emp - SE]
   
   firm_sim_taz_w <- dcast.data.table(firm_sim_taz,
-                                     TAZ ~ EmpCatName,
+                                     TAZ ~ EmpCatGroupedName,
                                      fun.aggregate = sum,
                                      value.var = c("Firms", "Emp", "SE", "Diff"))
-  
-  # Long distance model
-  ld_taz_o_trips <- ld_trips[,.(NumTrips = sum(Trips, na.rm = TRUE)),
-                             keyby = .(TAZ = OTAZ, Vehicle, Movement.Type)]
-  
-  ld_taz_d_trips <- ld_trips[,.(NumTrips = sum(Trips, na.rm = TRUE)),
-                             keyby = .(TAZ =DTAZ, Vehicle, Movement.Type)]
-  
-  ld_taz_trips <- merge(ld_taz_o_trips[, .(oTripsLD = sum(NumTrips)), by = .(TAZ, Vehicle)],
-                        ld_taz_d_trips[, .(dTripsLD = sum(NumTrips)), by = .(TAZ, Vehicle)],
-                        by = c("TAZ", "Vehicle"),
-                        all = TRUE)
-  
-  ld_taz_trips[is.na(ld_taz_trips)] <- 0
-  
-  ld_taz_trips_w <- dcast.data.table(ld_taz_trips,
-                                     TAZ ~ Vehicle,
-                                     fun.aggregate = sum,
-                                     value.var = c("oTripsLD", "dTripsLD"))
   
   # Commercial vehicle touring model: trips
   cv_taz_o_trips <- cv_trips[,.(NumTrips = .N),
@@ -77,10 +57,10 @@ createTAZSummaries <- function(scenario, scenario_output_path, load_db_workspace
                                      value.var = c("oTripsCV", "dTripsCV"))
   
   # Trip tables: trips
-  tt_taz_o_trips <- TripTable[,.(NumTrips = .N),
+  tt_taz_o_trips <- TripTable[,.(NumTrips = sum(trips)),
                                keyby = .(TAZ = OTAZ, Vehicle)]
   
-  tt_taz_d_trips <- TripTable[,.(NumTrips = .N),
+  tt_taz_d_trips <- TripTable[,.(NumTrips = sum(trips)),
                                keyby = .(TAZ = DTAZ, Vehicle)]
   
   tt_taz_trips <- merge(tt_taz_o_trips[, .(oTripsAll = sum(NumTrips)), by = .(TAZ, Vehicle)],
@@ -102,10 +82,6 @@ createTAZSummaries <- function(scenario, scenario_output_path, load_db_workspace
                      cv_taz_d_trips = cv_taz_d_trips,
                      cv_taz_trips = cv_taz_trips,
                      cv_taz_trips_w = cv_taz_trips_w,
-                     ld_taz_o_trips = ld_taz_o_trips,
-                     ld_taz_d_trips = ld_taz_d_trips,
-                     ld_taz_trips = ld_taz_trips,
-                     ld_taz_trips_w = ld_taz_trips_w,
                      tt_taz_o_trips = tt_taz_o_trips,
                      tt_taz_d_trips = tt_taz_d_trips,
                      tt_taz_trips = tt_taz_trips,
@@ -119,17 +95,12 @@ createTAZSummaries <- function(scenario, scenario_output_path, load_db_workspace
 }
 
 # Function to create truck trip summaries from trip tables
-createTripTableSummaries <- function(scenario, scenario_output_path, load_db_workspace = FALSE){
+createTripTableSummaries <- function(scenario, scenario_output_path, ref_scenario = FALSE){
   
   # Load the db workspace if this is an alternative scenario
-  if(load_db_workspace){
-    load(file.path(scenario_output_path, SYSTEM_DB_OUTPUTNAME))
-    # ScenarioFirms <- db_inputs$ScenarioFirms
-    # TAZSocioEconomics <- db_inputs$TAZSocioEconomics
-    # ld_trips <- db_inputs$ld_trips
-    # cv_trips <- db_inputs$cv_trips
-    TripTable <- db_inputs$TripTable
-    tmh_vtods_wide <- db_inputs$tmh_vtods_wide
+  if(ref_scenario){
+    TripTable <- db_inputs$ref_TripTable
+    tmh_vtods_wide <- db_inputs$ref_tmh_vtods_wide
   }
   
   # Daily tt (aggregate over time of day)
@@ -170,69 +141,31 @@ createTripTableSummaries <- function(scenario, scenario_output_path, load_db_wor
                                     idcols = 4L,
                                     rowtotal = FALSE)
   
-  xt.mh.reg.trips <- add_totals(dcast.data.table(daily.sum.veh.odreg[Vehicle != "Light"], 
+  xt.reg.trips <- add_totals(dcast.data.table(daily.sum.veh.odreg[!is.na(Vehicle)], 
                                                  OSummaryGeog~DSummaryGeog, 
                                                  fun.aggregate = sum, 
                                                  value.var = "Trips"))
   
-  xt.mh.reg.vmt <- add_totals(dcast.data.table(daily.sum.veh.odreg[Vehicle != "Light"], 
+  xt.reg.vmt <- add_totals(dcast.data.table(daily.sum.veh.odreg[!is.na(Vehicle)], 
                                                OSummaryGeog~DSummaryGeog, 
                                                fun.aggregate = sum, 
                                                value.var = "VMT"))
-  # Trips crossing cordons
-  ttd[, ExternalCordon := trips * c(0,1,1,2)[match(ODSegment, c("II", "IX", "XI", "XX"))]]
-  
-  # tag externals in Canada
-  international_ext <- TAZ_System[StationGroup == "Ontario"]$TAZ
-  ttd[, InternationalCordon := trips * ifelse((OTAZ %in% international_ext & !DTAZ %in% international_ext)|
-                                       (DTAZ %in% international_ext & !OTAZ %in% international_ext),1,0)]
-  
-  # Summarize cordon trips
-  xt.mh.cordon.external <- add_totals(dcast.data.table(ttd, ODSegment~Vehicle, fun.aggregate = sum, value.var = "ExternalCordon"))
-  xt.mh.cordon.international <- add_totals(dcast.data.table(ttd, OSummaryGeog+DSummaryGeog~Vehicle, fun.aggregate = sum, value.var = "InternationalCordon"),
-                                   idcols = 1:2)[Total>0]
-  
-  # Summarise external trips by station
-  ext.in <- add_totals(dcast.data.table(ttd[ODSegment %in% c("XI", "XX"), .(Trips = sum(trips)), keyby = .(TAZ = as.character(OTAZ), ODSegment, Vehicle)],
-                                        TAZ ~ ODSegment + Vehicle, fun.aggregate = sum, value.var = "Trips"))
-  setnames(ext.in, names(ext.in)[2:8], paste0("In_", names(ext.in)[2:8]))
-  ext.out <- add_totals(dcast.data.table(ttd[ODSegment %in% c("IX", "XX"), .(Trips = sum(trips)), keyby = .(TAZ = as.character(DTAZ), ODSegment, Vehicle)],
-                                         TAZ ~ ODSegment + Vehicle, fun.aggregate = sum, value.var = "Trips"))
-  setnames(ext.out, names(ext.out)[2:8], paste0("Out_", names(ext.out)[2:8]))
-  
-  ext.sum <- merge(TAZ_System[EXTERNAL == 1, .(TAZ = as.character(TAZ), StationGroup, StationName, StationType)],
-                   ext.in,
-                   by = "TAZ") 
-  
-  ext.sum <- merge(ext.sum,
-                   ext.out,
-                   by = "TAZ")
-  
-  ext.sum <- add_totals(ext.sum,
-                        idcols = 4L,
-                        rowtotal = FALSE)
   
   # Create a vector of tabletitles (pretty names for the table to be used in the spreadsheet)
   tabletitles = c("Daily Trip Summary by Vehicle Type",
                   "Daily Trip Summary by OD Segment",
                   "Daily Trip Summary by Vehicle Type and OD Segment",
                   "Daily Trip Summary by Vehicle Type, OD Segment, and OD Regions",
-                  "Tabulation of Total (Medium + Heavy Trucks) Daily Trips by OD Regions",
-                  "Tabulation of Total (Medium + Heavy Trucks) Daily VMT by OD Regions",
-                  "Daily Trips Crossing the External Cordon by Vehicle Type and OD Segment",
-                  "Daily Trips Crossing the International Cordon by Vehicle Type and OD Regions",
-                  "Daily Trips by External Station, Direction, Vehicle Type, and OD Segment")
+                  "Tabulation of Total Daily Trips by OD Regions",
+                  "Tabulation of Total Daily VMT by OD Regions")
   
   # Return a list of all of the tables created, with those for the spreadsheet first
   return(list(daily.sum.veh = daily.sum.veh,
               daily.sum.od = daily.sum.od,
               daily.sum.veh.od = daily.sum.veh.od,
               daily.sum.veh.odreg = daily.sum.veh.odreg,
-              xt.mh.reg.trips = xt.mh.reg.trips,
-              xt.mh.reg.vmt = xt.mh.reg.vmt,
-              xt.mh.cordon.external = xt.mh.cordon.external,
-              xt.mh.cordon.international = xt.mh.cordon.international,
-              ext.sum = ext.sum,
+              xt.reg.trips = xt.reg.trips,
+              xt.reg.vmt = xt.reg.vmt,
               tttod = tttod,
               tabletitles = tabletitles,
               scenario = scenario))
@@ -249,18 +182,18 @@ compareTAZ <- function(scenario_1_taz_list, scenario_2_taz_list){
   firm_sim_taz_2 <- copy(scenario_2_taz_list[["firm_sim_taz"]])
   
   setnames(firm_sim_taz_1, 
-           c("TAZ", "EmpCatName", paste("Ref", 
+           c("TAZ", "EmpCatGroupedName", paste("Ref", 
                                           names(firm_sim_taz_1)[3:ncol(firm_sim_taz_1)],
                                           sep = "_")))
   
   setnames(firm_sim_taz_2, 
-           c("TAZ", "EmpCatName", paste("Alt", 
+           c("TAZ", "EmpCatGroupedName", paste("Alt", 
                                           names(firm_sim_taz_2)[3:ncol(firm_sim_taz_2)],
                                           sep = "_")))
   
   firm_sim_taz <- merge(firm_sim_taz_1,
                         firm_sim_taz_2,
-                        by = c("TAZ", "EmpCatName"),
+                        by = c("TAZ", "EmpCatGroupedName"),
                         all = TRUE)
   
   firm_sim_taz[is.na(firm_sim_taz)] <- 0
@@ -273,37 +206,6 @@ compareTAZ <- function(scenario_1_taz_list, scenario_2_taz_list){
   
   cols <- names(firm_sim_taz)[3:ncol(firm_sim_taz)]
   firm_sim_taz_sum <- firm_sim_taz[,lapply(.SD, sum), by = TAZ, .SDcols = cols]
-  
-  # Compare the long distance model outputs
-  ld_taz_trips_1 <- copy(scenario_1_taz_list[["ld_taz_trips"]])
-  ld_taz_trips_2 <- copy(scenario_2_taz_list[["ld_taz_trips"]])
-  
-  setnames(ld_taz_trips_1, 
-           c("TAZ", "Vehicle", paste("Ref", 
-                                     names(ld_taz_trips_1)[3:ncol(ld_taz_trips_1)],
-                                     sep = "_")))
-  
-  setnames(ld_taz_trips_2, 
-           c("TAZ", "Vehicle", paste("Alt", 
-                                     names(ld_taz_trips_2)[3:ncol(ld_taz_trips_2)],
-                                     sep = "_")))
-  
-  ld_taz_trips <- merge(ld_taz_trips_1,
-                        ld_taz_trips_2,
-                        by = c("TAZ", "Vehicle"),
-                        all = TRUE)
-  
-  ld_taz_trips[is.na(ld_taz_trips)] <- 0
-  
-  ld_taz_trips[, c("Diff_oTripsLD", "Diff_dTripsLD") := .(Alt_oTripsLD - Ref_oTripsLD,
-                                                          Alt_dTripsLD - Ref_dTripsLD)]
-  
-  ld_taz_trips_w <- dcast.data.table(ld_taz_trips,
-                                     TAZ ~ Vehicle,
-                                     fun.aggregate = sum,
-                                     value.var = c("Ref_oTripsLD", "Ref_dTripsLD", 
-                                                   "Alt_oTripsLD", "Alt_dTripsLD", 
-                                                   "Diff_oTripsLD", "Diff_dTripsLD"))
   
   # Compare the commercial vehicle touring outputs
   cv_taz_trips_1 <- copy(scenario_1_taz_list[["cv_taz_trips"]])
@@ -369,11 +271,6 @@ compareTAZ <- function(scenario_1_taz_list, scenario_2_taz_list){
   
   # Create a unified summary
   taz_sum <- merge(firm_sim_taz_sum,
-                   ld_taz_trips_w,
-                   by = "TAZ",
-                   all = TRUE)
-  
-  taz_sum <- merge(taz_sum,
                    cv_taz_trips_w,
                    by = "TAZ",
                    all = TRUE)
@@ -389,8 +286,6 @@ compareTAZ <- function(scenario_1_taz_list, scenario_2_taz_list){
   tabletitles = c("Comparison by TAZ",
                   "Firm Synthesis by TAZ and Employment Category",
                   "Firm Synthesis by TAZ",
-                  "Long Distance Truck Trips by TAZ and Vehicle",
-                  "Long Distance Truck Trips by TAZ and Vehicle (Wide)",
                   "Commercial Vehicle Trips by TAZ and Vehicle",
                   "Commercial Vehicle Trips by TAZ and Vehicle (Wide)",
                   "Total Trips by TAZ and Vehicle",
@@ -400,8 +295,6 @@ compareTAZ <- function(scenario_1_taz_list, scenario_2_taz_list){
   return(list(taz_sum = taz_sum,
               firm_sim_taz = firm_sim_taz,
               firm_sim_taz_sum = firm_sim_taz_sum,
-              ld_taz_trips = ld_taz_trips,
-              ld_taz_trips_w = ld_taz_trips_w,
               cv_taz_trips = cv_taz_trips,
               cv_taz_trips_w = cv_taz_trips_w,
               tt_taz_trips = tt_taz_trips,
@@ -576,284 +469,3 @@ addScenarioSummarySheet <- function(wb, sheetname, tableslist,
   return(wb)
 }
 
-# Function to create assignment summaries from time period and daily flow table
-createAssignmentSummaries <- function(scenario, model_flows){
-
-  # add the volumes from the network flows
-  model_flows[is.na(model_flows)] <- 0
-  model_flows[, TOT_FLOW_PASS_CAR := AB_FLOW_SOV + BA_FLOW_SOV + AB_FLOW_HOV2 + BA_FLOW_HOV2 + AB_FLOW_HOV3 + BA_FLOW_HOV3]
-  model_flows[, TOT_FLOW_LIGHT_TRUCK := `AB_FLOW_LIGHT TRUCK` + `BA_FLOW_LIGHT TRUCK`]
-  model_flows[, TOT_FLOW_LIGHT_VEHICLE := TOT_FLOW_PASS_CAR + TOT_FLOW_LIGHT_TRUCK]
-  model_flows[, TOT_FLOW_MEDIUM_TRUCK := `AB_FLOW_MEDIUM TRUCK` + `BA_FLOW_MEDIUM TRUCK`]
-  model_flows[, TOT_FLOW_HEAVY_TRUCK := `AB_FLOW_HEAVY TRUCK` + `BA_FLOW_HEAVY TRUCK`]
-  model_flows[, TOT_FLOW_TRUCK := TOT_FLOW_MEDIUM_TRUCK + TOT_FLOW_HEAVY_TRUCK]
-  model_flows[, TOT_FLOW_CHECK := TOT_FLOW_LIGHT_VEHICLE + TOT_FLOW_MEDIUM_TRUCK + TOT_FLOW_HEAVY_TRUCK]
-  
-  model_flow_summary <- model_flows[,.(LINKSERIAL = ID1, TOD, TOT_FLOW_PASS_CAR, TOT_FLOW_LIGHT_TRUCK, TOT_FLOW_LIGHT_VEHICLE,
-                                       TOT_FLOW_MEDIUM_TRUCK, TOT_FLOW_HEAVY_TRUCK, TOT_FLOW_TRUCK, TOT_FLOW_VEHICLE = TOT_FLOW)]
-  
-  # # Join on link distances for VMT summary from flows
-  # model_flow_summary[hwy_shp_dt, c("FCLASS", "LENGTH") := .(i.FCLASS, i.LENGTH), on = "LINKSERIAL"]
-  # model_flow_summary[, VMT_Pass_Car := TOT_FLOW_PASS_CAR * LENGTH]
-  # model_flow_summary[, VMT_Light_Truck := TOT_FLOW_LIGHT_TRUCK * LENGTH]
-  # model_flow_summary[, VMT_Light_Vehicle := TOT_FLOW_LIGHT_VEHICLE * LENGTH]
-  # model_flow_summary[, VMT_Medium_Truck := TOT_FLOW_MEDIUM_TRUCK * LENGTH]
-  # model_flow_summary[, VMT_Heavy_Truck := TOT_FLOW_HEAVY_TRUCK * LENGTH]
-  # model_flow_summary[, VMT_Truck := TOT_FLOW_TRUCK * LENGTH]
-  # model_flow_summary[, VMT_Vehicle := TOT_FLOW_VEHICLE * LENGTH]
-  
-  # compare with the complete set of daily counts
-  daily_comp_all <- merge(counts_daily_class,
-                          model_flow_summary[TOD == "DY"
-                                             ,.(LINKSERIAL, TOT_FLOW_PASS_CAR, TOT_FLOW_LIGHT_TRUCK, TOT_FLOW_LIGHT_VEHICLE,
-                                                TOT_FLOW_MEDIUM_TRUCK, TOT_FLOW_HEAVY_TRUCK, TOT_FLOW_TRUCK, TOT_FLOW_VEHICLE)],
-                          by = "LINKSERIAL",
-                          all.x = TRUE)
-  
-  daily_count_vol_comp <- c(Counts = nrow(daily_comp_all), colSums(daily_comp_all[,c(5:9, 21:26)], na.rm = TRUE))
-  daily_count_vol_comp["TOT_FLOW_LIGHT_VEHICLE"]/daily_count_vol_comp["AADT_CAR"]
-  daily_count_vol_comp["TOT_FLOW_MEDIUM_TRUCK"]/daily_count_vol_comp["AADT_SUT"]
-  daily_count_vol_comp["TOT_FLOW_HEAVY_TRUCK"]/daily_count_vol_comp["AADT_MUT"]
-  
-  # compare time period flows with the time period counts
-  counts_time_period[, TOD := substr(TOD, 1,2)]
-  
-  tod_comp_all <- merge(counts_time_period,
-                        model_flow_summary[TOD != "DY"
-                                           ,.(LINKSERIAL, TOD = as.character(TOD),
-                                              TOT_FLOW_MEDIUM_TRUCK, TOT_FLOW_HEAVY_TRUCK, TOT_FLOW_TRUCK)],
-                        by = c("LINKSERIAL", "TOD"),
-                        all.x = TRUE)
-  
-  tod_comp_all[, TRUCK := SUT + MUT]
-  
-  # Calculate error at link level
-  daily_comp_all[, c("Error_LV", "Error_SUT", "Error_MUT", "Error_Truck", "Error_All") :=
-                   .(TOT_FLOW_LIGHT_VEHICLE - AADT_CAR,
-                     TOT_FLOW_MEDIUM_TRUCK - AADT_SUT,
-                     TOT_FLOW_HEAVY_TRUCK - AADT_MUT,
-                     TOT_FLOW_TRUCK - (AADT_SUT + AADT_MUT),
-                     TOT_FLOW_VEHICLE - AADT)]
-  
-  tod_comp_all[, c("Error_SUT", "Error_MUT", "Error_Truck") :=
-                 .(TOT_FLOW_MEDIUM_TRUCK - SUT,
-                   TOT_FLOW_HEAVY_TRUCK - MUT,
-                   TOT_FLOW_TRUCK - TRUCK)]
-  
-  # Compare by county, functional class, etc
-  daily_comp_all_fclass <- add_totals(daily_comp_all[,.(NumCounts = .N,
-                                                        AADT_CAR = sum(AADT_CAR), 
-                                                        AADT_SUT = sum(AADT_SUT),
-                                                        AADT_MUT = sum(AADT_MUT),
-                                                        AADT_TRUCK = sum(AADT_SUT + AADT_MUT),
-                                                        AADT = sum(AADT),
-                                                        TOT_FLOW_PASS_CAR = round(sum(TOT_FLOW_PASS_CAR)), 
-                                                        TOT_FLOW_LIGHT_TRUCK = round(sum(TOT_FLOW_LIGHT_TRUCK)), 
-                                                        TOT_FLOW_LIGHT_VEHICLE = round(sum(TOT_FLOW_LIGHT_VEHICLE)),
-                                                        TOT_FLOW_MEDIUM_TRUCK = round(sum(TOT_FLOW_MEDIUM_TRUCK)), 
-                                                        TOT_FLOW_HEAVY_TRUCK = round(sum(TOT_FLOW_HEAVY_TRUCK)), 
-                                                        TOT_FLOW_TRUCK = round(sum(TOT_FLOW_TRUCK)), 
-                                                        TOT_FLOW_VEHICLE = round(sum(TOT_FLOW_VEHICLE)),
-                                                        Error_LV = round(sum(Error_LV)),
-                                                        Error_SUT = round(sum(Error_SUT)), 
-                                                        Error_MUT = round(sum(Error_MUT)), 
-                                                        Error_Truck = round(sum(Error_Truck)), 
-                                                        Error_All = round(sum(Error_All)),
-                                                        SumSqEr_LV = sum(Error_LV^2),
-                                                        SumSqEr_SUT = sum(Error_SUT^2),
-                                                        SumSqEr_MUT = sum(Error_MUT^2),
-                                                        SumSqEr_Truck = sum(Error_Truck^2),
-                                                        SumSqEr_All = sum(Error_All^2)),
-                                                     keyby = .(FCLASS, FCLASS_LABEL)],
-                                      idcols = 2L, rowtotal = FALSE)
-  
-  daily_comp_all_fclass[, c("Ratio_LV", "Ratio_SUT", "Ratio_MUT", "Ratio_Truck", "Ratio_All") :=
-                          .(round(TOT_FLOW_LIGHT_VEHICLE/AADT_CAR,2), round(TOT_FLOW_MEDIUM_TRUCK/AADT_SUT,2), 
-                            round(TOT_FLOW_HEAVY_TRUCK/AADT_MUT,2), round(TOT_FLOW_TRUCK/AADT_TRUCK,2), 
-                            round(TOT_FLOW_VEHICLE/AADT,2))]
-  
-  daily_comp_all_fclass[, PctRMSE_LV := round(sqrt(SumSqEr_LV/NumCounts)/(AADT_CAR/NumCounts)*100,2)]
-  daily_comp_all_fclass[, PctRMSE_SUT := round(sqrt(SumSqEr_SUT/NumCounts)/(AADT_SUT/NumCounts)*100,2)]
-  daily_comp_all_fclass[, PctRMSE_MUT := round(sqrt(SumSqEr_MUT/NumCounts)/(AADT_MUT/NumCounts)*100,2)]
-  daily_comp_all_fclass[, PctRMSE_Truck := round(sqrt(SumSqEr_Truck/NumCounts)/(AADT_TRUCK/NumCounts)*100,2)]
-  daily_comp_all_fclass[, PctRMSE_All := round(sqrt(SumSqEr_All/NumCounts)/(AADT/NumCounts)*100,2)]
-  
-  daily_comp_all_county <- add_totals(daily_comp_all[,.(NumCounts = .N,
-                                                        AADT_CAR = sum(AADT_CAR), 
-                                                        AADT_SUT = sum(AADT_SUT),
-                                                        AADT_MUT = sum(AADT_MUT),
-                                                        AADT_TRUCK = sum(AADT_SUT + AADT_MUT),
-                                                        AADT = sum(AADT),
-                                                        TOT_FLOW_PASS_CAR = round(sum(TOT_FLOW_PASS_CAR)), 
-                                                        TOT_FLOW_LIGHT_TRUCK = round(sum(TOT_FLOW_LIGHT_TRUCK)), 
-                                                        TOT_FLOW_LIGHT_VEHICLE = round(sum(TOT_FLOW_LIGHT_VEHICLE)),
-                                                        TOT_FLOW_MEDIUM_TRUCK = round(sum(TOT_FLOW_MEDIUM_TRUCK)), 
-                                                        TOT_FLOW_HEAVY_TRUCK = round(sum(TOT_FLOW_HEAVY_TRUCK)), 
-                                                        TOT_FLOW_TRUCK = round(sum(TOT_FLOW_TRUCK)), 
-                                                        TOT_FLOW_VEHICLE = round(sum(TOT_FLOW_VEHICLE)),
-                                                        Error_LV = round(sum(Error_LV)),
-                                                        Error_SUT = round(sum(Error_SUT)), 
-                                                        Error_MUT = round(sum(Error_MUT)), 
-                                                        Error_Truck = round(sum(Error_Truck)), 
-                                                        Error_All = round(sum(Error_All)),
-                                                        SumSqEr_LV = sum(Error_LV^2),
-                                                        SumSqEr_SUT = sum(Error_SUT^2),
-                                                        SumSqEr_MUT = sum(Error_MUT^2),
-                                                        SumSqEr_Truck = sum(Error_Truck^2),
-                                                        SumSqEr_All = sum(Error_All^2)),
-                                                     keyby = .(COUNTY, CountyName)],
-                                      idcols = 2L, rowtotal = FALSE)
-  
-  daily_comp_all_county[, c("Ratio_LV", "Ratio_SUT", "Ratio_MUT", "Ratio_Truck", "Ratio_All") :=
-                          .(round(TOT_FLOW_LIGHT_VEHICLE/AADT_CAR,2), round(TOT_FLOW_MEDIUM_TRUCK/AADT_SUT,2), 
-                            round(TOT_FLOW_HEAVY_TRUCK/AADT_MUT,2), round(TOT_FLOW_TRUCK/AADT_TRUCK,2), 
-                            round(TOT_FLOW_VEHICLE/AADT,2))]
-  
-  daily_comp_all_county[, PctRMSE_LV := round(sqrt(SumSqEr_LV/NumCounts)/(AADT_CAR/NumCounts)*100,2)]
-  daily_comp_all_county[, PctRMSE_SUT := round(sqrt(SumSqEr_SUT/NumCounts)/(AADT_SUT/NumCounts)*100,2)]
-  daily_comp_all_county[, PctRMSE_MUT := round(sqrt(SumSqEr_MUT/NumCounts)/(AADT_MUT/NumCounts)*100,2)]
-  daily_comp_all_county[, PctRMSE_Truck := round(sqrt(SumSqEr_Truck/NumCounts)/(AADT_TRUCK/NumCounts)*100,2)]
-  daily_comp_all_county[, PctRMSE_All := round(sqrt(SumSqEr_All/NumCounts)/(AADT/NumCounts)*100,2)]
-  
-  daily_comp_all_areatype <- add_totals(daily_comp_all[,.(NumCounts = .N,
-                                                          AADT_CAR = sum(AADT_CAR), 
-                                                          AADT_SUT = sum(AADT_SUT),
-                                                          AADT_MUT = sum(AADT_MUT),
-                                                          AADT_TRUCK = sum(AADT_SUT + AADT_MUT),
-                                                          AADT = sum(AADT),
-                                                          TOT_FLOW_PASS_CAR = round(sum(TOT_FLOW_PASS_CAR)), 
-                                                          TOT_FLOW_LIGHT_TRUCK = round(sum(TOT_FLOW_LIGHT_TRUCK)), 
-                                                          TOT_FLOW_LIGHT_VEHICLE = round(sum(TOT_FLOW_LIGHT_VEHICLE)),
-                                                          TOT_FLOW_MEDIUM_TRUCK = round(sum(TOT_FLOW_MEDIUM_TRUCK)), 
-                                                          TOT_FLOW_HEAVY_TRUCK = round(sum(TOT_FLOW_HEAVY_TRUCK)), 
-                                                          TOT_FLOW_TRUCK = round(sum(TOT_FLOW_TRUCK)), 
-                                                          TOT_FLOW_VEHICLE = round(sum(TOT_FLOW_VEHICLE)),
-                                                          Error_LV = round(sum(Error_LV)),
-                                                          Error_SUT = round(sum(Error_SUT)), 
-                                                          Error_MUT = round(sum(Error_MUT)), 
-                                                          Error_Truck = round(sum(Error_Truck)), 
-                                                          Error_All = round(sum(Error_All)),
-                                                          SumSqEr_LV = sum(Error_LV^2),
-                                                          SumSqEr_SUT = sum(Error_SUT^2),
-                                                          SumSqEr_MUT = sum(Error_MUT^2),
-                                                          SumSqEr_Truck = sum(Error_Truck^2),
-                                                          SumSqEr_All = sum(Error_All^2)),
-                                                       keyby = .(AREATYPE, AREATYPE_LABEL)],
-                                        idcols = 2L, rowtotal = FALSE)
-  
-  daily_comp_all_areatype[, c("Ratio_LV", "Ratio_SUT", "Ratio_MUT", "Ratio_Truck", "Ratio_All") :=
-                            .(round(TOT_FLOW_LIGHT_VEHICLE/AADT_CAR,2), round(TOT_FLOW_MEDIUM_TRUCK/AADT_SUT,2), 
-                              round(TOT_FLOW_HEAVY_TRUCK/AADT_MUT,2), round(TOT_FLOW_TRUCK/AADT_TRUCK,2), 
-                              round(TOT_FLOW_VEHICLE/AADT,2))]
-  
-  daily_comp_all_areatype[, PctRMSE_LV := round(sqrt(SumSqEr_LV/NumCounts)/(AADT_CAR/NumCounts)*100,2)]
-  daily_comp_all_areatype[, PctRMSE_SUT := round(sqrt(SumSqEr_SUT/NumCounts)/(AADT_SUT/NumCounts)*100,2)]
-  daily_comp_all_areatype[, PctRMSE_MUT := round(sqrt(SumSqEr_MUT/NumCounts)/(AADT_MUT/NumCounts)*100,2)]
-  daily_comp_all_areatype[, PctRMSE_Truck := round(sqrt(SumSqEr_Truck/NumCounts)/(AADT_TRUCK/NumCounts)*100,2)]
-  daily_comp_all_areatype[, PctRMSE_All := round(sqrt(SumSqEr_All/NumCounts)/(AADT/NumCounts)*100,2)]
-  
-  daily_comp_all_volgrp <- add_totals(daily_comp_all[,.(NumCounts = .N,
-                                                        AADT_CAR = sum(AADT_CAR), 
-                                                        AADT_SUT = sum(AADT_SUT),
-                                                        AADT_MUT = sum(AADT_MUT),
-                                                        AADT_TRUCK = sum(AADT_SUT + AADT_MUT),
-                                                        AADT = sum(AADT),
-                                                        TOT_FLOW_PASS_CAR = round(sum(TOT_FLOW_PASS_CAR)), 
-                                                        TOT_FLOW_LIGHT_TRUCK = round(sum(TOT_FLOW_LIGHT_TRUCK)), 
-                                                        TOT_FLOW_LIGHT_VEHICLE = round(sum(TOT_FLOW_LIGHT_VEHICLE)),
-                                                        TOT_FLOW_MEDIUM_TRUCK = round(sum(TOT_FLOW_MEDIUM_TRUCK)), 
-                                                        TOT_FLOW_HEAVY_TRUCK = round(sum(TOT_FLOW_HEAVY_TRUCK)), 
-                                                        TOT_FLOW_TRUCK = round(sum(TOT_FLOW_TRUCK)), 
-                                                        TOT_FLOW_VEHICLE = round(sum(TOT_FLOW_VEHICLE)),
-                                                        Error_LV = round(sum(Error_LV)),
-                                                        Error_SUT = round(sum(Error_SUT)), 
-                                                        Error_MUT = round(sum(Error_MUT)), 
-                                                        Error_Truck = round(sum(Error_Truck)), 
-                                                        Error_All = round(sum(Error_All)),
-                                                        SumSqEr_LV = sum(Error_LV^2),
-                                                        SumSqEr_SUT = sum(Error_SUT^2),
-                                                        SumSqEr_MUT = sum(Error_MUT^2),
-                                                        SumSqEr_Truck = sum(Error_Truck^2),
-                                                        SumSqEr_All = sum(Error_All^2)),
-                                                     keyby = .(VOLUME_GROUP_TRUCK)],
-                                      idcols = 1L, rowtotal = FALSE)
-  
-  daily_comp_all_volgrp[, c("Ratio_LV", "Ratio_SUT", "Ratio_MUT", "Ratio_Truck", "Ratio_All") :=
-                          .(round(TOT_FLOW_LIGHT_VEHICLE/AADT_CAR,2), round(TOT_FLOW_MEDIUM_TRUCK/AADT_SUT,2), 
-                            round(TOT_FLOW_HEAVY_TRUCK/AADT_MUT,2), round(TOT_FLOW_TRUCK/AADT_TRUCK,2), 
-                            round(TOT_FLOW_VEHICLE/AADT,2))]
-  
-  daily_comp_all_volgrp[, PctRMSE_LV := round(sqrt(SumSqEr_LV/NumCounts)/(AADT_CAR/NumCounts)*100,2)]
-  daily_comp_all_volgrp[, PctRMSE_SUT := round(sqrt(SumSqEr_SUT/NumCounts)/(AADT_SUT/NumCounts)*100,2)]
-  daily_comp_all_volgrp[, PctRMSE_MUT := round(sqrt(SumSqEr_MUT/NumCounts)/(AADT_MUT/NumCounts)*100,2)]
-  daily_comp_all_volgrp[, PctRMSE_Truck := round(sqrt(SumSqEr_Truck/NumCounts)/(AADT_TRUCK/NumCounts)*100,2)]
-  daily_comp_all_volgrp[, PctRMSE_All := round(sqrt(SumSqEr_All/NumCounts)/(AADT/NumCounts)*100,2)]
-  
-  # Time period
-  tod_comp_all_tod <- add_totals(tod_comp_all[!is.na(TOT_FLOW_MEDIUM_TRUCK) & !is.na(TOT_FLOW_HEAVY_TRUCK),
-                                              .(NumCounts = .N,
-                                                SUT = sum(SUT),
-                                                MUT = sum(MUT),
-                                                TRUCK = sum(SUT + MUT),
-                                                TOT_FLOW_MEDIUM_TRUCK = round(sum(TOT_FLOW_MEDIUM_TRUCK)), 
-                                                TOT_FLOW_HEAVY_TRUCK = round(sum(TOT_FLOW_HEAVY_TRUCK)), 
-                                                TOT_FLOW_TRUCK = round(sum(TOT_FLOW_TRUCK)), 
-                                                Error_SUT = round(sum(Error_SUT)), 
-                                                Error_MUT = round(sum(Error_MUT)), 
-                                                Error_Truck = round(sum(Error_Truck)), 
-                                                SumSqEr_SUT = sum(Error_SUT^2),
-                                                SumSqEr_MUT = sum(Error_MUT^2),
-                                                SumSqEr_Truck = sum(Error_Truck^2)),
-                                              keyby = .(TOD)],
-                                 rowtotal = FALSE)
-  
-  tod_comp_all_tod[, c("Ratio_SUT", "Ratio_MUT", "Ratio_Truck") :=
-                     .(round(TOT_FLOW_MEDIUM_TRUCK/SUT,2), 
-                       round(TOT_FLOW_HEAVY_TRUCK/MUT,2), round(TOT_FLOW_TRUCK/TRUCK,2))]
-  
-  tod_comp_all_tod[, PctRMSE_SUT := round(sqrt(SumSqEr_SUT/NumCounts)/(SUT/NumCounts)*100,2)]
-  tod_comp_all_tod[, PctRMSE_MUT := round(sqrt(SumSqEr_MUT/NumCounts)/(MUT/NumCounts)*100,2)]
-  tod_comp_all_tod[, PctRMSE_Truck := round(sqrt(SumSqEr_Truck/NumCounts)/(TRUCK/NumCounts)*100,2)]
-  
-  tod_comp_all_fclass_tod <- add_totals(tod_comp_all[!is.na(TOT_FLOW_MEDIUM_TRUCK) & !is.na(TOT_FLOW_HEAVY_TRUCK),
-                                                     .(NumCounts = .N,
-                                                       SUT = round(sum(SUT)),
-                                                       MUT = round(sum(MUT)),
-                                                       TRUCK = round(sum(SUT + MUT)),
-                                                       TOT_FLOW_MEDIUM_TRUCK = round(sum(TOT_FLOW_MEDIUM_TRUCK)), 
-                                                       TOT_FLOW_HEAVY_TRUCK = round(sum(TOT_FLOW_HEAVY_TRUCK)), 
-                                                       TOT_FLOW_TRUCK = round(sum(TOT_FLOW_TRUCK)), 
-                                                       Error_SUT = round(sum(Error_SUT)), 
-                                                       Error_MUT = round(sum(Error_MUT)), 
-                                                       Error_Truck = round(sum(Error_Truck)), 
-                                                       SumSqEr_SUT = sum(Error_SUT^2),
-                                                       SumSqEr_MUT = sum(Error_MUT^2),
-                                                       SumSqEr_Truck = sum(Error_Truck^2)),
-                                                     keyby = .(FCLASS, FCLASS_LABEL, TOD)],
-                                        idcols = 3L,
-                                        rowtotal = FALSE)
-  
-  tod_comp_all_fclass_tod[, c("Ratio_SUT", "Ratio_MUT", "Ratio_Truck") :=
-                            .(round(TOT_FLOW_MEDIUM_TRUCK/SUT,2), 
-                              round(TOT_FLOW_HEAVY_TRUCK/MUT,2), round(TOT_FLOW_TRUCK/TRUCK,2))]
-  
-  tod_comp_all_fclass_tod[, PctRMSE_SUT := round(sqrt(SumSqEr_SUT/NumCounts)/(SUT/NumCounts)*100,2)]
-  tod_comp_all_fclass_tod[, PctRMSE_MUT := round(sqrt(SumSqEr_MUT/NumCounts)/(MUT/NumCounts)*100,2)]
-  tod_comp_all_fclass_tod[, PctRMSE_Truck := round(sqrt(SumSqEr_Truck/NumCounts)/(TRUCK/NumCounts)*100,2)]
-  
-  # Collect together summaries and write out
-  assignment_validation_list <- list(daily_comp_all = daily_comp_all,
-                                    tod_comp_all = tod_comp_all,
-                                    daily_comp_all_fclass = daily_comp_all_fclass,
-                                    daily_comp_all_county = daily_comp_all_county,
-                                    daily_comp_all_areatype = daily_comp_all_areatype,
-                                    daily_comp_all_volgrp = daily_comp_all_volgrp,
-                                    tod_comp_all_tod = tod_comp_all_tod,
-                                    tod_comp_all_fclass_tod = tod_comp_all_fclass_tod)
-  
-  assignment_validation_list$tabletitles <- names(assignment_validation_list)
-  assignment_validation_list$scenario <- scenario
-  
-  return(assignment_validation_list)
-
-}

@@ -197,7 +197,8 @@ db_build_process_inputs <- function(envir){
   
   if(SCENARIO_DB_SPREADSHEET){
     
-    # code here for processing inputs required specifically to build the summary spreadsheet
+    # Add code here for processing inputs required specifically to build the summary spreadsheet
+    # Currently no additional code required beyond that in other sections of this script
    
   }
   
@@ -225,7 +226,7 @@ db_build_process_inputs <- function(envir){
       #extract some of the reference tables and remove the other inputs, functions, etc, that are in the env.
       ref_obj <- ls(db_reference$db_inputs, all.names=TRUE)
       ref_obj <- ref_obj[grep("db_tab_", ref_obj)]
-      ref_obj <- c("ScenarioFirms", "TAZLandUseCVTM", "cv_trips", "TripTable", "tmh_vtods", "truck_trip_gen", ref_obj)
+      ref_obj <- c("ScenarioFirms", "TAZLandUseCVTM", "cv_trips", "TripTable", "tmh_vtods", "truck_trip_gen", "tmh_vtods_wide", ref_obj)
       for(n in ref_obj) assign(paste0("ref_", n), get(n, db_reference$db_inputs), envir)
       
     } else {
