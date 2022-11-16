@@ -10,13 +10,12 @@ firm_sim_process_inputs <- function(envir) {
                       EstSizeCategories    = file.path(SYSTEM_DATA_PATH, "data_est_size_categories.csv"),  # Establishment size categories and labels
                       TAZ_System           = file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"),                # TAZ system 
                       firm_sim_enumerate   = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_enumerate.R"),
-                      firm_sim_mesozones   = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_mesozones.R"),
-                      firm_sim_scaling     = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_scaling.R"))
+                      firm_sim_mesozones   = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_mesozones.R"))
   
   loadInputs(files = project.files, envir = envir)
   
   ### Process project input files
-  envir[["UEmpCats"]]  <- unique(envir[["c_n2_empcats"]][,.(EmpCatID, EmpCatName, EmpCatDesc, EmpCatGroupedName)])
+  envir[["UEmpCats"]]  <- unique(envir[["c_n2_empcats"]][,.(EmpCatID, EmpCatName = as.character(EmpCatName), EmpCatDesc, EmpCatGroupedName)])
   
   # Combine Domestic Non Ag Firm Records with the Ag Firm Records
   # Remove any ag records in cbp and replacing with cbp_ag  
@@ -35,24 +34,21 @@ firm_sim_process_inputs <- function(envir) {
   ### Process scenario input files
   
   # Update fieldnames/datatypes for consistency
-  setnames(envir[["TAZEmployment"]], 
-           c("Zone17", "NAICS"), 
-           c("TAZ", "EmpCatName"))
   
-  # Create a wide version of the employment data for rFreight scaling function
-  TAZEmploymentWide <- dcast.data.table(envir[["TAZEmployment"]],
-                                    TAZ ~ EmpCatName,
-                                    fun.aggregate = sum,
-                                    value.var = "Employment")
+  # Naming and data type of control employment data
+  setnames(envir[["TAZEmployment"]], 
+           c("Zone17", "NAICS", "Employment"), 
+           c("TAZ", "EmpCatName", "Employees.SE"))
+  envir[["TAZEmployment"]][, EmpCatName := as.character(EmpCatName)]
   
   # Create a summarized version of the employment data with employment grouping categories in wide format
   envir[["TAZLandUseCVTM"]] <- add_totals(dcast.data.table(merge(envir[["TAZEmployment"]][, .(TAZ, Mesozone, CountyFIPS, 
-                                                         EmpCatName, Employment)],
+                                                         EmpCatName, Employees.SE)],
                                      envir[["UEmpCats"]],
                                      by = "EmpCatName"),
                                      TAZ + Mesozone + CountyFIPS ~ EmpCatGroupedName,
                                      fun.aggregate = sum,
-                                     value.var = "Employment"),
+                                     value.var = "Employees.SE"),
                                      idcols = 3L,
                                      coltotal = FALSE)
   setnames(envir[["TAZLandUseCVTM"]], 

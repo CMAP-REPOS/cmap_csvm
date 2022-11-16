@@ -56,8 +56,8 @@ firm_synthesis_mesozones <- function(Firms, mzemp, TAZEmployment){
   # Scaling algorithm will deal with any discrepancies at the TAZ level
   if(!"TAZ" %in% names(Firms)){
     
-    taz_prob <- TAZEmployment[, .(Employment = sum(Employment)), by = .(TAZ, Mesozone)]
-    taz_prob[, Prob := Employment/sum(Employment), by = Mesozone]
+    taz_prob <- TAZEmployment[, .(Employees.SE = sum(Employees.SE)), by = .(TAZ, Mesozone)]
+    taz_prob[, Prob := Employees.SE/sum(Employees.SE), by = Mesozone]
     
     for (mz in BASE_MZ_INTERNAL){
       SampleTAZ <- TAZ_System[mz == Mesozone]$TAZ

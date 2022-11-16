@@ -24,8 +24,8 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   Firms[, esizecat := as.integer(esizecat)]
   
   # Synthesize data for missing NAICS/county category 92
-  emp_cty_n2 <- TAZEmployment[,.(Emp = sum(Employment)), keyby = .(EmpCatName, CountyFIPS)]
-  emp_cty_n2[Firms[,.(Est = sum(est)), by = .(EmpCatName = as.integer(EmpCatName))], Est := i.Est, on = c("EmpCatName")]
+  emp_cty_n2 <- TAZEmployment[,.(Emp = sum(Employees.SE)), keyby = .(EmpCatName, CountyFIPS)]
+  emp_cty_n2[Firms[,.(Est = sum(est)), by = EmpCatName], Est := i.Est, on = c("EmpCatName")]
   emp_cty_n2[is.na(Est), Est := 0]
   emp_cty_n2_public <- emp_cty_n2[EmpCatName == 92]
   emp_cty_n2_public[emp_cty_n2[EmpCatName != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]

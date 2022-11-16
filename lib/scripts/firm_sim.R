@@ -37,10 +37,11 @@ firm_sim <- function(Establishments) {
       # Scale the employment to TAZ controls
       progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
       ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
-                                       TAZEmployment = TAZEmploymentWide, 
+                                       TAZEmployment = TAZEmployment, 
                                        NewFirmsProportion = BASE_NEW_FIRMS_PROP,
                                        MaxBusID = max(ScenarioFirms$BusID),
-                                       EstSizeCategories = EstSizeCategories)
+                                       EstSizeCategories = EstSizeCategories,
+                                       TAZEmploymentShape = "LONG")
       
       
       
@@ -61,10 +62,11 @@ firm_sim <- function(Establishments) {
         # Scale the emplyoment
         progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
         ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
-                                                          TAZEmployment = TAZEmploymentWide, 
+                                                          TAZEmployment = TAZEmployment, 
                                                           NewFirmsProportion = BASE_NEW_FIRMS_PROP,
                                                           MaxBusID = max(ScenarioFirms$BusID),
-                                                          EstSizeCategories = EstSizeCategories)
+                                                          EstSizeCategories = EstSizeCategories,
+                                                          TAZEmploymentShape = "LONG")
         
       } else {
         
