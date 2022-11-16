@@ -109,28 +109,21 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   
   cat("Creating Base Year Establishment List", "\n")
   
-  # Process and enumerate the CBP data
-  progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
+  # Process and enumerate the Establishment data
+  progressUpdate(prop = 1/3, dir = SCENARIO_LOG_PATH)
   ScenarioFirms <- firm_synthesis_enumerate(Establishments = Establishments,
                                             EstSizeCategories = EstSizeCategories,
-                                            TAZEmployment = TAZEmployment)
-  
-  # Allocate from counties to mesozones
-  progressUpdate(prop = 2/4, dir = SCENARIO_LOG_PATH)
-  ScenarioFirms <- firm_synthesis_mesozones(Firms = ScenarioFirms,
-                                            mzemp = mzemp,
-                                            TAZEmployment = TAZEmployment)
+                                            TAZEmployment = TAZEmployment,
+                                            mzemp = mzemp)
   
   # Scale the employment to TAZ controls
-  progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
+  progressUpdate(prop = 2/3, dir = SCENARIO_LOG_PATH)
   ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
                                                     TAZEmployment = TAZEmployment, 
                                                     NewFirmsProportion = BASE_NEW_FIRMS_PROP,
                                                     MaxBusID = max(ScenarioFirms$BusID),
                                                     EstSizeCategories = EstSizeCategories,
                                                     TAZEmploymentShape = "LONG")
-  
-  
   
 } else {
   
@@ -140,14 +133,14 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
     cat("Updating Base Year Establishment List with Future Control Data", "\n")
     
     # Load the output from the base year firm synthesis model
-    progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
+    progressUpdate(prop = 1/3, dir = SCENARIO_LOG_PATH)
     
     load(SCENARIO_BASEFIRMS)
     ScenarioFirms <- firm_sim_results$ScenarioFirms
     rm(firm_sim_results)
     
     # Scale the emplyoment
-    progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
+    progressUpdate(prop = 2/3, dir = SCENARIO_LOG_PATH)
     ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
                                                       TAZEmployment = TAZEmployment, 
                                                       NewFirmsProportion = BASE_NEW_FIRMS_PROP,
@@ -164,7 +157,7 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
 
 
 # Add employment classifications and spatial fields
-progressUpdate(prop = 4/4, dir = SCENARIO_LOG_PATH)
+progressUpdate(prop = 3/3, dir = SCENARIO_LOG_PATH)
 cat("Adding Employment Group and Spatial Variables", "\n")
 
 ScenarioFirms[UEmpCats, 
@@ -174,6 +167,7 @@ ScenarioFirms[UEmpCats,
 ScenarioFirms[TAZ_System, 
               c("Mesozone", "CountyFIPS") := .(i.Mesozone, i.CountyFIPS), 
               on = "TAZ"]
+
 # End progress tracking
 progressEnd(dir = SCENARIO_LOG_PATH)
 
