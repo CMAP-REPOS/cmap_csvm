@@ -1,6 +1,6 @@
 
 # Master function for executing the synthesis of firms.
-firm_sim <- function(cbp) {
+firm_sim <- function(Establishments) {
   
   # Begin progress tracking
   progressStart(action = "Simulating...", task = "Firms", dir = SCENARIO_LOG_PATH, subtasks = FALSE)
@@ -24,22 +24,25 @@ firm_sim <- function(cbp) {
       
       # Process and enumerate the CBP data
       progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
-      ScenarioFirms <- firm_synthesis_enumerate(cbp = cbp,
+      ScenarioFirms <- firm_synthesis_enumerate(Establishments = Establishments,
                                                 EstSizeCategories = EstSizeCategories,
-                                                emp_control_taz = emp_control_taz,
-                                                cbp_ag = cbp_ag)
+                                                TAZEmployment = TAZEmployment)
       
       # Allocate from counties to mesozones
       progressUpdate(prop = 2/4, dir = SCENARIO_LOG_PATH)
       ScenarioFirms <- firm_synthesis_mesozones(Firms = ScenarioFirms,
-                                                mzemp = mzemp)
+                                                mzemp = mzemp,
+                                                TAZEmployment = TAZEmployment)
       
       # Scale the employment to TAZ controls
       progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
-      ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
-                                              emp_control_taz = emp_control_taz,
-                                              TAZ_System = TAZ_System,
-                                              EstSizeCategories = EstSizeCategories)
+      ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
+                                       TAZEmployment = TAZEmploymentWide, 
+                                       NewFirmsProportion = BASE_NEW_FIRMS_PROP,
+                                       MaxBusID = max(ScenarioFirms$BusID),
+                                       EstSizeCategories = EstSizeCategories)
+      
+      
       
     } else {
       
@@ -57,10 +60,11 @@ firm_sim <- function(cbp) {
         
         # Scale the emplyoment
         progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
-        ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
-                                                emp_control_taz = emp_control_taz,
-                                                TAZ_System = TAZ_System,
-                                                EstSizeCategories = EstSizeCategories)
+        ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
+                                                          TAZEmployment = TAZEmploymentWide, 
+                                                          NewFirmsProportion = BASE_NEW_FIRMS_PROP,
+                                                          MaxBusID = max(ScenarioFirms$BusID),
+                                                          EstSizeCategories = EstSizeCategories)
         
       } else {
         
@@ -69,13 +73,18 @@ firm_sim <- function(cbp) {
       }
     }
     
-    # Add employment classifications
+    
+    # Add employment classifications and spatial fields
     progressUpdate(prop = 4/4, dir = SCENARIO_LOG_PATH)
-    cat("Adding Employment Group Variables", "\n")
+    cat("Adding Employment Group and Spatial Variables", "\n")
     
     ScenarioFirms[UEmpCats, 
                   EmpCatGroupedName := i.EmpCatGroupedName,
                   on = "EmpCatName"]
+    
+    ScenarioFirms[TAZ_System, 
+                  c("Mesozone", "CountyFIPS") := .(i.Mesozone, i.CountyFIPS), 
+                  on = "TAZ"]
     
   } # end run step 2
   

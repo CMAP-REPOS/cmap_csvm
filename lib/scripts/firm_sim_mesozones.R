@@ -1,5 +1,5 @@
 # Assign establishments to Mesozones
-firm_synthesis_mesozones <- function(Firms, mzemp){
+firm_synthesis_mesozones <- function(Firms, mzemp, TAZEmployment){
 
   # Assign firms from Counties to model Mesozones that are smaller in size -- more like cities
   FirmsCMAP <- Firms[CountyFIPS %in% BASE_FIPS_INTERNAL, .(CountyFIPS, BusID, EmpCatName, Emp)]
@@ -50,6 +50,26 @@ firm_synthesis_mesozones <- function(Firms, mzemp){
 
   # Assign MESOZONES for all firms
   Firms[FirmsCMAP, Mesozone := i.Mesozone, on = "BusID"]
+  
+  # Add an initial allocation to the TAZs 
+  # Allocation proportional to employment
+  # Scaling algorithm will deal with any discrepancies at the TAZ level
+  if(!"TAZ" %in% names(Firms)){
+    
+    taz_prob <- TAZEmployment[, .(Employment = sum(Employment)), by = .(TAZ, Mesozone)]
+    taz_prob[, Prob := Employment/sum(Employment), by = Mesozone]
+    
+    for (mz in BASE_MZ_INTERNAL){
+      SampleTAZ <- TAZ_System[mz == Mesozone]$TAZ
+      ProbTAZ <- taz_prob[mz == Mesozone]$Prob
+      if(length(SampleTAZ) == 1){
+        Firms[Mesozone == mz, TAZ := SampleTAZ]
+      } else {
+        Firms[Mesozone == mz, TAZ := sample(SampleTAZ, size = .N, replace = TRUE, prob = ProbTAZ)]
+      }
+    }
+  }
+  
   
   # Return the processed cbp table
   return(Firms)

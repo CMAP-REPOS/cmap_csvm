@@ -1,76 +1,64 @@
 
 #Enumerate firms and merge with correspondenses
-firm_synthesis_enumerate <- function(cbp, EstSizeCategories, emp_control_taz, cbp_ag = NULL){
-
-  # Clean the input data, combine with Ag data if needed
-  if(!is.null(cbp_ag)){
-    # Combine Domestic Non Ag Firm Records with the Ag Firm Records
-    # Remove any ag records in cbp and replacing with cbp_ag
-    cbp <- rbind(cbp[Industry_NAICS6_CBP >= 113110],
-                 cbp_ag)
-  }
-  
-  # Extract just the region data for the 21 county CMAP region
-  # For the 21 counties, CBPZONE == county FIPS code
-  cbp <- cbp[CBPZONE %in% BASE_FIPS_INTERNAL]
+firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmployment){
 
   # Aggregate the employment data by zones, NAICS, and firm size category
   # 1='1-19',2='20-99',3='100-249',4='250-499',5='500-999',6='1,000-2,499',7='2,500-4,999',8='Over 5,000'
   # Remove records with missing zones and NAICS codes
   # Renaming of some fields
-  FirmsDomestic <- cbp[!is.na(CBPZONE) & !is.na(FAFZONE) & !is.na(Industry_NAICS6_CBP),
+  Firms <- Establishments[!is.na(CBPZONE) & !is.na(FAFZONE) & !is.na(Industry_NAICS6_CBP),
                        .(e1 = sum(e1), e2 = sum(e2), e3 = sum(e3), e4 = sum(e4),
                          e5 = sum(e5), e6 = sum(e6), e7 = sum(e7), e8 = sum(e8)),
                        by = .(NAICS6 = Industry_NAICS6_CBP, CountyFIPS = CBPZONE)]
 
   # Add 2 digit NAICS
-  FirmsDomestic[, EmpCatName := substr(NAICS6, 1, 2)]
+  Firms[, EmpCatName := substr(NAICS6, 1, 2)]
 
   # Melt to create separate rows for each firm size category
-  FirmsDomestic <- melt.data.table(FirmsDomestic,
+  Firms <- melt.data.table(Firms,
                         measure.vars = paste0("e",1:8),
                         variable.name ="esizecat",
                         value.name = "est")
 
   # Convert esizecat to an integer (1:8)
-  FirmsDomestic[, esizecat := as.integer(esizecat)]
+  Firms[, esizecat := as.integer(esizecat)]
   
   # Synthesize data for missing NAICS/county category 92
-  emp_cty_n2 <- emp_control_taz[,.(Emp = sum(Employment)), keyby = .(EmpCatName = NAICS, CountyFIPS)]
-  emp_cty_n2[FirmsDomestic[,.(Est = sum(est)), by = .(EmpCatName = as.integer(EmpCatName))], Est := i.Est, on = c("EmpCatName")]
+  emp_cty_n2 <- TAZEmployment[,.(Emp = sum(Employment)), keyby = .(EmpCatName, CountyFIPS)]
+  emp_cty_n2[Firms[,.(Est = sum(est)), by = .(EmpCatName = as.integer(EmpCatName))], Est := i.Est, on = c("EmpCatName")]
   emp_cty_n2[is.na(Est), Est := 0]
   emp_cty_n2_public <- emp_cty_n2[EmpCatName == 92]
   emp_cty_n2_public[emp_cty_n2[EmpCatName != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
   emp_cty_n2_public[, PctPublic := Emp/EmpOther]
   
-  FirmsDomesticMiss <- FirmsDomestic[, .(est = sum(est)), by = .(CountyFIPS, esizecat)]
-  FirmsDomesticMiss[emp_cty_n2_public, PctPublic := i.PctPublic, on = "CountyFIPS"]
-  FirmsDomesticMiss[, estPublic := est * PctPublic]
-  FirmsDomesticMiss[, estPublic := bucketRound(estPublic)]
+  FirmsMiss <- Firms[, .(est = sum(est)), by = .(CountyFIPS, esizecat)]
+  FirmsMiss[emp_cty_n2_public, PctPublic := i.PctPublic, on = "CountyFIPS"]
+  FirmsMiss[, estPublic := est * PctPublic]
+  FirmsMiss[, estPublic := bucketRound(estPublic)]
   
-  FirmsDomestic <- rbind(FirmsDomestic,
-                         FirmsDomesticMiss[, .(NAICS6 = 920000, CountyFIPS, 
+  Firms <- rbind(Firms,
+                         FirmsMiss[, .(NAICS6 = 920000, CountyFIPS, 
                                                EmpCatName = 92, esizecat, est = estPublic)])
   
   # Enumerates the agent businesses using the est variable.
-  FirmsDomestic <- FirmsDomestic[rep(seq_len(FirmsDomestic[, .N]), est),]
+  Firms <- Firms[rep(seq_len(Firms[, .N]), est),]
 
   # Estimate the number of employees
   # Draw from the employment range using a draw from the uniform distribution
   EmpBounds = c(EstSizeCategories$LowerBound, EstSizeCategories[nrow(EstSizeCategories)]$LowerBound * 2)
   
   set.seed(151)
-  FirmsDomestic[, Emp := round(runif(n = .N,
+  Firms[, Emp := round(runif(n = .N,
                                      min = EmpBounds[esizecat],
                                      max = EmpBounds[esizecat + 1] - 1))]
 
   # Add an ID and firm type
-  FirmsDomestic[, BusID := .I]
+  Firms[, BusID := .I]
 
   # Remove uncessary fields
-  FirmsDomestic[, est := NULL]
+  Firms[, est := NULL]
 
   # Return the enumerated firms table
-  return(FirmsDomestic)
+  return(Firms)
 
 }
