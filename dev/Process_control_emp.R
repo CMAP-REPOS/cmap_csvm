@@ -2,27 +2,29 @@
 library(tidyverse)
 library(readxl)
 library(sf)
-# Process Internal-----
-Emp <- read_csv('dev/Data_Processed/Future_Year_Inputs/r211_parcelSum_empsBySZ_2050.csv')
+# Process Internal (Updated File Received 11/10/22) -----
+Emp <- read_xlsx('dev/Data_Processed/Future_Year_Inputs/r211_empsbySZ_fullmodelingregion_2050.xlsx')
 
 Emp1 <- Emp %>% 
-  select(subzone_id, SUM_e11:SUM_e92)
-
-Zone_dict <- st_read('dev/Data_Processed/TAZ/subzones17.shp')
-
-zonedict_1 <- Zone_dict %>%
-  select(subzone17,zone17, county_fip) %>% 
-  st_drop_geometry()
+  select(subzone17, zone17, county_fips, SUM_e11:SUM_e92)
 
 
 
-Emp_TAZ <- Emp1 %>% 
-  left_join(zonedict_1, by = c('subzone_id' = 'subzone17')) %>% 
-  select(zone17, contains('county'), SUM_e11:SUM_e92)
+#newest file comes with Zones already attached
+#Zone_dict <- st_read('dev/Data_Processed/TAZ/subzones17.shp')
+# zonedict_1 <- Zone_dict %>%
+#   select(subzone17,zone17, county_fip) %>% 
+#   st_drop_geometry()
+# 
+# 
+# 
+# Emp_TAZ <- Emp1 %>% 
+#   left_join(zonedict_1, by = c('subzone_id' = 'subzone17')) %>% 
+#   select(zone17, contains('county'), SUM_e11:SUM_e92)
 
-Emp_TAZ_grouped <- Emp_TAZ %>% 
+Emp_TAZ_grouped <- Emp1 %>% 
   group_by(zone17) %>% 
-  summarise(county_fip, across(SUM_e11:SUM_e92, ~sum(.))) %>% 
+  summarise(county_fips, across(SUM_e11:SUM_e92, ~sum(.))) %>% 
   distinct()
 
 Emp_TAZ_long <- Emp_TAZ_grouped %>% 
@@ -39,9 +41,10 @@ Zone_dict <- read_csv('lib/data/TAZ_System.csv') %>%
 
 Emp_Control <- Emp_TAZ_long2 %>% 
   left_join(Zone_dict, by = c('zone17' = 'TAZ')) %>% 
-  select(Zone17 = zone17, Mesozone, CountyFIPS = county_fip, NAICS, Employment) %>% 
+  select(Zone17 = zone17, Mesozone, CountyFIPS = county_fips, NAICS, Employment) %>% 
   arrange(NAICS, Zone17) %>% 
-  filter(!is.na(Zone17))
+  filter(!is.na(Zone17)) %>% 
+  mutate(CountyFIPS = as.character(CountyFIPS))
 
 
 
