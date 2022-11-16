@@ -3,11 +3,12 @@
 firm_sim_process_inputs <- function(envir) {
   
   ### Load project input files
-  project.files <- c( c_n2_empcats         = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),    #Correspondence between NAICS2 groups and aggregated employment groups
-                      cbp                  = file.path(SYSTEM_DATA_PATH, "data_emp_cbp.csv"),         #CBP data file
-                      cbp_ag               = file.path(SYSTEM_DATA_PATH, "data_emp_cbp_ag.csv"),           #CBP data file -- Agriculture records generated seperately
-                      mzemp                = file.path(SYSTEM_DATA_PATH, "data_mesozone_emprankings.csv"), #Industry rankings data by mesozone based on employment
-                      TAZ_System           = file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"), # TAZ system 
+  project.files <- c( c_n2_empcats         = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),    # Correspondence between NAICS2 groups and aggregated employment groups
+                      cbp                  = file.path(SYSTEM_DATA_PATH, "data_emp_cbp.csv"),              # CBP data file
+                      cbp_ag               = file.path(SYSTEM_DATA_PATH, "data_emp_cbp_ag.csv"),           # CBP data file -- Agriculture records generated seperately
+                      mzemp                = file.path(SYSTEM_DATA_PATH, "data_mesozone_emprankings.csv"), # Industry rankings data by mesozone based on employment
+                      EstSizeCategories    = file.path(SYSTEM_DATA_PATH, "data_est_size_categories.csv"),  # Establishment size categories and labels
+                      TAZ_System           = file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"),                # TAZ system 
                       firm_sim_enumerate         = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_enumerate.R"),
                       firm_sim_mesozones         = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_mesozones.R"),
                       firm_sim_scaling           = file.path(SYSTEM_SCRIPTS_PATH, "firm_sim_scaling.R"))
@@ -40,14 +41,6 @@ firm_sim_process_inputs <- function(envir) {
            paste("NEmp", names(envir[["TAZLandUseCVTM"]])[4:ncol(envir[["TAZLandUseCVTM"]])], sep = "_"))
                                      
   envir[["TAZLandUseCVTM"]][envir[["data_hh"]][,.(TAZ = Zone17, HH)], HH := i.HH, on = "TAZ"]
-  
-  ### Define additional variables
-  
-  # Employment ranges: assume upper bound for the largest size (>5000) is 10,000 
-  # to conform to earlier assumption of midpoint being 7,500
-  envir[["EmpBounds"]] <- c(1, 20, 100, 250, 500, 1000, 2500, 5000, 10000)
-  envir[["EmpLabels"]] <- c("1-19", "20-99", "100-249", "250-499", "500-999", 
-                            "1,000-2,499", "2,500-4,999", "5,000-9,999", "10,000+")
   
   ### Return the cbp table
   cbp <- envir[["cbp"]]

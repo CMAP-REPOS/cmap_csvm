@@ -113,7 +113,7 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   # Process and enumerate the CBP data
   progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
   ScenarioFirms <- firm_synthesis_enumerate(cbp = cbp,
-                                            EmpBounds = EmpBounds,
+                                            EstSizeCategories = EstSizeCategories,
                                             emp_control_taz = emp_control_taz,
                                             cbp_ag = cbp_ag)
   
@@ -121,13 +121,13 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   progressUpdate(prop = 2/4, dir = SCENARIO_LOG_PATH)
   ScenarioFirms <- firm_synthesis_mesozones(Firms = ScenarioFirms,
                                             mzemp = mzemp)
- 
+  
   # Scale the employment to TAZ controls
   progressUpdate(prop = 3/4, dir = SCENARIO_LOG_PATH)
   ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
                                           emp_control_taz = emp_control_taz,
                                           TAZ_System = TAZ_System,
-                                          EmpBounds = EmpBounds)
+                                          EstSizeCategories = EstSizeCategories)
   
 } else {
   
@@ -148,7 +148,7 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
     ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
                                             emp_control_taz = emp_control_taz,
                                             TAZ_System = TAZ_System,
-                                            EmpBounds = EmpBounds)
+                                            EstSizeCategories = EstSizeCategories)
     
   } else {
     
@@ -161,9 +161,9 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
 progressUpdate(prop = 4/4, dir = SCENARIO_LOG_PATH)
 cat("Adding Employment Group Variables", "\n")
 
-ScenarioFirms[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
-            EmpCatGroupedName := i.EmpCatGroupedName,
-            on = "n2"]
+ScenarioFirms[UEmpCats[,.(EmpCatName = as.character(EmpCatName), EmpCatGroupedName)], 
+              EmpCatGroupedName := i.EmpCatGroupedName,
+              on = "EmpCatName"]
 
 # End progress tracking
 progressEnd(dir = SCENARIO_LOG_PATH)

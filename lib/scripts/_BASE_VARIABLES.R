@@ -11,6 +11,7 @@ rm(TAZ_System)
 BASE_SCENARIO_BASE_NAME <- "base" #base year scenario name
 BASE_SCENARIO_BASE_YEAR <- 2019 #base year scenario year
 
+BASE_NEW_FIRMS_PROP <- 0.6 #proportion of growth in employment in already developed TAZs that comes from new firm formation as opposed to existing firm growth
 BASE_SEED_VALUE  <- 5 #seed for sampling to ensure repeatable results
 BASE_TIME_PERIOD_TRIP_POINT <- "START" #point in trip for time period allocation, from ("START", "MIDDLE", "END")
 BASE_SKIM_CONDITION <- "congested" #alternatives are 'congested' and 'free flow'

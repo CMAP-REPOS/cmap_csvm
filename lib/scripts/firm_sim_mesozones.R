@@ -2,25 +2,25 @@
 firm_synthesis_mesozones <- function(Firms, mzemp){
 
   # Assign firms from Counties to model Mesozones that are smaller in size -- more like cities
-  FirmsCMAP <- Firms[CountyFIPS %in% BASE_FIPS_INTERNAL, .(CountyFIPS, BusID, n2, Emp)]
+  FirmsCMAP <- Firms[CountyFIPS %in% BASE_FIPS_INTERNAL, .(CountyFIPS, BusID, EmpCatName, Emp)]
 
   # Assign specific NAICS categories which would be used to locate businesses to tazs
-  FirmsCMAP[n2 %in% c("31","32","33"), n2 := "3133"]
-  FirmsCMAP[n2 %in% c("44","45"), n2 := "4445"]
-  FirmsCMAP[n2 %in% c("48","49"), n2 := "4849"]
+  FirmsCMAP[EmpCatName %in% c("31","32","33"), EmpCatName := "3133"]
+  FirmsCMAP[EmpCatName %in% c("44","45"), EmpCatName := "4445"]
+  FirmsCMAP[EmpCatName %in% c("48","49"), EmpCatName := "4849"]
   
   # Convert the ranking table to long format
   mzemp <- melt.data.table(mzemp,
                 id.vars = c("CountyFIPS", "Mesozone"),
-                variable.name = "n2",
+                variable.name = "EmpCatName",
                 value.name = "EmpRank")
 
-  mzemp[, n2 := sub("rank", "", as.character(n2))]
+  mzemp[, EmpCatName := sub("rank", "", as.character(EmpCatName))]
   
   # Merge the rankings dataset to the firms database based on county
   FirmsCMAP <- merge(FirmsCMAP,
                 mzemp,
-                by = c("CountyFIPS", "n2"),
+                by = c("CountyFIPS", "EmpCatName"),
                 allow.cartesian = TRUE,
                 all.x = TRUE)
 

@@ -51,8 +51,8 @@ db_build_process_inputs <- function(envir){
     ScenarioFirms[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP 7 County Area", "Rest of Model Region")]
     
     # Convert size to labels
-    ScenarioFirms[, esizecat := factor(firm_inputs$EmpLabels[esizecat], 
-                                       levels = firm_inputs$EmpLabels)]
+    ScenarioFirms[, esizecat := factor(firm_inputs$EstSizeCategories$Label[esizecat], 
+                                       levels = firm_inputs$EstSizeCategories$Label)]
     
     setnames(ScenarioFirms, "Emp", "Employees")
     envir[["ScenarioFirms"]] <- ScenarioFirms

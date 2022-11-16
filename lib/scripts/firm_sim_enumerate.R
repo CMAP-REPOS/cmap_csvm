@@ -1,6 +1,6 @@
 
 #Enumerate firms and merge with correspondenses
-firm_synthesis_enumerate <- function(cbp, EmpBounds, emp_control_taz, cbp_ag = NULL){
+firm_synthesis_enumerate <- function(cbp, EstSizeCategories, emp_control_taz, cbp_ag = NULL){
 
   # Clean the input data, combine with Ag data if needed
   if(!is.null(cbp_ag)){
@@ -24,7 +24,7 @@ firm_synthesis_enumerate <- function(cbp, EmpBounds, emp_control_taz, cbp_ag = N
                        by = .(NAICS6 = Industry_NAICS6_CBP, CountyFIPS = CBPZONE)]
 
   # Add 2 digit NAICS
-  FirmsDomestic[, n2 := substr(NAICS6, 1, 2)]
+  FirmsDomestic[, EmpCatName := substr(NAICS6, 1, 2)]
 
   # Melt to create separate rows for each firm size category
   FirmsDomestic <- melt.data.table(FirmsDomestic,
@@ -36,11 +36,11 @@ firm_synthesis_enumerate <- function(cbp, EmpBounds, emp_control_taz, cbp_ag = N
   FirmsDomestic[, esizecat := as.integer(esizecat)]
   
   # Synthesize data for missing NAICS/county category 92
-  emp_cty_n2 <- emp_control_taz[,.(Emp = sum(Employment)), keyby = .(n2 = NAICS, CountyFIPS)]
-  emp_cty_n2[FirmsDomestic[,.(Est = sum(est)), by = .(n2 = as.integer(n2))], Est := i.Est, on = c("n2")]
+  emp_cty_n2 <- emp_control_taz[,.(Emp = sum(Employment)), keyby = .(EmpCatName = NAICS, CountyFIPS)]
+  emp_cty_n2[FirmsDomestic[,.(Est = sum(est)), by = .(EmpCatName = as.integer(EmpCatName))], Est := i.Est, on = c("EmpCatName")]
   emp_cty_n2[is.na(Est), Est := 0]
-  emp_cty_n2_public <- emp_cty_n2[n2 == 92]
-  emp_cty_n2_public[emp_cty_n2[n2 != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
+  emp_cty_n2_public <- emp_cty_n2[EmpCatName == 92]
+  emp_cty_n2_public[emp_cty_n2[EmpCatName != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
   emp_cty_n2_public[, PctPublic := Emp/EmpOther]
   
   FirmsDomesticMiss <- FirmsDomestic[, .(est = sum(est)), by = .(CountyFIPS, esizecat)]
@@ -50,13 +50,15 @@ firm_synthesis_enumerate <- function(cbp, EmpBounds, emp_control_taz, cbp_ag = N
   
   FirmsDomestic <- rbind(FirmsDomestic,
                          FirmsDomesticMiss[, .(NAICS6 = 920000, CountyFIPS, 
-                                               n2 = 92, esizecat, est = estPublic)])
+                                               EmpCatName = 92, esizecat, est = estPublic)])
   
   # Enumerates the agent businesses using the est variable.
   FirmsDomestic <- FirmsDomestic[rep(seq_len(FirmsDomestic[, .N]), est),]
 
   # Estimate the number of employees
   # Draw from the employment range using a draw from the uniform distribution
+  EmpBounds = c(EstSizeCategories$LowerBound, EstSizeCategories[nrow(EstSizeCategories)]$LowerBound * 2)
+  
   set.seed(151)
   FirmsDomestic[, Emp := round(runif(n = .N,
                                      min = EmpBounds[esizecat],

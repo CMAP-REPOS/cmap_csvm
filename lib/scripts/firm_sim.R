@@ -25,7 +25,7 @@ firm_sim <- function(cbp) {
       # Process and enumerate the CBP data
       progressUpdate(prop = 1/4, dir = SCENARIO_LOG_PATH)
       ScenarioFirms <- firm_synthesis_enumerate(cbp = cbp,
-                                                EmpBounds = EmpBounds,
+                                                EstSizeCategories = EstSizeCategories,
                                                 emp_control_taz = emp_control_taz,
                                                 cbp_ag = cbp_ag)
       
@@ -39,7 +39,7 @@ firm_sim <- function(cbp) {
       ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
                                               emp_control_taz = emp_control_taz,
                                               TAZ_System = TAZ_System,
-                                              EmpBounds = EmpBounds)
+                                              EstSizeCategories = EstSizeCategories)
       
     } else {
       
@@ -60,7 +60,7 @@ firm_sim <- function(cbp) {
         ScenarioFirms <- firm_synthesis_scaling(Firms = ScenarioFirms,
                                                 emp_control_taz = emp_control_taz,
                                                 TAZ_System = TAZ_System,
-                                                EmpBounds = EmpBounds)
+                                                EstSizeCategories = EstSizeCategories)
         
       } else {
         
@@ -73,9 +73,9 @@ firm_sim <- function(cbp) {
     progressUpdate(prop = 4/4, dir = SCENARIO_LOG_PATH)
     cat("Adding Employment Group Variables", "\n")
     
-    ScenarioFirms[UEmpCats[, .(n2 = EmpCatName, EmpCatGroupedName)], 
+    ScenarioFirms[UEmpCats, 
                   EmpCatGroupedName := i.EmpCatGroupedName,
-                  on = "n2"]
+                  on = "EmpCatName"]
     
   } # end run step 2
   
