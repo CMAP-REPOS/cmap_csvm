@@ -29,8 +29,7 @@ cv_sim_process_inputs <- function(envir) {
   load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_FIRMSYN_OUTPUTNAME))
   envir[["TAZLandUseCVTM"]] <- firm_sim_results[["TAZLandUseCVTM"]]
   ScenarioFirms <- firm_sim_results[["ScenarioFirms"]][!is.na(TAZ)]
-  setnames(ScenarioFirms, "n2", "EmpCatName")
-
+  
   ### Load scenario input files
 
   ### Load skims

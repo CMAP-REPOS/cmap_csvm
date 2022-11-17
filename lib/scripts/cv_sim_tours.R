@@ -83,9 +83,10 @@ cv_sim_tours <- function(firmStopsVehDur, firms, branch.limit, skims, model) {
   progressUpdate(subtaskprogress = 0, subtask = "Tour Generation", prop = 1/7, dir = SCENARIO_LOG_PATH)
   
   # Add firm details
-  firmStopsVehDur[firms, c("EmpCatName", "EmpCatGroupedName", "TAZ") := .(i.EmpCatName, i.EmpCatGroupedName, i.TAZ), on = "BusID"]
+  firmStopsVehDur[firms, c("EmpCatName", "EmpCatGroupedName", "TAZ") := .(as.character(i.EmpCatName), i.EmpCatGroupedName, i.TAZ), on = "BusID"]
   
   # Add branch limits distributions and sample
+  branch.limit[, EmpCatName := as.character(EmpCatName)]
   firmStopsVehDur[branch.limit, c("brlim.mu", "brlim.sd") := .(i.brlim.mu, i.brlim.sd), on = "EmpCatName"]
   set.seed(BASE_SEED_VALUE)
   firmStopsVehDur[, branch.limit := qlnorm(runif(1), meanlog = brlim.mu, sdlog = brlim.sd)*60, by = EmpCatName]
