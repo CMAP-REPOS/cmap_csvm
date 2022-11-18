@@ -185,6 +185,103 @@ rm(list = names(firm_inputs)) # For scratch only, remove variables that were add
 rm(firm_sim_results, firm_inputs, Establishments)
 gc(verbose = FALSE)
 
+
+### Test the scaleEstablishmentsTAZEmployment function
+# function (RegionFirms, TAZEmployment, NewFirmsProportion, MaxBusID, 
+#           EstSizeCategories, TAZEmploymentShape = "WIDE") 
+# {
+  Employment.Est <- RegionFirms[, .(Employees.Est = sum(Emp)),
+                                by = .(TAZ, EmpCatName)]
+  if (toupper(TAZEmploymentShape) == "WIDE") {
+    Employment.SE <- melt(TAZEmployment, id.vars = "TAZ",
+                          variable.name = "EmpCatName", value.name = "Employees.SE")
+  } else {
+    Employment.SE = TAZEmployment
+  }
+  Employment.Compare <- merge(Employment.SE, Employment.Est,
+                              by = c("TAZ", "EmpCatName"), all = TRUE)
+  Employment.Compare[is.na(Employees.SE), `:=`(Employees.SE,
+                                               0)]
+  Employment.Compare[is.na(Employees.Est), `:=`(Employees.Est,
+                                                0)]
+  Employment.Compare <- Employment.Compare[!(Employees.SE ==
+                                               0 & Employees.Est == 0)]
+  Employment.Compare[, `:=`(Employees.Difference, Employees.SE -
+                              Employees.Est)]
+  Employment.Compare[Employees.Difference > 0 & Employees.Est >
+                       0, `:=`(Employees.Growth, Employees.Difference *
+                                 (1 - NewFirmsProportion))]
+  Employment.Compare[Employees.Difference > 0 & Employees.Est >
+                       0, `:=`(Employees.New, Employees.Difference * NewFirmsProportion)]
+  Employment.Compare[Employees.Difference <= 0, `:=`(Employees.Growth,
+                                                     as.double(Employees.Difference))]
+  Employment.Compare[Employees.Difference <= 0, `:=`(Employees.New,
+                                                     0)]
+  Employment.Compare[Employees.Difference > 0 & Employees.Est ==
+                       0, `:=`(Employees.Growth, 0)]
+  Employment.Compare[Employees.Difference > 0 & Employees.Est ==
+                       0, `:=`(Employees.New, as.double(Employees.Difference))]
+  Employment.Scaled <- Employment.Compare[Employees.Growth !=
+                                            0]
+  Employment.Scaled[, `:=`(Adjustment, (Employees.Est +
+                                          Employees.Growth)/Employees.Est)]
+  RegionFirms[Employment.Scaled, `:=`(Adjustment, i.Adjustment),
+              on = c("TAZ", "EmpCatName")]
+  RegionFirms[, `:=`(Emp, as.numeric(Emp))]
+  RegionFirms[!is.na(Adjustment), `:=`(Emp, as.numeric(bucketRound(Emp *
+                                                                     Adjustment))), by = .(TAZ, EmpCatName)]
+  RegionFirms[, `:=`(Adjustment, NULL)]
+  RegionFirms <- RegionFirms[Emp >= 1]
+  if (nrow(Employment.Compare[Employees.New > 0]) > 0) {
+    FirmsNeeded <- Employment.Compare[Employees.New > 0]
+    Employment.Avg <- RegionFirms[, .(Employees.Avg = mean(Emp)),
+                                  by = EmpCatName]
+    FirmsNeeded[Employment.Avg, `:=`(Employees.Avg,
+                                     i.Employees.Avg), on = "EmpCatName"]
+    FirmsNeeded[, `:=`(N, round(pmax(1, Employees.New/Employees.Avg)))]
+    NewFirms <- FirmsNeeded[, .(N = sum(N)), by = .(TAZ,
+                                                    EmpCatName)]
+    set.seed(BASE_SEED_VALUE)
+    NewFirms <- NewFirms[, .(BusID = sample(x = RegionFirms[EmpCatName ==
+                                                              EmpCatName.temp, BusID], size = N, replace = TRUE)),
+                         by = .(TAZ, EmpCatName.temp = EmpCatName)]
+    setnames(NewFirms, old = "EmpCatName.temp", new = "EmpCatName")
+    NewFirms <- merge(NewFirms, RegionFirms[, !c("TAZ",
+                                                 "EmpCatName"), with = FALSE], by = "BusID")
+    Employment.New <- NewFirms[, .(Employees.NewFirms = sum(Emp)),
+                               by = .(TAZ, EmpCatName)]
+    Employment.New[Employment.SE, `:=`(Employees.SE,
+                                       i.Employees.SE), on = c("TAZ", "EmpCatName")]
+    Employment.Region <- RegionFirms[, .(Employees.Region = sum(Emp)),
+                                     by = .(TAZ, EmpCatName)]
+    Employment.New[Employment.Region, `:=`(Employees.Region,
+                                           i.Employees.Region), on = c("TAZ", "EmpCatName")]
+    Employment.New[is.na(Employees.Region), `:=`(Employees.Region,
+                                                 0)]
+    Employment.New[, `:=`(Employees.New, Employees.SE -
+                            Employees.Region)]
+    Employment.New[, `:=`(Adjustment, Employees.New/Employees.NewFirms)]
+    NewFirms[Employment.New[, .(TAZ, EmpCatName, Adjustment)],
+             `:=`(Adjustment, i.Adjustment), on = c("TAZ",
+                                                    "EmpCatName")]
+    NewFirms[, `:=`(Emp, as.numeric(bucketRound(Emp *
+                                                  Adjustment))), by = .(TAZ, EmpCatName)]
+    NewFirms[, `:=`(Adjustment, NULL)]
+    NewFirms <- NewFirms[Emp >= 1]
+    NewFirms[, `:=`(BusID, .I + MaxBusID)]
+    RegionFirms <- rbind(RegionFirms, NewFirms, use.names = TRUE,
+                         fill = TRUE)
+  }
+  RegionFirms[, `:=`(Emp, as.integer(Emp))]
+  RegionFirms[, `:=`(esizecat, cut(x = Emp, breaks = c(EstSizeCategories[["LowerBound"]],
+                                                       Inf), labels = EstSizeCategories[["Label"]], right = FALSE,
+                                   ordered_result = TRUE))]
+  setkey(RegionFirms, BusID)
+#  return(RegionFirms)
+# }
+
+
+
 ### Commercial Vehicle Touring Model ===========================================
 # Load executive functions (process inputs and simulation)
 source(file = file.path(SYSTEM_SCRIPTS_PATH, "cv_sim.R"))
