@@ -25,12 +25,18 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   # Estimate the number of employees
   # Draw from the employment range using a draw from the uniform distribution
   EmpBounds = c(EstSizeCategories$LowerBound, EstSizeCategories[nrow(EstSizeCategories)]$LowerBound * 2)
+  EmpDiff = shift(EmpBounds,-1)-EmpBounds-1
+  EmpProb = EstSizeCategories$ProbRatio
   
-  set.seed(151)
-  Firms[, Emp := round(runif(n = .N,
-                                     min = EmpBounds[esizecat],
-                                     max = EmpBounds[esizecat + 1] - 1))]
-
+  set.seed(BASE_SEED_VALUE)
+  
+  Firms[, EmpS := sample(x = EmpBounds[esizecat]:(EmpBounds[esizecat + 1] - 1), 
+                         size = .N, 
+                         replace = TRUE,
+                         prob = seq(EmpProb[esizecat],1, 
+                                    by = -(EmpProb[esizecat] - 1)/EmpDiff[esizecat])), 
+        keyby = esizecat]
+  
   # Add an ID and firm type
   Firms[, BusID := .I]
 
@@ -88,20 +94,25 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   Firms[FirmsMZ, Mesozone := i.Mesozone, on = "BusID"]
   
   # Add an initial allocation to the TAZs within each Mesozone 
-  # Allocation proportional to employment
-  taz_prob <- TAZEmployment[, .(Employees.SE = sum(Employees.SE)), by = .(TAZ, Mesozone)]
-  taz_prob[, Prob := Employees.SE/sum(Employees.SE), by = Mesozone]
+  # Allocation proportional to employment by group
+  taz_prob <- TAZEmployment[, .(Employees.SE = sum(Employees.SE)), by = .(TAZ, Mesozone, EmpCatName)]
+  taz_prob[, Prob := Employees.SE/sum(Employees.SE), by = .(Mesozone, EmpCatName)]
+  # For any mesozones with no employment in that group, replace NaNs with small positive number
+  taz_prob[is.na(Prob), Prob := 0.001]
     
   for (mz in BASE_MZ_INTERNAL){
-    SampleTAZ <- TAZ_System[mz == Mesozone]$TAZ
-    ProbTAZ <- taz_prob[mz == Mesozone]$Prob
-    if(length(SampleTAZ) == 1){
-      Firms[Mesozone == mz, TAZ := SampleTAZ]
-    } else {
-      Firms[Mesozone == mz, TAZ := sample(SampleTAZ, size = .N, replace = TRUE, prob = ProbTAZ)]
+    for (empcat in unique(taz_prob[Mesozone == mz]$EmpCatName)){
+      SampleTAZ <- taz_prob[Mesozone == mz & EmpCatName == empcat]$TAZ
+      ProbTAZ <- taz_prob[Mesozone == mz & EmpCatName == empcat]$Prob
+      if(length(SampleTAZ) == 1){
+        Firms[Mesozone == mz & EmpCatName == empcat, TAZ := SampleTAZ]
+      } else if(length(SampleTAZ) > 1){
+        Firms[Mesozone == mz & EmpCatName == empcat, TAZ := sample(SampleTAZ, size = .N, replace = TRUE, prob = ProbTAZ)]
+      } else { # No TAZs?
+        
+      }
     }
   }
-  
   # Return the enumerated firms table
   return(Firms)
 

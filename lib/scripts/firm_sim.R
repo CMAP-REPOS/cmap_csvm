@@ -52,6 +52,9 @@ firm_sim <- function(Establishments) {
         ScenarioFirms <- firm_sim_results$ScenarioFirms
         rm(firm_sim_results)
         
+        # Convert to an alternative (grouped) see of employment categories if necessary
+        if(1==1){}
+        
         # Scale the emplyoment
         progressUpdate(prop = 2/3, dir = SCENARIO_LOG_PATH)
         ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 

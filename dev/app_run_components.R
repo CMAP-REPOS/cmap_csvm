@@ -120,7 +120,7 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
   progressUpdate(prop = 2/3, dir = SCENARIO_LOG_PATH)
   ScenarioFirms <- scaleEstablishmentsTAZEmployment(RegionFirms = ScenarioFirms, 
                                                     TAZEmployment = TAZEmployment, 
-                                                    NewFirmsProportion = BASE_NEW_FIRMS_PROP,
+                                                    NewFirmsProportion = 0,
                                                     MaxBusID = max(ScenarioFirms$BusID),
                                                     EstSizeCategories = EstSizeCategories,
                                                     TAZEmploymentShape = "LONG")
@@ -138,6 +138,9 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
     load(SCENARIO_BASEFIRMS)
     ScenarioFirms <- firm_sim_results$ScenarioFirms
     rm(firm_sim_results)
+    
+    # Convert to an alternative (grouped) see of employment categories if necessary
+    if(1==1){}
     
     # Scale the emplyoment
     progressUpdate(prop = 2/3, dir = SCENARIO_LOG_PATH)
