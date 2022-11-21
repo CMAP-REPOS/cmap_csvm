@@ -140,7 +140,12 @@ if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
     rm(firm_sim_results)
     
     # Convert to an alternative (grouped) see of employment categories if necessary
-    if(1==1){}
+    if(!identical(c_n2_empcats$EmpCatName, c_n2_empcats$EmpCatNameFuture)){
+      ScenarioFirms[c_n2_empcats[,.(EmpCatName = as.character(EmpCatName), 
+                                    EmpCatNameFuture = as.character(EmpCatNameFuture))],
+                    EmpCatName := i.EmpCatNameFuture, 
+                    on = "EmpCatName"]
+    }
     
     # Scale the emplyoment
     progressUpdate(prop = 2/3, dir = SCENARIO_LOG_PATH)
