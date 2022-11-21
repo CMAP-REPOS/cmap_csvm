@@ -3,15 +3,15 @@
 firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmployment, mzemp){
 
   # Synthesize data for missing NAICS/county category 92
-  emp_cty_n2 <- TAZEmployment[,.(Emp = sum(Employees.SE)), keyby = .(EmpCatName, CountyFIPS)]
-  emp_cty_n2[Establishments[,.(Est = sum(est)), by = EmpCatName], Est := i.Est, on = c("EmpCatName")]
-  emp_cty_n2[is.na(Est), Est := 0]
-  emp_cty_n2_public <- emp_cty_n2[EmpCatName == 92]
-  emp_cty_n2_public[emp_cty_n2[EmpCatName != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
-  emp_cty_n2_public[, PctPublic := Emp/EmpOther]
+  EmpCounty <- TAZEmployment[,.(Emp = sum(Employees.SE)), keyby = .(EmpCatName, CountyFIPS)]
+  EmpCounty[Establishments[,.(Est = sum(est)), by = EmpCatName], Est := i.Est, on = c("EmpCatName")]
+  EmpCounty[is.na(Est), Est := 0]
+  EmpCountyPublic <- EmpCounty[EmpCatName == 92]
+  EmpCountyPublic[EmpCounty[EmpCatName != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
+  EmpCountyPublic[, PctPublic := Emp/EmpOther]
   
   EstablishmentsMiss <- Establishments[, .(est = sum(est)), by = .(CountyFIPS, esizecat)]
-  EstablishmentsMiss[emp_cty_n2_public, PctPublic := i.PctPublic, on = "CountyFIPS"]
+  EstablishmentsMiss[EmpCountyPublic, PctPublic := i.PctPublic, on = "CountyFIPS"]
   EstablishmentsMiss[, estPublic := est * PctPublic]
   EstablishmentsMiss[, estPublic := bucketRound(estPublic)]
   
@@ -23,14 +23,14 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   Firms <- Establishments[rep(seq_len(Establishments[, .N]), est),]
 
   # Estimate the number of employees
-  # Draw from the employment range using a draw from the uniform distribution
+  # Sample from the employment range using probabilities that approximate a declining distribution (1 more likely than 2, etc)
   EmpBounds = c(EstSizeCategories$LowerBound, EstSizeCategories[nrow(EstSizeCategories)]$LowerBound * 2)
   EmpDiff = shift(EmpBounds,-1)-EmpBounds-1
   EmpProb = EstSizeCategories$ProbRatio
   
   set.seed(BASE_SEED_VALUE)
   
-  Firms[, EmpS := sample(x = EmpBounds[esizecat]:(EmpBounds[esizecat + 1] - 1), 
+  Firms[, Emp := sample(x = EmpBounds[esizecat]:(EmpBounds[esizecat + 1] - 1), 
                          size = .N, 
                          replace = TRUE,
                          prob = seq(EmpProb[esizecat],1, 
@@ -99,6 +99,7 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   taz_prob[, Prob := Employees.SE/sum(Employees.SE), by = .(Mesozone, EmpCatName)]
   # For any mesozones with no employment in that group, replace NaNs with small positive number
   taz_prob[is.na(Prob), Prob := 0.001]
+  set.seed(BASE_SEED_VALUE)
     
   for (mz in BASE_MZ_INTERNAL){
     for (empcat in unique(taz_prob[Mesozone == mz]$EmpCatName)){
