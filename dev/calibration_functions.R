@@ -76,9 +76,9 @@ calibrate_firm_sim_scale_employees <- function(submodel_calibrated, submodel_res
 
   submodel_results_summary <- submodel_results[TAZ %in% BASE_TAZ_INTERNAL,
                                       .(Model = as.integer(sum(Emp))), 
-                                      keyby = .(TAZ, Category = n2)]
+                                      keyby = .(TAZ, Category = as.character(EmpCatName))]
  
-  submodel_comparison <- merge(model_step_target$taz_emp_target, 
+  submodel_comparison <- merge(model_step_target$taz_emp_target[, Category := as.character(Category)], 
                                submodel_results_summary, 
                                by = c("TAZ", "Category"), 
                                all = TRUE)
