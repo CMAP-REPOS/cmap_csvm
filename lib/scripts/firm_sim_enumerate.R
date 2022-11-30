@@ -6,8 +6,8 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   EmpCounty <- TAZEmployment[,.(Emp = sum(Employees.SE)), keyby = .(EmpCatName, CountyFIPS)]
   EmpCounty[Establishments[,.(Est = sum(est)), by = EmpCatName], Est := i.Est, on = c("EmpCatName")]
   EmpCounty[is.na(Est), Est := 0]
-  EmpCountyPublic <- EmpCounty[EmpCatName == 92]
-  EmpCountyPublic[EmpCounty[EmpCatName != 92, .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
+  EmpCountyPublic <- EmpCounty[EmpCatName == "92"]
+  EmpCountyPublic[EmpCounty[EmpCatName != "92", .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
   EmpCountyPublic[, PctPublic := Emp/EmpOther]
   
   EstablishmentsMiss <- Establishments[, .(est = sum(est)), by = .(CountyFIPS, esizecat)]
@@ -17,7 +17,7 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   
   Establishments <- rbind(Establishments,
                           EstablishmentsMiss[, .(NAICS6 = 920000, CountyFIPS, 
-                                                 EmpCatName = 92, esizecat, est = estPublic)])
+                                                 EmpCatName = "92", esizecat, est = estPublic)])
   
   # Enumerates the agent businesses using the est variable.
   Firms <- Establishments[rep(seq_len(Establishments[, .N]), est),]

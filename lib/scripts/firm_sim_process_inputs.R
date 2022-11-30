@@ -14,7 +14,7 @@ firm_sim_process_inputs <- function(envir) {
   loadInputs(files = project.files, envir = envir)
   
   ### Process project input files
-  envir[["UEmpCats"]]  <- unique(envir[["c_n2_empcats"]][,.(EmpCatID, EmpCatName = as.character(EmpCatName), EmpCatDesc, EmpCatGroupedName)])
+  envir[["UEmpCats"]]  <- unique(envir[["c_n2_empcats"]][,.(EmpCatName = as.character(EmpCatName), EmpCatDesc, EmpCatGroupedName)])
   
   # For the base scenario need to process the input CBP data into the format required by the model
   if(SCENARIO_NAME == BASE_SCENARIO_BASE_NAME){
@@ -32,8 +32,11 @@ firm_sim_process_inputs <- function(envir) {
                 e5 = sum(e5), e6 = sum(e6), e7 = sum(e7), e8 = sum(e8)),
               by = .(NAICS6 = Industry_NAICS6_CBP, CountyFIPS = CBPZONE)]
     
-    # Add 2 digit NAICS which is the EmpCatName used in the model
-    cbp[, EmpCatName := substr(NAICS6, 1, 2)]
+    # Add 2 digit NAICS and the EmpCatName used in the model
+    cbp[, NAICS2 := substr(NAICS6, 1, 2)]
+    cbp[envir[["c_n2_empcats"]][,.(NAICS2 = as.character(NAICS2), EmpCatName = as.character(EmpCatName))], 
+        EmpCatName := i.EmpCatName, on = "NAICS2"]
+    cbp[, NAICS2 := NULL]
     
     # Melt to create separate rows for each firm size category
     cbp <- melt.data.table(cbp,

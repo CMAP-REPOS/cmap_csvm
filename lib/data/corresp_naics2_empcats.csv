@@ -1,25 +1,25 @@
-EmpCatID,EmpCatName,EmpCatNameFuture,EmpCatDesc,EmpCatGroupedName
-1,11,11,"Agriculture, Forestry, Fishing and Hunting",Transport_Industry
-2,21,21,"Mining, Quarrying, and Oil and Gas Extraction",Transport_Industry
-3,22,22,Utilities,Construction
-4,23,23,Construction,Construction
-5,31,31,Manufacturing,Transport_Industry
-6,32,31,Manufacturing,Transport_Industry
-7,33,31,Manufacturing,Transport_Industry
-8,42,42,Wholesale Trade,Wholesale
-9,44,44,Retail Trade,Retail
-10,45,44,Retail Trade,Retail
-11,48,48,Transportation and Warehousing,Transport_Industry
-12,49,48,Transportation and Warehousing,Transport_Industry
-13,51,51,Information,Office_Professional
-14,52,52,Finance and Insurance,Office_Professional
-15,53,53,Real Estate and Rental and Leasing,Office_Professional
-16,54,54,"Professional, Scientific, and Technical Services",Office_Professional
-17,55,55,Management of Companies and Enterprises,Office_Professional
-18,56,56,Administrative and Support and Waste Management and Remediation Services,Admin_Support_Waste
-19,61,61,Educational Services,Ed_Health_Social_Public
-20,62,62,Health Care and Social Assistance,Ed_Health_Social_Public
-21,71,71,"Arts, Entertainment, and Recreation",Service_FoodDrink
-22,72,72,Accommodation and Food Services,Service_FoodDrink
-23,81,81,Other Services (except Public Administration),Service_Other
-24,92,92,Public Administration,Ed_Health_Social_Public
+NAICS2,NAICS2Desc,EmpCatName,EmpCatNameFuture,EmpCatDesc,EmpCatGroupedName
+11,"Agriculture, Forestry, Fishing and Hunting",11,11,"Agriculture, Forestry, Fishing and Hunting",Transport_Industry
+21,"Mining, Quarrying, and Oil and Gas Extraction",21,21,"Mining, Quarrying, and Oil and Gas Extraction",Transport_Industry
+22,Utilities,22,22,Utilities,Construction
+23,Construction,23,23,Construction,Construction
+31,Manufacturing,31,31,Manufacturing,Transport_Industry
+32,Manufacturing,31,31,Manufacturing,Transport_Industry
+33,Manufacturing,31,31,Manufacturing,Transport_Industry
+42,Wholesale Trade,42,42,Wholesale Trade,Wholesale
+44,Retail Trade,44,44,Retail Trade,Retail
+45,Retail Trade,44,44,Retail Trade,Retail
+48,Transportation and Warehousing,48,48,Transportation and Warehousing,Transport_Industry
+49,Transportation and Warehousing,48,48,Transportation and Warehousing,Transport_Industry
+51,Information,51,51,Information,Office_Professional
+52,Finance and Insurance,52,52,Finance and Insurance,Office_Professional
+53,Real Estate and Rental and Leasing,53,53,Real Estate and Rental and Leasing,Office_Professional
+54,"Professional, Scientific, and Technical Services",54,54,"Professional, Scientific, and Technical Services",Office_Professional
+55,Management of Companies and Enterprises,55,55,Management of Companies and Enterprises,Office_Professional
+56,Administrative and Support and Waste Management and Remediation Services,56,56,Administrative and Support and Waste Management and Remediation Services,Admin_Support_Waste
+61,Educational Services,61,61,Educational Services,Ed_Health_Social_Public
+62,Health Care and Social Assistance,62,62,Health Care and Social Assistance,Ed_Health_Social_Public
+71,"Arts, Entertainment, and Recreation",71,71,"Arts, Entertainment, and Recreation",Service_FoodDrink
+72,Accommodation and Food Services,72,72,Accommodation and Food Services,Service_FoodDrink
+81,Other Services (except Public Administration),81,81,Other Services (except Public Administration),Service_Other
+92,Public Administration,92,92,Public Administration,Ed_Health_Social_Public
