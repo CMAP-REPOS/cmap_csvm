@@ -23,12 +23,14 @@ firm_sim_process_inputs <- function(envir) {
     cbp <- rbind(envir[["cbp"]][Industry_NAICS6_CBP >= 113110],
                  envir[["cbp_ag"]])
     
-    # Aggregate by zones, NAICS, and firm size category
     # Extract just the region data for the 21 county CMAP region
     # For the 21 counties, CBPZONE == county FIPS code
     # Remove records with missing zones and NAICS codes
-    cbp <- cbp[CBPZONE %in% BASE_FIPS_INTERNAL & !is.na(FAFZONE) & !is.na(Industry_NAICS6_CBP),
-              .(e1 = sum(e1), e2 = sum(e2), e3 = sum(e3), e4 = sum(e4),
+    cbp <- cbp[CBPZONE %in% BASE_FIPS_INTERNAL & !is.na(FAFZONE) & !is.na(Industry_NAICS6_CBP)]
+    
+    # Aggregate by zones, NAICS, and firm size category (should already conform to this grouping)
+    cbp <- cbp[,.(establishment = sum(establishment),
+                  e1 = sum(e1), e2 = sum(e2), e3 = sum(e3), e4 = sum(e4),
                 e5 = sum(e5), e6 = sum(e6), e7 = sum(e7), e8 = sum(e8)),
               by = .(NAICS6 = Industry_NAICS6_CBP, CountyFIPS = CBPZONE)]
     
@@ -36,13 +38,63 @@ firm_sim_process_inputs <- function(envir) {
     cbp[, NAICS2 := substr(NAICS6, 1, 2)]
     cbp[envir[["c_n2_empcats"]][,.(NAICS2 = as.character(NAICS2), EmpCatName = as.character(EmpCatName))], 
         EmpCatName := i.EmpCatName, on = "NAICS2"]
-    cbp[, NAICS2 := NULL]
+    
+    # Account for missing establishments by size category
+    cbp[, est_cat_sum := e1+e2+e3+e4+e5+e6+e7+e8]
+    cbp[, est_cat_miss := establishment - est_cat_sum]
+    cbp[est_cat_miss < 0, est_cat_miss := 0] # should not happen
+    
+    # Summarize size distributions by NAISC2 and draw from for missing est
+    cbpn2 <- cbp[,.(e1 = sum(e1), e2 = sum(e2), e3 = sum(e3), e4 = sum(e4),
+                  e5 = sum(e5), e6 = sum(e6), e7 = sum(e7), e8 = sum(e8)),
+               by = .(NAICS2)]
+    
+    cbpn2 <- melt.data.table(cbpn2,
+                           measure.vars = paste0("e",1:8),
+                           variable.name ="esizecat",
+                           value.name = "est")
+    cbpn2[, pest := est/sum(est), by = NAICS2]
+    cbpn2[, intest := as.integer(gsub("e","", esizecat))]
+    
+    cbp_extra <- list()
+    for(n2 in unique(cbpn2$NAICS2)){
+      cbp_extra_n2 <- cbp[NAICS2 == n2 & est_cat_miss > 0,
+                          .(NAICS6, CountyFIPS, establishment, est_cat_sum, est_cat_miss, NAICS2, EmpCatName)]
+      if(nrow(cbp_extra_n2)>0){
+        cbp_extra_n2[, ID := .I]
+        cbpn2i = cbpn2[NAICS2 == n2]
+        cbp_extra_n2_samp <- lapply(1:nrow(cbp_extra_n2), 
+                                    function(x) {
+                                      samp = sample(x = cbpn2i$intest,
+                                             size = cbp_extra_n2[x]$est_cat_miss,
+                                             replace = TRUE,
+                                             prob = cbpn2i$pest)
+                                      tab = data.table(table(samp))})      
+        cbp_extra_n2_samp <- rbindlist(cbp_extra_n2_samp, idcol = "ID")
+        cbp_extra_n2_samp[, esizecat := paste0("e",samp)]
+        setnames(cbp_extra_n2_samp, "N", "est")
+        cbp_extra_n2 <- merge(cbp_extra_n2[, .(NAICS6, CountyFIPS, EmpCatName, ID)],
+                              cbp_extra_n2_samp[,.(ID, est, esizecat)],
+                              by = "ID", allow.cartesian = TRUE)
+      }
+      cbp_extra[[n2]] <- cbp_extra_n2
+    }
+    
+    cbp_extra <- rbindlist(cbp_extra)
+    cbp_extra[, ID := NULL]
+    
+    # Remove unecessary fields and format to match cbp_extra
+    cbp[, c("NAICS2", "establishment", "est_cat_sum", "est_cat_miss") := NULL]
     
     # Melt to create separate rows for each firm size category
     cbp <- melt.data.table(cbp,
                            measure.vars = paste0("e",1:8),
                            variable.name ="esizecat",
                            value.name = "est")
+    
+    # Combine with cbp extra and summarize
+    cbp <- rbind(cbp, cbp_extra)
+    cbp <- cbp[, .(est = sum(est)), keyby = .(NAICS6, CountyFIPS, EmpCatName, esizecat)]
     
     # Convert esizecat to an integer (1:8)
     cbp[, esizecat := as.integer(esizecat)]
