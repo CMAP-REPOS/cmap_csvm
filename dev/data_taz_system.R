@@ -34,6 +34,42 @@ TAZ_System <- TAZ_System[,.(TAZ = zone17, cbd, chicago, cmap, CountyFIPS = count
 TAZ_System[c_taz_mz, Mesozone := i.Mesozone, on = "TAZ"]
 TAZ_System[, county_state := paste(county, state, sep = ", ")]
 
+# Create a grouping for use in the dashboard and elsewhere in summary tabulations 
+# (add a numerical integer version for ordering and a text field)
+# 1 "Chicago" City of Chicago (chicago  == 1)
+# 2 "COOk, IL (Outside Chicago)" (county_state == "COOK, IL" & chicago  != 1)
+# 3 "DUPAGE, IL" (county_state == "DUPAGE, IL" & cmap == 1)
+# 4 "KANE, IL" (county_state == "KANE, IL" & cmap == 1)
+# 5 "KENDALL, IL (county_state == "KENDALL, IL" & cmap == 1)
+# 6 "LAKE, IL" (county_state == "LAKE, IL" & cmap == 1)
+# 7 "MCHENRY, IL" (county_state == "MCHENRY, IL" & cmap == 1)
+# 8 "WILL, IL" (county_state == "WILL, IL" & cmap == 1)
+# 9 "GRUNDY, IL (CMAP Part)" (county_state == "GRUNDY, IL" & cmap == 1)
+# 10 "DEKALB, IL (CMAP Part)" (county_state == "DEKALB, IL" & cmap == 1)
+# 11 "Non-CMAP Part of Model Region" (cmap == 0)
+
+TAZ_System[, DistrictNum := ifelse(chicago  == 1,1,0)]
+TAZ_System[, DistrictNum := ifelse(county_state == "COOK, IL" & chicago  != 1,2,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "DUPAGE, IL" & cmap == 1,3,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "KANE, IL" & cmap == 1,4,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "KENDALL, IL" & cmap == 1,5,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "LAKE, IL" & cmap == 1,6,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "MCHENRY, IL" & cmap == 1,7,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "WILL, IL" & cmap == 1,8,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "GRUNDY, IL" & cmap == 1,9,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(county_state == "DEKALB, IL" & cmap == 1,10,DistrictNum)]
+TAZ_System[, DistrictNum := ifelse(cmap == 0,11,DistrictNum)]
+TAZ_System[DistrictNum == 0]
+
+# add labels
+
+district_labels = c("Chicago","COOK, IL (Outside Chicago)","DUPAGE, IL","KANE, IL",
+                    "KENDALL, IL","LAKE, IL","MCHENRY, IL","WILL, IL",
+                    "GRUNDY, IL (CMAP Part)","DEKALB, IL (CMAP Part)",
+                    "Non-CMAP Part of Model Region")
+TAZ_System[, DistrictName := district_labels[DistrictNum]]
+TAZ_System[, DistrictName := factor(DistrictName, levels = district_labels)]
+
 ### CREATE SHAPE FILE VERSION ===================================
 
 TAZ_System_Shape <- st_transform(zone17, crs = st_crs(county))
@@ -74,3 +110,5 @@ st_write(TAZ_System_Shape_Small,
                          "data", 
                          "TAZ_System_Shape.shp"), 
          delete_layer = TRUE)
+
+plot(TAZ_System_Shape_Small[,c("DistrictNa")])

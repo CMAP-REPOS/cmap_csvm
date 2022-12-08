@@ -21,12 +21,17 @@ db_build_process_inputs <- function(envir){
       stop("BASE_DASHBOARD_GEOGRAPHY must be a column name from the TAZ_System dataset!")
     }
     
+    # Convert the DistrictName into a factor
+    district_labels <- unique(TAZ_System[, .(DistrictNum, DistrictName)])[order(DistrictNum)]
+    district_labels_vec <- district_labels$DistrictName
+    TAZ_System[, DistrictName := factor(DistrictName, levels = district_labels_vec)]
+    
     # Adjust the order of the counties
     county_order <- unique(TAZ_System[,.(county_state, CountyFIPS, cmap)])[order(-cmap, CountyFIPS)]
     county_order_vec <- unique(county_order$county_state)
     TAZ_System[, CountyName:=factor(county_state, levels = county_order_vec)]
     
-    #Transform the NAICS3 to employment category mapping
+    #Transform the employment category mapping
     envir[["c_n2_empcats"]] <- unique(envir[["c_n2_empcats"]][,.(EmpCatName, EmpCatDesc,
                                                                            EmpCatGroupedName)])
     setorder(envir[["c_n2_empcats"]],EmpCatName)
@@ -48,7 +53,7 @@ db_build_process_inputs <- function(envir){
     ScenarioFirms <- merge(ScenarioFirms, TAZ_System[,.(TAZ, Region = get(BASE_DASHBOARD_GEOGRAPHY))],
                            by.x = "TAZ", by.y = "TAZ")
     
-    ScenarioFirms[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP 7 County Area", "Rest of Model Region")]
+    ScenarioFirms[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP MPO Area", "Non-CMAP Part of Model Region")]
     
     # Convert size to labels
     ScenarioFirms[, esizecat := factor(firm_inputs$EstSizeCategories$Label[esizecat], 
@@ -74,7 +79,7 @@ db_build_process_inputs <- function(envir){
     cv_trips <- cv_trips[cv_trips[TripID == 1, .(TourID, TAZ.Start = OTAZ, Region.Start = Region.Origin)], 
                      c("TAZ.Start", "Region.Start") := .(i.TAZ.Start, i.Region.Start), on = "TourID"]
     
-    # add od segment, with external defined as the buffer
+    # add od segment
     cv_trips[, Movement.Type := add_od_segment(origins = OTAZ, 
                                                destinations = DTAZ, 
                                                external_taz = NULL)]
@@ -87,8 +92,8 @@ db_build_process_inputs <- function(envir){
     
     load(file.path(SCENARIO_OUTPUT_PATH, SYSTEM_TT_OUTPUTNAME))
     
-    # Create a trip gen summary table for use in the dashboard and main model report
-    # extent is internal CMAP TAZs
+    # Create a trip gen summary table
+    # extent is all model region TAZs (CMAP MPO and rest of model region)
     tab_template <- data.table(ID = rep(BASE_TAZ_INTERNAL,6),
                                Vehicle = rep(c("Light", "Medium", "Heavy"), 
                                              each = length(BASE_TAZ_INTERNAL) * 2),
@@ -148,10 +153,10 @@ db_build_process_inputs <- function(envir){
     TripTable[, ODSegment := add_od_segment(OTAZ, DTAZ, external_taz = NULL)]
     
     TripTable <- add_od_fields(TripTable, TAZ_System,  
-                               fieldsToAdd = c("county_state"))
+                               fieldsToAdd = c("county_state", "DistrictName"))
     
-    TripTable[, OSummaryGeog := Ocounty_state]
-    TripTable[, DSummaryGeog := Dcounty_state]
+    TripTable[, OSummaryGeog := ODistrictName]
+    TripTable[, DSummaryGeog := DDistrictName]
     
     envir[["TripTable"]] <- TripTable
               
@@ -242,20 +247,20 @@ db_build_process_inputs <- function(envir){
   shp <- readOGR(file.path(SYSTEM_DATA_PATH, "TAZ_System_Shape.shp"), layer = "TAZ_System_Shape", verbose = FALSE)
   
   # Add the grouping variable and order it
-  shp$county_state <- paste(shp$county_nam, shp$state, sep = ", ")
-  shp$county_state <- factor(shp$county_state, levels = county_order_vec)
+  shp$DistrictName <- TAZ_System$DistrictName[match(shp$zone17, TAZ_System$TAZ)]
+  shp$DistrictName <- factor(shp$DistrictName, levels = district_labels_vec)
   envir[["shp"]] <- shp
   
-  # Generate the bounding box for SEMCOG region
+  # Generate the bounding box for CMAP region
   envir[["CMAP_BBOX"]] <- shp %>% bbox()
   
   ### Generate basemaps
   prepTAZPolygons <- envir[["prepTAZPolygons"]]
   prepTAZList <- prepTAZPolygons(shp = shp, group.by = BASE_DASHBOARD_GEOGRAPHY)
   envir[["TAZ.polys"]] <- prepTAZList$shp
-  if(exists("county_order_vec")){
-    envir[["TAZ.polys"]]$county_state <- factor(envir[["TAZ.polys"]]$county_state, levels=county_order_vec)
-    envir[["TAZ.polys"]]$Group <- factor(envir[["TAZ.polys"]]$Group, levels=county_order_vec)
+  if(exists("district_labels_vec")){
+    envir[["TAZ.polys"]]$DistrictName <- factor(envir[["TAZ.polys"]]$DistrictName, levels=district_labels_vec)
+    envir[["TAZ.polys"]]$Group <- factor(envir[["TAZ.polys"]]$Group, levels=district_labels_vec)
   }
   envir[["colorFun"]] <- prepTAZList$colorFun
 

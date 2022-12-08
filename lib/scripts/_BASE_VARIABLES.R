@@ -40,7 +40,7 @@ BASE_TOD_RANGES <- list(P1 = list(c(0,360), c(1200,1440)),
 # Column name from TAZ_System.csv that labels each TAZ with the desired group
 # names for use in the dashboard. This also determines how TAZs will be grouped
 # into larger regions for display in the dashboard.
-BASE_DASHBOARD_GEOGRAPHY <- "county_state"
+BASE_DASHBOARD_GEOGRAPHY <- "DistrictName"
 
 # Unit used for display in dashboard
 BASE_DASHBOARD_LENGTH_UNIT <- "miles"
