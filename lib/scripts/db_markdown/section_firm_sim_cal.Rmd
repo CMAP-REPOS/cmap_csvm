@@ -44,7 +44,7 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 
 ```{r Chart_firm_sim_taz_land_use_emp_county}
 # Organize
-dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[TAZ_TYPE == "CMAP 7 County Area" & Category %in% c("NEmp_Total"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
+dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[Category %in% c("NEmp_Total"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
 
 dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Employment")
 
@@ -61,7 +61,7 @@ bar_plotter(dat, xvar = "County", yvar = "Employment", fill = "Source", position
 
 ```{r Chart_firm_sim_taz_land_use_hh_county}
 # Organize
-dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[TAZ_TYPE == "CMAP 7 County Area" & Category %in% c("HH"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
+dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[Category %in% c("HH"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
 
 dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Households")
 

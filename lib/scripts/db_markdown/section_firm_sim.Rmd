@@ -160,24 +160,22 @@ bar_plotter(dat, xvar = "Size", yvar = "N", xlabel = "Firm Size Category", ylabe
 
 ```{r Chart_Firms_By_County}
 # Organize
-dat <- ScenarioFirms[TAZ_TYPE=="CMAP 7 County Area", .N, keyby = .(Region)]
+dat <- ScenarioFirms[, .N, keyby = .(Region)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_County.csv"))
 assign("db_tab_firms_county", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "N", xlabel = "CMAP County", ylabel = "Firms", 
+bar_plotter(dat, xvar = "Region", yvar = "N", xlabel = "County or other Geography", ylabel = "Firms", 
              coord_flip = TRUE)
 ```
-
-> Includes firms within the CMAP 7 county region only
 
 ### Firms by Industry and Size (CMAP)
 
 ```{r Chart_Firms_By_Industry_And_Size_CMAP}
 # Organize
-dat <- ScenarioFirms[TAZ_TYPE=="CMAP 7 County Area", .N, keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
+dat <- ScenarioFirms[TAZ_TYPE=="CMAP MPO Area", .N, keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
 
 dat <- add_totals(dcast.data.table(dat,
                      Industry ~ Size,
@@ -197,13 +195,13 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
-> Includes firms within the CMAP 7 county region only
+> Includes firms within the CMAP MPO area only
 
 ### Firms by Industry and Size (Rest of Model Region)
 
 ```{r Chart_Firms_By_Industry_And_Size_Rest_Region}
 # Organize
-dat <- ScenarioFirms[TAZ_TYPE=="Rest of Model Region", .N, keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
+dat <- ScenarioFirms[TAZ_TYPE=="Non-CMAP Part of Model Region", .N, keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
 
 dat <- add_totals(dcast.data.table(dat,
                      Industry ~ Size,
@@ -272,16 +270,16 @@ valueBox(value, caption = "Synthesized Employees<br>City of Chicago</br>", icon 
 ### Synthesized Employment (CMAP)
 
 ```{r}
-value <- format(ScenarioFirms[TAZ_TYPE=="CMAP 7 County Area", sum(Employees)], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Employees<br>CMAP 7 County Region</br>", icon = "fa-briefcase",
+value <- format(ScenarioFirms[TAZ_TYPE=="CMAP MPO Area", sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>CMAP MPO Area</br>", icon = "fa-briefcase",
          color = rgb(rsgcolordf[1,], maxColorValue = 255))
 ```
 
 ### Synthesized Employment (Rest of Model Region)
 
 ```{r}
-value <- format(ScenarioFirms[TAZ_TYPE=="Rest of Model Region", sum(Employees)], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Employees<br>Rest of Model Region</br>", 
+value <- format(ScenarioFirms[TAZ_TYPE=="Non-CMAP Part of Model Region", sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>Non-CMAP Region</br>", 
          icon = "fa-briefcase",
          color = rgb(rsgcolordf[1,], maxColorValue = 255))
 ```
@@ -381,23 +379,21 @@ bar_plotter(dat, xvar = "Size", yvar = "Employees", xlabel = "Firm Size Category
 
 ```{r Chart_Employment_By_County}
 # Organize
-dat <- ScenarioFirms[TAZ_TYPE=="CMAP 7 County Area", .(Employees = sum(Employees)), keyby = .(Region)]
+dat <- ScenarioFirms[, .(Employees = sum(Employees)), keyby = .(Region)]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_County.csv"))
 assign("db_tab_emp_county", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "Employees", xlabel = "CMAP County", coord_flip = TRUE)
+bar_plotter(dat, xvar = "Region", yvar = "Employees", xlabel = "County or other Geography", coord_flip = TRUE)
 ```
-
-> Includes employment within the CMAP 7 County region only
 
 ### Employment by Industry and Size (CMAP)
 
 ```{r Chart_Employment_By_Industry_And_Size_CMAP}
 # Organize
-dat <- ScenarioFirms[TAZ_TYPE=="CMAP 7 County Area", .(Employees = sum(Employees)), keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
+dat <- ScenarioFirms[TAZ_TYPE=="CMAP MPO Area", .(Employees = sum(Employees)), keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
 
 dat <- add_totals(dcast.data.table(dat,
                      Industry ~ Size,
@@ -423,7 +419,7 @@ kable(dat, escape=FALSE) %>%
 
 ```{r Chart_Employment_By_Industry_And_Size_Rest_Region}
 # Organize
-dat <- ScenarioFirms[TAZ_TYPE=="Rest of Model Region", .(Employees = sum(Employees)), keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
+dat <- ScenarioFirms[TAZ_TYPE=="Non-CMAP Part of Model Region", .(Employees = sum(Employees)), keyby = .(Industry = EmpCatGroupedName, Size = esizecat)]
 
 dat <- add_totals(dcast.data.table(dat,
                      Industry ~ Size,
