@@ -176,6 +176,13 @@ db_build_process_inputs <- function(envir){
     tab_template[, Vehicle := factor(Vehicle, levels = c("Light", "Medium", "Heavy"))]
     tab_template[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
     
+    # add some labels for the time periods
+    tod_labels <- data.table(TOD = names(BASE_TOD_RANGES),
+                             Hours = c("8pm-6am","6am-7am", "7am-9am",
+                                            "9am-10am", "10am-2pm", "2pm-4pm", 
+                                            "4pm-6pm", "6pm-8pm"))
+    tab_template[tod_labels, Hours := i.Hours, on = "TOD"]
+    
     tmh_vtods <- merge(tab_template, 
                        tmh_vtods,
                        by = c("Vehicle", "TOD", "ODSegment"),
@@ -184,6 +191,7 @@ db_build_process_inputs <- function(envir){
     tmh_vtods[is.na(Trips), c("Trips", "MeanDist", "MeanTime", "MeanSpeed", "VMT", "VHT") := 0]
     
     envir[["tmh_vtods"]] <- tmh_vtods
+    envir[["tod_labels"]] <- tod_labels
     
     # Write a wide version of this table
     # Filtered to just II

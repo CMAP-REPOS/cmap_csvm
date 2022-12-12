@@ -1,10 +1,8 @@
 # packages for model and report dashboard
 SYSTEM_PKGS <- c("data.table", "rFreight", "rhdf5", "pscl", "TSP", "apollo")
 
-SYSTEM_REPORT_PKGS <- c("DT", "flexdashboard", "leaflet", "geojsonio", "htmltools", "htmlwidgets",
-                        "knitr", "mapview", "RColorBrewer", "rgdal", "rgeos",
-                        "rmarkdown", "scales", "stringr", "jsonlite", "pander",
-                        "ggplot2", "plotly", "kableExtra", "openxlsx")
+SYSTEM_REPORT_PKGS <- c("DT", "flexdashboard", "leaflet", "plotly", "scales", "rgdal", "rgeos",
+                        "pander", "geojsonlint", "stringr", "kableExtra", "openxlsx")
 
 SYSTEM_DEV_PKGS <- c("sf", "lwgeom", "ggrepel", "dplyr",
                      "ggspatial", "bookdown", "leaps")
