@@ -9,10 +9,20 @@ editor_options:
   chunk_output_type: console
 ---
 
-### Commercial Vehicle Trips
+### Commercial Vehicle Goods and Service Stops
 
 ```{r Total_Stops_ValueBox}
-value <- format(cv_trips[, .N],
+value <- format(cv_trips[Activity %in% c("Goods", "Service"), .N],
                 big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
-valueBox(value, caption = "Commercial Vehicle Trips", icon = "fa-truck")
+valueBox(value, caption = "Goods and Service Stops", icon = "fa-truck")
+```
+
+### Commercial Vehicle Tours
+
+```{r Total_Vehicle_Tours_ValueBox}
+
+value <- format(cv_trips[, uniqueN(TourID)],
+                big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
+valueBox(value, caption = "Commercial Vehicle Tours", icon = "fa-truck")
+
 ```

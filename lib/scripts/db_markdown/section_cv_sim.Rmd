@@ -428,7 +428,7 @@ Highlights {data-width=150}
 
 Commercial vehicle tours by location, activity, and length
 
-### Total Tours (Stops in SEMCOG)
+### Total Tours (Stops in CMAP)
 
 ```{r Commercial_Vehicle_Tours_ValueBox2}
 

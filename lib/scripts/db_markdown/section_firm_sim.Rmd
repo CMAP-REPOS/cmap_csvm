@@ -12,7 +12,7 @@ editor_options:
 Firms {data-navmenu="Firm Synthesis Model"}
 ============================================
 
-Highlights {data-width=100}
+Highlights {data-width=150}
 --------------------------------------------
 
 **Firm Synthesis Model: Firms in the Model Region**
@@ -23,26 +23,29 @@ Firm synthesis model outputs enumerating firms by size, location, and industry.
 
 ```{r Synthesized_Firms_ValueBox_Chicago}
 value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CHICAGO, .N], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Firms<br>City of Chicago</br>", icon = "fa-building-o",
-         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+valueBox(value, caption = "Synthesized Firms<br>City of Chicago</br>", icon = "fa-building-o")
 ```
 
-### Synthesized Firms CMAP 7 County Region
+### Synthesized Firms Cook County Outside Chicago
 
-```{r Synthesized_Firms_ValueBox_CMAP7}
-value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CMAP, .N], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Firms<br>CMAP 7 County Region</br>", icon = "fa-building-o",
-         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+```{r Synthesized_Firms_ValueBox_Cook_Not_Chicago}
+value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_COOK & !TAZ %in% BASE_TAZ_CHICAGO, .N], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Firms<br>Cook County (Not Chicago)</br>", icon = "fa-building-o")
+```
+
+### Synthesized Firms Rest of CMAP MPO Area (Not Cook County)
+
+```{r Synthesized_Firms_ValueBox_CMAP_MPO}
+value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CMAP & !TAZ %in% BASE_TAZ_COOK, .N], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Firms<br>CMAP MPO Area (Not Cook)</br>", icon = "fa-building-o")
 ```
 
 ### Synthesized Firms Rest of Region
 
 ```{r Synthesized_Firms_ValueBox_Rest_Region}
 value <- format(ScenarioFirms[!TAZ %in% BASE_TAZ_CMAP, .N], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Firms<br>Rest of Model Region</br>", icon = "fa-building-o",
-         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+valueBox(value, caption = "Synthesized Firms<br>Rest of Model Region</br>", icon = "fa-building-o")
 ```
-
 
 ### Synthesized Firms Model Region
 
@@ -124,7 +127,7 @@ map.fitBounds(bounds);
 
 >`r if(SCENARIO_DB_FIRMSYN) {paste0("Note: Each data point represents ", comma(k), " firms within model region and precise locations are illustrative as firms are only identified geographically at the TAZ-level.")}`
 
-Column {data-width=500 .tabset}
+Column {data-width=400 .tabset}
 --------------------------------------------
 
 ### Firms by Industry
@@ -263,16 +266,21 @@ Firm synthesis model outputs enumerating employment by location and industry.
 
 ```{r}
 value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CHICAGO, sum(Employees)], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Employees<br>City of Chicago</br>", icon = "fa-briefcase",
-         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+valueBox(value, caption = "Synthesized Employees<br>City of Chicago</br>", icon = "fa-briefcase")
 ```
 
-### Synthesized Employment (CMAP)
+### Synthesized Firms Cook County Outside Chicago
 
 ```{r}
-value <- format(ScenarioFirms[TAZ_TYPE=="CMAP MPO Area", sum(Employees)], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Employees<br>CMAP MPO Area</br>", icon = "fa-briefcase",
-         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_COOK & !TAZ %in% BASE_TAZ_CHICAGO, sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>Cook County (Not Chicago)</br>", icon = "fa-briefcase")
+```
+
+### Synthesized Employment Rest of CMAP MPO Area (Not Cook County)
+
+```{r}
+value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CMAP & !TAZ %in% BASE_TAZ_COOK, sum(Employees)], big.mark = ",", trim = TRUE)
+valueBox(value, caption = "Synthesized Employees<br>CMAP MPO Area</br>", icon = "fa-briefcase")
 ```
 
 ### Synthesized Employment (Rest of Model Region)
@@ -280,8 +288,7 @@ valueBox(value, caption = "Synthesized Employees<br>CMAP MPO Area</br>", icon = 
 ```{r}
 value <- format(ScenarioFirms[TAZ_TYPE=="Non-CMAP Part of Model Region", sum(Employees)], big.mark = ",", trim = TRUE)
 valueBox(value, caption = "Synthesized Employees<br>Non-CMAP Region</br>", 
-         icon = "fa-briefcase",
-         color = rgb(rsgcolordf[1,], maxColorValue = 255))
+         icon = "fa-briefcase")
 ```
 
 ### Synthesized Employment TOTAL

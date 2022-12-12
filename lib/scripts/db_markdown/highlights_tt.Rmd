@@ -14,3 +14,11 @@ editor_options:
 value <- format(TripTable[, sum(trips)], big.mark = ",", digits = 0, scientific = FALSE, trim = TRUE)
 valueBox(value, caption = "Total Trips", icon = "fa-truck")
 ```
+
+### Total VMT
+
+```{r Trip_Table_Total_VMT_ValueBox}
+value <- format(sum(tmh_vtods$VMT, na.rm = TRUE), 
+                digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Total VMT", icon = "fa-map-marker")
+```
