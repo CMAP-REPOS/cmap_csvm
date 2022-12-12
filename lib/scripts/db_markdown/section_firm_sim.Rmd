@@ -37,7 +37,7 @@ valueBox(value, caption = "Synthesized Firms<br>Cook County (Not Chicago)</br>",
 
 ```{r Synthesized_Firms_ValueBox_CMAP_MPO}
 value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CMAP & !TAZ %in% BASE_TAZ_COOK, .N], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Firms<br>CMAP MPO Area (Not Cook)</br>", icon = "fa-building-o")
+valueBox(value, caption = "Synthesized Firms<br>Rest of CMAP MPO Area (Not Cook County)</br>", icon = "fa-building-o")
 ```
 
 ### Synthesized Firms Rest of Region
@@ -280,7 +280,7 @@ valueBox(value, caption = "Synthesized Employees<br>Cook County (Not Chicago)</b
 
 ```{r}
 value <- format(ScenarioFirms[TAZ %in% BASE_TAZ_CMAP & !TAZ %in% BASE_TAZ_COOK, sum(Employees)], big.mark = ",", trim = TRUE)
-valueBox(value, caption = "Synthesized Employees<br>CMAP MPO Area</br>", icon = "fa-briefcase")
+valueBox(value, caption = "Synthesized Employees<br>Rest of CMAP MPO Area (Not Cook County)</br>", icon = "fa-briefcase")
 ```
 
 ### Synthesized Employment (Rest of Model Region)
