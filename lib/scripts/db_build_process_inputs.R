@@ -30,6 +30,7 @@ db_build_process_inputs <- function(envir){
     county_order <- unique(TAZ_System[,.(county_state, CountyFIPS, cmap)])[order(-cmap, CountyFIPS)]
     county_order_vec <- unique(county_order$county_state)
     TAZ_System[, CountyName:=factor(county_state, levels = county_order_vec)]
+    envir[["TAZ_System"]] <- TAZ_System
     
     #Transform the employment category mapping
     envir[["c_n2_empcats"]] <- unique(envir[["c_n2_empcats"]][,.(EmpCatName, EmpCatDesc,

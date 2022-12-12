@@ -38,9 +38,9 @@ targetdt <- melt.data.table(TAZLandUseCVTM[TAZ %in% BASE_TAZ_INTERNAL],
                             variable.name = "Category", 
                             value.name = "Target")
 targetdt[, c("CatType", "Units") := .("Land Use Category", "Employees_Households")]
-targetdt[TAZ_System, c("SummaryGeog") := .(i.county_state), on = "TAZ"]
-targetdt[, SummaryGeogName := "CMAP County"]
-targetdt[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP 7 County Area", "Rest of Model Region")]
+targetdt[TAZ_System, c("SummaryGeog") := .(i.DistrictName), on = "TAZ"]
+targetdt[, SummaryGeogName := "CMAP District"]
+targetdt[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP MPO Area", "Rest of Model Region")]
 
 model_step_targets_firm_sim[["firm_sim_taz_land_use"]] <- targetdt
 
@@ -58,7 +58,7 @@ p_firm_sim_taz_land_use <- ggplot(data = firm_sim_taz_land_use,
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual("Land Use Type", values = rgb(rsgcolordf[2:3,],maxColorValue = 255)) +
   labs(title = "CMAP Household and Employment Data", 
-       subtitle = paste("By County, Scenario:", SCENARIO_NAME), 
+       subtitle = paste("By CMAP District, Scenario:", SCENARIO_NAME), 
        caption = "Source: CMAP 2019 Landuse Data") +
   xlab("County") + scale_y_continuous(name = "Employment or Households", labels = scales::comma) + 
   theme(axis.ticks = element_blank(), legend.position="bottom", plot.margin = unit(c(0.5,1,0.5,0.5), "cm")) +
@@ -69,7 +69,7 @@ ggsave(filename = file.path(SYSTEM_DEV_CALIBRATION_DOC_PATH, "firm_sim_taz_land_
        width = 6.5, 
        height = 4)
 
-# 2. HHs and Employment by Employment Group and by SEMCOG/Buffer 
+# 2. HHs and Employment by Employment Group
 
 firm_sim_taz_lu_cmap_region <- dcast.data.table(targetdt[,.(Target = sum(Target)), by = .(Category, TAZ_TYPE)],
                                                   Category~TAZ_TYPE, fun.aggregate = sum, value.var = "Target")
@@ -78,7 +78,7 @@ firm_sim_taz_lu_cmap_region[, Category := sub("NEmp_", "", Category)]
 firm_sim_taz_lu_cmap_region[, Category := factor(Category)]
 setorder(firm_sim_taz_lu_cmap_region, Category)
 setnames(firm_sim_taz_lu_cmap_region, "Category", "Land Use Type")
-firm_sim_taz_lu_cmap_region[, Total := `CMAP 7 County Area` + `Rest of Model Region`]
+firm_sim_taz_lu_cmap_region[, Total := `CMAP MPO Area` + `Rest of Model Region`]
 firm_sim_taz_lu_cmap_region[, `Land Use Type`:= ifelse(`Land Use Type` == "TotalEmp", "Total Employment", as.character(`Land Use Type`))]
 firm_sim_taz_lu_cmap_region[, `Land Use Type`:= ifelse(`Land Use Type` == "HH", "Households", as.character(`Land Use Type`))]
 
@@ -92,13 +92,12 @@ fwrite(x = firm_sim_taz_lu_cmap_region,
 # Create from the TAZSE data for the scenario
 # Add category labeling and aggregrate geographies
 
-targetdt <- emp_control_taz[Zone17 %in% BASE_TAZ_INTERNAL,
-                            .(TAZ = Zone17, CountyFIPS, Category = NAICS, Target = Employment)]
+targetdt <- TAZEmployment[,.(TAZ, CountyFIPS, Category = EmpCatName, Target = Employees.SE)]
 targetdt[, c("CatType", "Units") := .("Employment Category", "Employees")]
 targetdt[UEmpCats[,.(Category = EmpCatName, EmpCatDesc)], CatLabel := i.EmpCatDesc, on = "Category"]
 targetdt[TAZ_System, c("TAZ_TYPE", "SummaryGeog") := 
-           .(ifelse(i.cmap == 0, "CMAP 7 County Area", "Rest of Model Region"), i.county_state), on = "TAZ"]
-targetdt[, SummaryGeogName := "CMAP County"]
+           .(ifelse(i.cmap == 0, "CMAP MPO Area", "Rest of Model Region"), i.DistrictName), on = "TAZ"]
+targetdt[, SummaryGeogName := "CMAP District"]
 
 # Add the targets to the list
 

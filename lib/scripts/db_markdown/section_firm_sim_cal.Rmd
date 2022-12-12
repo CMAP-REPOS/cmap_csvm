@@ -47,6 +47,7 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[Category %in% c("NEmp_Total"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
 
 dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Employment")
+dat[, County := factor(County, levels = levels(TAZ_System$DistrictName))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_emp_county.csv"))
@@ -64,6 +65,7 @@ bar_plotter(dat, xvar = "County", yvar = "Employment", fill = "Source", position
 dat <- cal_results$firm_sim_taz_land_use$submodel_comparison[Category %in% c("HH"), .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
 
 dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Households")
+dat[, County := factor(County, levels = levels(TAZ_System$DistrictName))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_hh_county.csv"))
@@ -101,6 +103,7 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 dat <- cal_results$firm_sim_scale_employees$submodel_comparison[, .(Model = sum(Model), Target = sum(Target)), keyby = .(County = SummaryGeog)]
 
 dat <- melt.data.table(dat, id.vars = "County", variable.name = "Source", value.name = "Employment")
+dat[, County := factor(County, levels = levels(TAZ_System$DistrictName))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_scale_employees_county.csv"))
