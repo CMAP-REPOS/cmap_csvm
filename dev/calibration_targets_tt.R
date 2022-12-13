@@ -24,6 +24,21 @@ countyod_medium <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                   "Calibration Targets",
                                   "CountyOD_medium.csv"))
 
+districtod_all <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                "CVGPS",
+                                "Calibration Targets",
+                                "DistrictOD.csv"))
+
+districtod_light <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                  "CVGPS",
+                                  "Calibration Targets",
+                                  "DistrictOD_light.csv"))
+
+districtod_medium <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                   "CVGPS",
+                                   "Calibration Targets",
+                                   "DistrictOD_medium.csv"))
+
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
 model_step_targets_tt_sim <- list()
@@ -46,7 +61,10 @@ model_step_targets_tt_sim <- list()
 # Add the target to the list 
 model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 countyod_light = countyod_light,
-                                                countyod_medium = countyod_medium)
+                                                countyod_medium = countyod_medium,
+                                                districtod_all = districtod_all,
+                                                districtod_light = districtod_light,
+                                                districtod_medium = districtod_medium)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 
