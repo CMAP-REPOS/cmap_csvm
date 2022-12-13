@@ -294,7 +294,7 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity
 assign("db_tab_cv_sim_stopduration_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_goods.png")
+bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_activity_goods.png")
 
 ```
 
@@ -303,7 +303,7 @@ bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration", yvar = "PctStops",
 ```{r Chart_cv_sim_stopduration_activity_service}
 
 # Plot
-bar_plotter(dat[Activity == "Service"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_service.png")
+bar_plotter(dat[Activity == "Service"], xvar = "stop_duration", yvar = "PctStops",  fill = "Source", position = "dodge", ylabel = "Percentage of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_activity_service.png")
 
 ```
 
@@ -395,6 +395,24 @@ bar_plotter(dat[Vehicle == "Heavy"], xvar = "Stops_Type", yvar = "PctTours",  fi
 
 ```
 
+### cv_sim_tours: Definitions
+
+```{r Chart_cv_sim_tours_Descr}
+# Show table
+tour_types_table <- data.table(Tour_Type = c("BBM", "BBS", "BNM", "BNS", "NBM", "NBS", "NNM", "NNS"),
+                         Description = c("Tour starts at truck base and ends at truck base, with multuple stops",
+                                         "Tour starts at truck base and ends at truck base, with single stop",
+                                         "Tour starts at truck base and ends not at truck base, with multuple stops",
+                                         "Tour starts at truck base and ends not at truck base, with single stop",
+                                         "Tour starts not at truck base and ends at truck base, with multuple stops",
+                                         "Tour starts not at truck base and ends at truck base, with single stop",
+                                         "Tour starts not at truck base and ends not at truck base, with multuple stops",
+                                         "Tour starts not at truck base and ends not at truck base, with single stop",))
+
+kable(tour_types_table, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("striped"))
+
+```
 
 Chart Column 2 {.tabset}
 --------------------------------------------

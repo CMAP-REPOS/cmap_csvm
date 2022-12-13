@@ -34,52 +34,102 @@ value <- format(sum(tmh_vtods$VMT, na.rm = TRUE),
 valueBox(value, "Total VMT<br>(Model Region)</br>", icon = "fa-map-marker")
 ```
 
+### Total VHT in CMAP Model Region
+
+```{r Trip_Table_Total_VHT_ValueBox2}
+value <- format(sum(tmh_vtods$VHT, na.rm = TRUE), 
+                digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Total VHT<br>(Model Region)</br>", icon = "fa-map-marker")
+```
+
+### Mean Trip Distance in CMAP Model Region
+
+```{r Trip_Table_Av_Dist_ValueBox2}
+value <- format(sum(tmh_vtods$VMT, na.rm = TRUE)/sum(tmh_vtods$Trips, na.rm = TRUE), 
+                digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Mean Trip Distance (Miles)<br>(Model Region)</br>", icon = "fa-map-marker")
+```
+
+### Mean Trip Travel Time in CMAP Model Region
+
+```{r Trip_Table_Av_Time_ValueBox2}
+value <- format(sum(tmh_vtods$VHT, na.rm = TRUE)/sum(tmh_vtods$Trips, na.rm = TRUE) * 60, 
+                digits = 0, big.mark = ",", scientific = FALSE, trim = TRUE)
+valueBox(value, "Mean Trip Travel Time (Minutes)<br>(Model Region)</br>", icon = "fa-map-marker")
+```
+
+
 Column {data-width=600, .tabset}
 --------------------------------------------
 
-### Total Trips by Vehicle, Segment, and TOD 
+### Total Trips by Vehicle and TOD, VMT, and VHT 
 
 ```{r Chart_Total_Trips_By_Vehicle_Segment_TOD}
 # Organize
-dat_vot <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), keyby = .(Vehicle, ODSegment, TOD)]
-dat_vot[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
-dat_vot <- add_totals(dcast.data.table(dat_vot,
-                                  Vehicle + ODSegment ~ TOD,
-                                   fun.aggregate = sum,
-                                   value.var = "Trips"),
-                      idcols = 2L, coltotal = FALSE)
 
-dat_vt <- TripTable[, .(Trips = sum(trips, na.rm = TRUE), ODSegment = "All Segments"), keyby = .(Vehicle, TOD)]
+dat_vt <- TripTable[, .(Trips = sum(trips, na.rm = TRUE), Measure = "Trips"), keyby = .(Vehicle, TOD)]
 dat_vt[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+
 dat_vt <- add_totals(dcast.data.table(dat_vt,
-                                  Vehicle + ODSegment ~ TOD,
+                                  Vehicle + Measure ~ TOD,
                                    fun.aggregate = sum,
                                    value.var = "Trips"),
                       idcols = 2L, coltotal = FALSE)
 
-dat_vo <- TripTable[, .(Trips = sum(trips, na.rm = TRUE), Vehicle = "All CVs (L+M+H)"), keyby = .(ODSegment, TOD)]
-dat_vo[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
-dat_vo <- add_totals(dcast.data.table(dat_vo,
-                                  Vehicle + ODSegment ~ TOD,
+dat_vtt <- TripTable[, .(Trips = sum(trips, na.rm = TRUE), Measure = "Trips", Vehicle = "All CVs (L+M+H)"), keyby = .(TOD)]
+dat_vtt[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vtt <- add_totals(dcast.data.table(dat_vtt,
+                                  Vehicle + Measure ~ TOD,
                                    fun.aggregate = sum,
                                    value.var = "Trips"),
-                      idcols = 2L)
+                      idcols = 2L, coltotal = FALSE)
 
-dat <- rbind(dat_vot, dat_vt, dat_vo)
-dat[is.na(Vehicle), Vehicle  := ""]
+dat_vm <- TripTable[, .(VMT = sum(VMT, na.rm = TRUE), Measure = "VMT"), keyby = .(Vehicle, TOD)]
+dat_vm[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vm <- add_totals(dcast.data.table(dat_vm,
+                                  Vehicle + Measure ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "VMT"),
+                      idcols = 2L, coltotal = FALSE)
+
+dat_vmt <- TripTable[, .(VMT = sum(VMT, na.rm = TRUE), Measure = "VMT", Vehicle = "All CVs (L+M+H)"), keyby = .(TOD)]
+dat_vmt[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vmt <- add_totals(dcast.data.table(dat_vmt,
+                                  Vehicle + Measure ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "VMT"),
+                      idcols = 2L, coltotal = FALSE)
+
+dat_vh <- TripTable[, .(VHT = sum(VHT, na.rm = TRUE), Measure = "VHT"), keyby = .(Vehicle, TOD)]
+dat_vh[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vh <- add_totals(dcast.data.table(dat_vh,
+                                  Vehicle + Measure ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "VHT"),
+                      idcols = 2L, coltotal = FALSE)
+
+dat_vht <- TripTable[, .(VHT = sum(VHT, na.rm = TRUE), Measure = "VHT", Vehicle = "All CVs (L+M+H)"), keyby = .(TOD)]
+dat_vht[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
+dat_vht <- add_totals(dcast.data.table(dat_vht,
+                                  Vehicle + Measure ~ TOD,
+                                   fun.aggregate = sum,
+                                   value.var = "VHT"),
+                      idcols = 2L, coltotal = FALSE)
+
+dat <- rbind(dat_vt, dat_vm, dat_vh, dat_vtt, dat_vmt, dat_vht)
+
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_by_Vehicle_Segment_TOD.csv"))
-assign("db_tab_tt_trips_veh_seg_tod", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_VMT_VHT_by_Vehicle_Segment_TOD.csv"))
+assign("db_tab_tt_trips_vmt_vht_veh_tod", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 0) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  row_spec(nrow(dat), background = "#f2f2f2") %>%
+  row_spec((nrow(dat)-2):nrow(dat), background = "#f2f2f2") %>%
   column_spec(ncol(dat), background = "#f2f2f2")
 
 ```
-
 
 ### Total Trips by County OD 
 
@@ -258,84 +308,6 @@ kable(dat, escape=FALSE, digits = 3) %>%
   row_spec(nrow(dat), background = "#f2f2f2") %>%
   column_spec(ncol(dat), background = "#f2f2f2")
 ```
-
-<!-- ### IX Trips County to External OD -->
-
-<!-- ```{r Table_Trips_IX_OD} -->
-<!-- # Organize -->
-<!-- dat <- TripTable[ODSegment %in% c("IX") & DTAZ %in% BASE_TAZ_EXTERNAL & trips > 0,  -->
-<!--                       .(Trips = round(sum(trips))), keyby = .(County = OSummaryGeog, External = DStationName, ExternalGroup = DStationGroup, ODSegment)] -->
-<!-- dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")] -->
-
-<!-- dat <- add_totals(dcast.data.table(dat, -->
-<!--                                   County ~ ExternalName, -->
-<!--                                    fun.aggregate = sum, -->
-<!--                                    value.var = "Trips")) -->
-
-<!-- # Save -->
-<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_IX_County_External.csv"), row.names = FALSE) -->
-<!-- assign("db_tab_tt_trips_county_external_ix", dat, envir = db_inputs) -->
-
-<!-- # Table -->
-<!-- kable(dat, escape=FALSE) %>% -->
-<!--   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>% -->
-<!--   row_spec(nrow(dat), background = "#f2f2f2") %>% -->
-<!--   column_spec(ncol(dat), background = "#f2f2f2") -->
-
-<!-- ``` -->
-
-<!-- ### XI Trips External to County OD -->
-
-<!-- ```{r Table_Trips_XI_OD} -->
-<!-- # Organize -->
-<!-- dat <- TripTable[ODSegment %in% c("XI") & OTAZ %in% BASE_TAZ_EXTERNAL & trips > 0,  -->
-<!--                       .(Trips = round(sum(trips))), keyby = .(County = DSummaryGeog, External = OStationName, ExternalGroup = OStationGroup)] -->
-
-<!-- dat[, ExternalName := paste0(External, " (", ExternalGroup, ")")] -->
-
-<!-- dat <- add_totals(dcast.data.table(dat, -->
-<!--                                   ExternalName ~ County, -->
-<!--                                    fun.aggregate = sum, -->
-<!--                                    value.var = "Trips")) -->
-
-<!-- # Save -->
-<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XI_External_County.csv"), row.names = FALSE) -->
-<!-- assign("db_tab_tt_trips_external_county_xi", dat, envir = db_inputs) -->
-
-<!-- # Table -->
-<!-- kable(dat, escape=FALSE) %>% -->
-<!--   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>% -->
-<!--   row_spec(nrow(dat), background = "#f2f2f2") %>% -->
-<!--   column_spec(ncol(dat), background = "#f2f2f2") -->
-<!-- ``` -->
-
-<!-- ### XX Trips External to External OD -->
-
-<!-- ```{r Table_Trips_XX_OD} -->
-<!-- # Organize -->
-<!-- dat <- TripTable[ODSegment %in% c("XX") & trips > 0,  -->
-<!--                       .(Trips = round(sum(trips))), keyby = .(OStationName, OStationGroup, DStationName, DStationGroup)] -->
-<!-- dat[, OExternalName := paste0(OStationName, " (", OStationGroup, ")")] -->
-<!-- dat[, DExternalName := paste0(DStationName, " (", DStationGroup, ")")] -->
-
-<!-- dat <- add_totals(dcast.data.table(dat, -->
-<!--                                   OExternalName ~ DExternalName, -->
-<!--                                    fun.aggregate = sum, -->
-<!--                                    value.var = "Trips")) -->
-
-<!-- # Save -->
-<!-- fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_XX_External_External.csv"), row.names = FALSE) -->
-<!-- assign("db_tab_tt_trips_external_external_xx", dat, envir = db_inputs) -->
-
-<!-- # Table -->
-<!-- kable(dat, escape=FALSE) %>% -->
-<!--   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>% -->
-<!--   row_spec(nrow(dat), background = "#f2f2f2") %>% -->
-<!--   column_spec(ncol(dat), background = "#f2f2f2") -->
-
-<!-- ``` -->
-
-
 
 ```{r section_build_tt_cal, results='asis', eval=SCENARIO_DB_CALIBRATION}
 section_tt_cal <- knitr::knit_child('section_tt_cal.Rmd',

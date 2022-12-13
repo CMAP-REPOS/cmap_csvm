@@ -1,7 +1,7 @@
 # Script to import calibration data and create targets for CVTM
 
 # Use init_dev.R to run here instead of sourcing from _Master_Dev.R
-# source("./dev/init_dev.R")
+source("./dev/init_dev.R")
 
 # support data
 TAZ_System <- fread(file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"))
@@ -33,18 +33,15 @@ model_step_targets_tt_sim <- list()
 # Validation Tables suggested:
 
 # Total trips by vehicle type
-# Trips by OD Segment 
-# Trips by OD Segment by vehicle type
-# County/external (total) to county/external (total) trips by vehicle type
-# Trips by external station group (state/province)
-
+# Region area to region area (e.g., Chicago, Cook (Not Chicago), Rest of CMAP, Rest of Region) by vehicle type
+# County to county trips by vehicle type
 # Similar measures for VMT and VHT
+
 
 # Trip length frequencies for time and distance by
 # Overall
 # vehicle type
-# OD Segment
-# OD segment by vehicle type
+# Region (e.g., Chicago, Cook (Not Chicago), Rest of CMAP, Rest of Region)
 
 # Add the target to the list 
 model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
