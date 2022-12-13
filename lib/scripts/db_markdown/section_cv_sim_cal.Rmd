@@ -407,7 +407,7 @@ tour_types_table <- data.table(Tour_Type = c("BBM", "BBS", "BNM", "BNS", "NBM", 
                                          "Tour starts not at truck base and ends at truck base, with multuple stops",
                                          "Tour starts not at truck base and ends at truck base, with single stop",
                                          "Tour starts not at truck base and ends not at truck base, with multuple stops",
-                                         "Tour starts not at truck base and ends not at truck base, with single stop",))
+                                         "Tour starts not at truck base and ends not at truck base, with single stop"))
 
 kable(tour_types_table, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("striped"))
