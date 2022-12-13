@@ -26,7 +26,7 @@ Column {data-width=600, .tabset}
 
 ```{r Chart_tt_val_county_origins}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
 dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
@@ -37,6 +37,9 @@ dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, OriginCounty)
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_all.csv"))
@@ -53,7 +56,7 @@ kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, dig
 
 ```{r Chart_tt_val_county_dest}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(DestinationCounty = DCounty)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(DestinationCounty = DDistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
 dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationCounty = DSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
@@ -64,6 +67,9 @@ dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+dat[, DestinationCounty := factor(DestinationCounty, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, DestinationCounty)
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_dest_all.csv"))
@@ -79,7 +85,7 @@ kable(dat[,.(DestinationCounty, Target, Model, Difference, Ratio)], escape=FALSE
 
 ```{r Chart_tt_val_county_origins_light}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_light[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_light[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
 dat_mod <- TripTable[Vehicle == "Light", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
@@ -90,6 +96,9 @@ dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, OriginCounty)
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_light.csv"))
@@ -105,7 +114,7 @@ kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, dig
 
 ```{r Chart_tt_val_county_origins_medium}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_medium[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_medium[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
 dat_mod <- TripTable[Vehicle == "Medium", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
@@ -116,6 +125,9 @@ dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
+
+dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, OriginCounty)
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_medium.csv"))
@@ -154,8 +166,11 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```{r Chart_Percent_Trips_By_County_OD_obs}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$countyod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = OCounty, DestinationCounty = DCounty)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict, DestinationCounty = DDistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+dat_obs[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
+dat_obs[, DestinationCounty := factor(DestinationCounty, levels = levels(TAZ_System$DistrictName))]
+
 dat <- add_totals(dcast.data.table(dat_obs,
                                   OriginCounty ~ DestinationCounty,
                                    fun.aggregate = sum,
