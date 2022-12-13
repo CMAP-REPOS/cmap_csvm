@@ -10,13 +10,13 @@ library(rbin)
 SYSTEM_DEV_DATA_PATH <- file.path(SYSTEM_DEV_PATH, 'DATA_Processed')
 
 file <- file.path(SYSTEM_DEV_PATH, 'Data_Processed', 'CVGPS', 'ToursTripsCharacteristics_SKIMS.csv')
-GPS <- read_csv(file)
+GPS <- fread(file)
 
 GPS2 <- GPS
 
 ToursWithNA <- GPS2 %>% 
-  select(Tour_ID = `Tour ID`, OTAZ = origin_zone, DTAZ = dest_zone, trip_dist, stopTime, base_stop_dist, TourType, `Reporting  Concern Indicated by "1"`) %>% 
-  filter(is.na(stopTime) | is.na(base_stop_dist) | is.na(TourType) | is.na(trip_dist) | `Reporting  Concern Indicated by "1"` == 1 | is.na(OTAZ) | is.na(DTAZ)) %>% 
+  select(Tour_ID = `Tour ID`, OTAZ = origin_zone, DTAZ = dest_zone, trip_dist, stopTime, base_stop_dist, TourType, `Reporting  Concern Indicated by ""1""`) %>% 
+  filter(is.na(stopTime) | is.na(base_stop_dist) | is.na(TourType) | is.na(trip_dist) | `Reporting  Concern Indicated by ""1""` == 1 | is.na(OTAZ) | is.na(DTAZ)) %>% 
   distinct()
 
 GPS <- GPS %>% 
@@ -325,6 +325,80 @@ CountyShare_medium <- GPS %>%
   mutate(Target = n/sum(n))
 
 write_csv(CountyShare_medium, 'dev/Data_Processed/CVGPS/Calibration Targets/CountyOD_medium.csv')
+
+
+
+
+
+
+
+
+
+# ADDITION: District-District OD ------------------------------------------
+
+
+
+
+district_dict <- read_csv('lib/data/TAZ_System.csv') %>% 
+  st_drop_geometry() %>% 
+  select(zone17 = TAZ, DistrictName, DistrictNum)
+
+
+Origin_district <- district_dict %>% 
+  select(zone17, ODistrict = DistrictName, ODistrict_num = DistrictNum)
+
+Destination_district <- district_dict %>% 
+  select(zone17, DDistrict = DistrictName, DDistrict_num = DistrictNum)
+
+GPS <- GPS %>% 
+  left_join(Origin_district, by = c('origin_zone' = 'zone17')) %>%
+  left_join(Destination_district, by = c('dest_zone' = 'zone17'))
+
+
+#county share all trips
+DistrictShare <- GPS %>% 
+  group_by(ODistrict, ODistrict_num, DDistrict, DDistrict_num) %>% 
+  tally() %>%
+  ungroup() %>% 
+  mutate(Target = n/sum(n))
+
+
+write_csv(DistrictShare, 'dev/Data_Processed/CVGPS/Calibration Targets/DistrictOD.csv')
+
+
+
+#county share light vehicle trips
+DistrictShare_light <- GPS %>% 
+  filter(Vehicle == 'Light') %>% 
+  group_by(ODistrict, ODistrict_num, DDistrict, DDistrict_num) %>% 
+  tally() %>% 
+  ungroup() %>% 
+  mutate(Target = n/sum(n))
+
+write_csv(DistrictShare_light, 'dev/Data_Processed/CVGPS/Calibration Targets/DistrictOD_light.csv')
+
+DistrictShare_medium <- GPS %>% 
+  filter(Vehicle == 'Medium') %>% 
+  group_by(ODistrict, ODistrict_num, DDistrict, DDistrict_num) %>% 
+  tally() %>% 
+  ungroup() %>% 
+  mutate(Target = n/sum(n))
+
+write_csv(DistrictShare_medium, 'dev/Data_Processed/CVGPS/Calibration Targets/DistrictOD_medium.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
