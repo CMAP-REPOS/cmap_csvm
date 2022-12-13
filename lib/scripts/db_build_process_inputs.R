@@ -9,6 +9,7 @@ db_build_process_inputs <- function(envir){
                         db_build_spreadsheet           = file.path(SYSTEM_SCRIPTS_PATH, "db_build_spreadsheet.R"),
                         db_build_spreadsheet_functions = file.path(SYSTEM_SCRIPTS_PATH, "db_build_spreadsheet_functions.R"),
                         c_n2_empcats                   = file.path(SYSTEM_DATA_PATH, "corresp_naics2_empcats.csv"),
+                        equity_zones                   = file.path(SYSTEM_DATA_PATH, "data_equity_zones.csv"),
                         TAZ_System                     = file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"))
   
   loadInputs(files = project.files, envir = envir)

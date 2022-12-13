@@ -596,6 +596,28 @@ plotly_build(p)
 
 >`r if(SCENARIO_RUN_CVTM) {paste0("Note: ", percent(1 - alpha), " of trips are longer than ", round(x.limits[2]), " minutes and are not displayed.")}`
 
+### Tour Length Cumulative Distributions
+
+```{r CumDist_Commercial_Tour_Length_By_Vehicle}
+# Organize
+dat <- cv_trips[, .(TourLength = sum(Distance)), by = .(BusID, Vehicle, TourID)]
+dat[, TourLengthRnd := round(TourLength,-1)]
+dat <- dat[,.(Tours = .N), keyby = .(TourLengthRnd, Vehicle)]
+dat[, ToursCum := cumsum(Tours), by = Vehicle]
+dat[, PctTours := Tours/sum(Tours), by = Vehicle]
+dat[, PctToursCum := cumsum(PctTours), by = Vehicle]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_CumDist_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_cumdist_tours", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[TourLengthRnd <= 200], xvar = "TourLengthRnd", yvar = "PctToursCum", fill = "Vehicle", position = "dodge", xlabel = "Tour Length", ylabel = "Cumulative Percent CV Tours")
+
+
+```
+
+
 Column {data-width=400, .tabset}
 --------------------------------------------
 
