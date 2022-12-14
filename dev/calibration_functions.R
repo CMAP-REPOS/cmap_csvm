@@ -395,6 +395,18 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
       
     }
     
+    # also do some distance adjustments 
+    ### TODO (might need to include in a more complicated iterative process to get to converge)
+    
+    # Apply the mean distance adjustments by activity
+    # to the relevant distance or time coefficient in the zero model
+    submodel_comparison_stop_dist[, coefficient := ifelse(Activity == "Goods", "log(dist)", "log(time)")]
+    coefficients[, adjustment:= NULL]
+    coefficients[submodel_comparison_stop_dist[,.(Activity, coefficient, modelstep = "zero", Adjustment)],
+                 adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+    coefficients[!is.na(adjustment), estimate := estimate + adjustment]
+    
+    
     new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
     names(new_coefficients_zero_goods) = coefficients[Activity == "Goods" & modelstep == "zero", coefficient]
     model_step_inputs$model_step_env$cv_goods_model$coefficients$zero = new_coefficients_zero_goods

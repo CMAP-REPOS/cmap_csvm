@@ -41,6 +41,25 @@ Actual_Dist <- GPS2 %>%
 GPS2 <- GPS2 %>% 
   filter(tour_leg != Trips)
 
+district_dict <- read_csv('lib/data/TAZ_System.csv') %>% 
+  st_drop_geometry() %>% 
+  select(zone17 = TAZ, DistrictName, DistrictNum)
+
+
+Origin_district <- district_dict %>% 
+  select(zone17, ODistrict = DistrictName, ODistrict_num = DistrictNum)
+
+Destination_district <- district_dict %>% 
+  select(zone17, DDistrict = DistrictName, DDistrict_num = DistrictNum)
+
+Base_district <- district_dict %>% 
+  select(zone17, BaseDistrict = DistrictName, BaseDistrict_num = DistrictNum)
+
+GPS <- GPS %>% 
+  left_join(Origin_district, by = c('origin_zone' = 'zone17')) %>%
+  left_join(Destination_district, by = c('dest_zone' = 'zone17')) %>% 
+  left_join(Base_district, by = c('base_Zone' = 'zone17'))
+
 
 
 # Tour N StopsDistribution -----
@@ -127,6 +146,9 @@ write_csv(duration_stops_vehicle_CVGPS, 'dev/Data_Processed/CVGPS/Calibration Ta
 
 
 # Base-Stop Distances -----
+
+
+#Overall
 dist_bins <- c(0, 2, 5, 10, 20)
 GPS[, dist_bin := factor(findInterval(x = base_stop_dist, vec = dist_bins),
                                      labels = c("dist_00_02", "dist_02_05", "dist_05_10", "dist_10_20", "dist_20_p"))]
@@ -138,6 +160,51 @@ BaseStopDist_CVGPS <- GPS %>%
 
 write_csv(BaseStopDist_CVGPS, 'dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_CVGPS.csv')
 
+BaseStopMean_CVGPS <- GPS %>% 
+  summarise(mean(base_stop_dist)) %>% 
+  rename(mean = `mean(base_stop_dist)`)
+
+write_csv(BaseStopMean_CVGPS, 'dev/Data_Processed/CVGPS/Calibration Targets/BaseStopMean_CVGPS.csv')
+  
+
+
+
+#By Home District
+BaseStopDist_district_CVGPS <- GPS %>% 
+  group_by(BaseDistrict, dist_bin) %>% 
+  tally() %>% 
+  mutate(Target = n/sum(n)) %>% 
+  as.data.table() %>% 
+  pivot_longer(n:Target, names_to = 'statistic', values_to = 'value') %>% 
+  pivot_wider(names_from = dist_bin) 
+
+
+
+BaseStopMean_district_CVGPS <- GPS %>% 
+  group_by(BaseDistrict) %>% 
+  summarise(mean_dist = mean(base_stop_dist))
+
+
+BaseStop_district <- BaseStopDist_district_CVGPS %>% 
+  left_join(BaseStopMean_district_CVGPS, by = 'BaseDistrict')%>% 
+  mutate(across(c(dist_00_02:mean_dist), ~round(., 4)))
+  
+
+
+write_csv(BaseStop_district, 'dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_district_CVGPS.csv', na = '')
+
+
+
+
+
+
+
+
+
+
+
+
+
 BaseStopDist_vehicle_CVGPS <- GPS %>% 
   group_by(Vehicle, dist_bin) %>% 
   tally() %>% 
@@ -146,6 +213,23 @@ BaseStopDist_vehicle_CVGPS <- GPS %>%
   ungroup()
 
 write_csv(BaseStopDist_vehicle_CVGPS, 'dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_vehicle_CVGPS.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -176,7 +260,10 @@ TourDistDistr <- TourDistDistr %>%
 write_csv(TourDistDistr, 'dev/Data_Processed/CVGPS/Calibration Targets/TotalTourDistance.csv')
 
 
-#trip distances
+#trip distances 
+
+
+##Overall
 GPS[, TripDist1Mile := ceiling(trip_dist/ 1) * 1]
 
 TripDistances1Mile <- GPS %>% 
@@ -186,6 +273,24 @@ TripDistances1Mile <- GPS %>%
   select(Trip_dist = TripDist1Mile, n, Target)
 
 write_csv(TripDistances1Mile, 'dev/Data_Processed/CVGPS/Calibration Targets/TripDistanceDistribution.csv')
+
+
+
+##By District
+TripDistances1Mile_district <- GPS %>% 
+  group_by(BaseDistrict, TripDist1Mile) %>% 
+  tally() %>% 
+  mutate(Target = n/sum(n)) %>% 
+  select(BaseDistrict, Trip_dist = TripDist1Mile, n, Target)
+
+write_csv(TripDistances1Mile_district, 'dev/Data_Processed/CVGPS/Calibration Targets/TripDistanceDistribution_district.csv')
+
+
+
+
+
+
+
 
 
 # n tours -----
@@ -339,20 +444,7 @@ write_csv(CountyShare_medium, 'dev/Data_Processed/CVGPS/Calibration Targets/Coun
 
 
 
-district_dict <- read_csv('lib/data/TAZ_System.csv') %>% 
-  st_drop_geometry() %>% 
-  select(zone17 = TAZ, DistrictName, DistrictNum)
 
-
-Origin_district <- district_dict %>% 
-  select(zone17, ODistrict = DistrictName, ODistrict_num = DistrictNum)
-
-Destination_district <- district_dict %>% 
-  select(zone17, DDistrict = DistrictName, DDistrict_num = DistrictNum)
-
-GPS <- GPS %>% 
-  left_join(Origin_district, by = c('origin_zone' = 'zone17')) %>%
-  left_join(Destination_district, by = c('dest_zone' = 'zone17'))
 
 
 #county share all trips

@@ -210,3 +210,30 @@ kable(dat, escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
 
 ```
+
+### Percent Trips by Distance
+
+```{r Chart_tt_trip_dist_Val}
+# Organize
+dat_mod <- TripTable[, .(ModelTrips = sum(trips)), keyby = .(Distance = round(dist,-1))]
+dat_mod[is.na(ModelTrips), ModelTrips := 0]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripdistancedist[, .(TargetTrips = sum(n)), keyby = .(Distance = round(Trip_dist,-1))]
+dat_obs[is.na(TargetTrips), TargetTrips := 0]
+dat_obs[, Target := TargetTrips/sum(TargetTrips)]
+
+dat <- merge(dat_obs, dat_mod, by= "Distance", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat[, .(Distance, Model, Target)], id.vars = c("Distance"), variable.name = "Source", value.name = "PctTrips")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripdistancedist_val.csv"))
+assign("db_tab_tt_build_tripdistancedist_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_cv_sim_scheduledtrips_all.png", xrotate = TRUE)
+
+```
