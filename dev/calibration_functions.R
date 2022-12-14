@@ -292,7 +292,14 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
   # model_step_target$mean_stop_distance_industry
   # Average distance by activity and industry of the business operating the truck from business to stop location
-
+  submodel_results_stop_dist_ind = submodel_results[,.(Model = mean(Distance)), keyby = .(Activity, EmpCatGroupedName)]
+  submodel_comparison_stop_dist_ind <- merge(model_step_target$mean_stop_distance_industry[, .(Activity, EmpCatGroupedName = IndustryCat, Target = WeightedMeanDistance)], 
+                                         submodel_results_stop_dist_ind, 
+                                         by = c("Activity", "EmpCatGroupedName"), 
+                                         all = TRUE)
+  
+  submodel_comparison_stop_dist_ind[is.na(submodel_comparison_stop_dist_ind)] <- 0
+  
   # model_step_target$gps_dist
   # Binned distance buisness to stop, grouped in a similar way to the parameters used in the vehicle model
   stop_dist_bins <- c(0,2,5,10,20)
@@ -351,8 +358,18 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
           coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero), 
           estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$zero))
     
+    # Stops by industry
     submodel_comparison_emp_stops[, Ratio := Target/Model]
     submodel_comparison_emp_stops[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
+    
+    # Distance by industry/activity/mean overall
+    submodel_comparison_stop_dist[, Ratio := Target/Model]
+    submodel_comparison_stop_dist[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
+    submodel_comparison_stop_dist_ind[, Ratio := Target/Model]
+    submodel_comparison_stop_dist_ind[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
+    submodel_comparison_stop_dist_gps[, Ratio := Target/Model]
+    submodel_comparison_stop_dist_gps[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
+    
     
     # calibration approach: 
     # adjust intercept and then employment specific constants

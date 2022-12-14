@@ -10,7 +10,7 @@ names(temp.envir)
 # update names for d_bars
 empcats <- fread("./lib/data/corresp_naics2_empcats.csv")
 unique(empcats$EmpCatGroupedName)
-temp.envir$d_bars[1:length(unique(empcats$EmpCatGroupedName))] <- 24.0
+temp.envir$d_bars[1:length(unique(empcats$EmpCatGroupedName))] <- 30
 temp.envir$d_bars <- temp.envir$d_bars[1:length(unique(empcats$EmpCatGroupedName))]
 names(temp.envir$d_bars) <- unique(empcats$EmpCatGroupedName)
 
@@ -20,7 +20,7 @@ temp.envir$branch.limit <- data.table(EmpCatName = sort(unique(empcats$EmpCatNam
                                       brlim.sd = 0.5)
 
 # update number of zones samples
-temp.envir$numZones <- 20
+temp.envir$numZones <- 50
 
 # Remove anything that should not be in there
 # Contents should be
