@@ -10,17 +10,17 @@ names(temp.envir)
 # update names for d_bars
 empcats <- fread("./lib/data/corresp_naics2_empcats.csv")
 unique(empcats$EmpCatGroupedName)
-temp.envir$d_bars[1:length(unique(empcats$EmpCatGroupedName))] <- 12.0
+temp.envir$d_bars[1:length(unique(empcats$EmpCatGroupedName))] <- 24.0
 temp.envir$d_bars <- temp.envir$d_bars[1:length(unique(empcats$EmpCatGroupedName))]
 names(temp.envir$d_bars) <- unique(empcats$EmpCatGroupedName)
 
-# update industres in brand.limit
+# update industres in branch.limit
 temp.envir$branch.limit <- data.table(EmpCatName = sort(unique(empcats$EmpCatName)),
-                                      brlim.mu = temp.envir$branch.limit$brlim.mu, 
-                                      brlim.sd = temp.envir$branch.limit$brlim.sd)
+                                      brlim.mu = 2, 
+                                      brlim.sd = 0.5)
 
-# # add cal parameters
-# temp.envir$cv_calibrated_parameters <- fread("./dev/Calibration/cv_calibrated_parameters.csv")
+# update number of zones samples
+temp.envir$numZones <- 20
 
 # Remove anything that should not be in there
 # Contents should be

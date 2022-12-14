@@ -259,9 +259,6 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   submodel_comparison_emp_stops[,TargetStops := Target * Emp]
   
   
-  
-  
-  
   # names(model_step_target)
   # "mean_stop_distance"               
   # "mean_stop_distance_industry"      
@@ -273,6 +270,8 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   # "mean_stop_distance_dens10emp_ind" 
   # "stop_taz_hh_emp"                 
   # "stops_taz_ind_hh_emp"
+  # "gps_dist"
+  # "gps_dist_veh"
   
   
   # model_step_target$stop_taz_hh_emp:
@@ -283,10 +282,31 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
   # model_step_target$mean_stop_distance
   # Average distance by activity from business to stop location
+  submodel_results_stop_dist = submodel_results[,.(Model = mean(Distance)), keyby = .(Activity)]
+  submodel_comparison_stop_dist <- merge(model_step_target$mean_stop_distance[, .(Activity, Target = WeightedMeanDistance)], 
+                                         submodel_results_stop_dist, 
+                                         by = c("Activity"), 
+                                         all = TRUE)
+  
+  submodel_comparison_stop_dist[is.na(submodel_comparison_stop_dist)] <- 0
   
   # model_step_target$mean_stop_distance_industry
   # Average distance by activity and industry of the business operating the truck from business to stop location
 
+  # model_step_target$gps_dist
+  # Binned distance buisness to stop, grouped in a similar way to the parameters used in the vehicle model
+  stop_dist_bins <- c(0,2,5,10,20)
+  submodel_results[, dist_bin := model_step_target$gps_dist$dist_bin[findInterval(Distance, stop_dist_bins)]]
+  submodel_results_stop_dist_gps = submodel_results[,.(ModelStops = .N), keyby = .(dist_bin)]
+  submodel_results_stop_dist_gps[, Model := ModelStops/sum(ModelStops)]
+  
+  submodel_comparison_stop_dist_gps <- merge(model_step_target$gps_dist[, .(dist_bin, Target)], 
+                                             submodel_results_stop_dist_gps, 
+                                         by = c("dist_bin"), 
+                                         all = TRUE)
+  
+  submodel_comparison_stop_dist_gps[is.na(submodel_comparison_stop_dist_gps)] <- 0
+  
   # Comparison: 
   # The difference between the model and target stops
   # should be small but is not expected to be zero due to simulation differences. 

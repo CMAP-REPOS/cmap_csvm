@@ -432,6 +432,11 @@ dcast.data.table(stops_taz_ind_hh_emp,
                  fun.aggregate = sum,
                  value.var = "Stops")
 
+### CV GPS
+
+# Read in the summaries from the CMAP CV GPS data
+gps_dist <- fread('dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_CVGPS.csv')
+gps_dist_veh <- fread('dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_vehicle_CVGPS.csv')
 
 # Add the targets to the list
 model_step_targets_cv_sim[["cv_sim_scheduledstops"]] <- list(mean_stop_distance = mean_stop_distance,
@@ -443,7 +448,9 @@ model_step_targets_cv_sim[["cv_sim_scheduledstops"]] <- list(mean_stop_distance 
                                                            mean_stop_distance_dens10hh_ind = mean_stop_distance_dens10hh_ind,
                                                            mean_stop_distance_dens10emp_ind = mean_stop_distance_dens10emp_ind,
                                                            stop_taz_hh_emp = stop_taz_hh_emp,
-                                                           stops_taz_ind_hh_emp = stops_taz_ind_hh_emp)
+                                                           stops_taz_ind_hh_emp = stops_taz_ind_hh_emp,
+                                                           gps_dist = gps_dist,
+                                                           gps_dist_veh = gps_dist_veh)
 
 ### cv_sim_vehicle -----------------------------------------------------------
 
