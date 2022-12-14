@@ -39,6 +39,12 @@ districtod_medium <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                    "Calibration Targets",
                                    "DistrictOD_medium.csv"))
 
+# Trip length distributions
+tripdistancedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                    "CVGPS",
+                                    "Calibration Targets",
+                                    "TripDistanceDistribution.csv"))
+
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
 model_step_targets_tt_sim <- list()
@@ -64,7 +70,8 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 countyod_medium = countyod_medium,
                                                 districtod_all = districtod_all,
                                                 districtod_light = districtod_light,
-                                                districtod_medium = districtod_medium)
+                                                districtod_medium = districtod_medium,
+                                                tripdistancedist = tripdistancedist)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 
@@ -75,3 +82,7 @@ saveRDS(model_step_targets_tt_sim,
         file = file.path(SYSTEM_DEV_CALIBRATION_PATH, 
                          "calibration_targets_tt_sim.RDS"))
 
+# copy file into the outputs folder for direct use in the dashboard summaries of validation results
+saveRDS(model_step_targets_tt_sim, 
+        file = file.path(SYSTEM_DEV_CALIBRATION_PATH, "outputs",
+                         "calibration_targets_tt_sim.RDS"))
