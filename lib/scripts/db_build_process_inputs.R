@@ -81,6 +81,11 @@ db_build_process_inputs <- function(envir){
     cv_trips <- cv_trips[cv_trips[TripID == 1, .(TourID, TAZ.Start = OTAZ, Region.Start = Region.Origin)], 
                      c("TAZ.Start", "Region.Start") := .(i.TAZ.Start, i.Region.Start), on = "TourID"]
     
+    # add tour start to stop destination distance
+    cv_trips[skims.long[,.(TAZ.Start = OTAZ, DTAZ, TOD, dist)], 
+              Distance.Start := i.dist, 
+              on = c("TAZ.Start", "DTAZ", "TOD")]
+    
     # add od segment
     cv_trips[, Movement.Type := add_od_segment(origins = OTAZ, 
                                                destinations = DTAZ, 

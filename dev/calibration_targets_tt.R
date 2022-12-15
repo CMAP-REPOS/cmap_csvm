@@ -76,10 +76,15 @@ tourfirststoparrival <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                         "TourFirstArrival_CVGPS.csv"))
 
 # Trip Time of Day
-# tripstarttimedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
-#                                         "CVGPS",
-#                                         "Calibration Targets",
-#                                         ".csv"))
+tripstarttimedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                        "CVGPS",
+                                        "Calibration Targets",
+                                        "TripDepartHour_CVGPS.csv"))
+
+tripstarttimedist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                     "CVGPS",
+                                     "Calibration Targets",
+                                     "TripDepartHour_district_CVGPS.csv"))
 
 
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
@@ -109,7 +114,13 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 districtod_light = districtod_light,
                                                 districtod_medium = districtod_medium,
                                                 tripdistancedist = tripdistancedist,
-                                                tripdistancedist_district = tripdistancedist_district)
+                                                tripdistancedist_district = tripdistancedist_district,
+                                                basestopdist_district = basestopdist_district,
+                                                tourdistance = tourdistance,
+                                                tournumstopsdistance = tournumstopsdistance,
+                                                tourfirststoparrival = tourfirststoparrival,
+                                                tripstarttimedist = tripstarttimedist,
+                                                tripstarttimedist_district = tripstarttimedist_district)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 

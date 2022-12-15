@@ -352,3 +352,140 @@ dat <- dat[!OriginCounty %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CM
 bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_cmap_val.png", xrotate = TRUE)
 
 ```
+
+### Mean Base to Stop Distance
+
+```{r Chart_tt_trip_base_stop_dist_Val}
+# Organize
+
+# for this summary comparing the final set of trips base location to stop location distance
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[Activity != "Return", .(Model = mean(Distance.Start)), keyby = .(BaseDistrict = Region.Start)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$basestopdist_district[statistic == "n", .(BaseDistrict, Target = mean_dist)]
+
+dat <- merge(dat_obs, dat_mod, by= "BaseDistrict", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+dat[, BaseDistrict := factor(BaseDistrict, levels = levels(TAZ_System$DistrictName))]
+
+dat <- melt.data.table(dat[, .(BaseDistrict, Model, Target)], id.vars = c("BaseDistrict"), variable.name = "Source", value.name = "Distance")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_basestopdistance_val.csv"))
+assign("db_tab_tt_build_basestopdistance_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "BaseDistrict", yvar = "Distance",  fill = "Source", position = "dodge", ylabel = "Average Base to Stop Distance", png_name = "p_tt_build_basestopdistance_val.png", coord_flip = TRUE)
+
+```
+
+### Tour Distance Distribution
+
+```{r Chart_tt_tour_distance_dist_Val}
+# Organize
+
+# for this summary comparing the final set of tour distances
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[, .(TourDistance = sum(Distance)), keyby = TourID]
+TourDistLabels = cal_results$calibration_targets_tt_sim$tt_build$tourdistance$TourDist
+dat_mod[, TourDist := TourDistLabels[findInterval(TourDistance, c(0,30,60,120,180,240,360,480))]]
+dat_mod <- dat_mod[, .(ModelTours = .N), keyby = TourDist ]
+dat_mod[, Model := ModelTours/sum(ModelTours)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tourdistance[, .(TourDist, Target)]
+
+dat <- merge(dat_obs, dat_mod[,.(TourDist, Model)], by= "TourDist", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+dat[, TourDist := factor(TourDist, levels = TourDistLabels)]
+
+dat <- melt.data.table(dat[, .(TourDist, Model, Target)], id.vars = c("TourDist"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tourdistance_val.csv"))
+assign("db_tab_tt_build_tourdistance_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "TourDist", yvar = "PctTours",  fill = "Source", position = "dodge", ylabel = "Percentage of Tours", png_name = "p_tt_build_tourdistance_val.png", coord_flip = TRUE)
+
+```
+
+### Tour Number of Stops Distribution
+
+```{r Chart_tt_tour_numstops_dist_Val}
+# Organize
+
+# for this summary comparing the final set of tour stops
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[Activity != "Return", .(NStops = .N), keyby = TourID]
+dat_mod <- dat_mod[, .(ModelTours = .N), keyby = NStops ]
+dat_mod[, Model := ModelTours/sum(ModelTours)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tournumstopsdistance[, .(NStops, Target)]
+
+dat <- merge(dat_obs, dat_mod[,.(NStops, Model)], by= "NStops", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat[, .(NStops, Model, Target)], id.vars = c("NStops"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tournumstops_val.csv"))
+assign("db_tab_tt_build_tournumstops_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "NStops", yvar = "PctTours",  fill = "Source", position = "dodge", xlabel = "Number of Stops on the Tour", ylabel = "Percentage of Tours", png_name = "p_tt_build_tournumstops_val.png")
+
+```
+
+### Tour First Stop Arrival Time
+
+```{r Chart_tt_tour_first_stop_time_Val}
+# Organize
+
+# for this summary comparing the final set of tour first stop arrival times
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[TripID == 1, .(StopTime = floor(as.numeric(MAMArrive)/60)), keyby = TourID]
+dat_mod <- dat_mod[, .(ModelTours = .N), keyby = StopTime]
+dat_mod[, Model := ModelTours/sum(ModelTours)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tourfirststoparrival[,.(Target = sum(Target)), keyby = .(StopTime = floor(startHour))]
+
+dat <- merge(dat_obs, dat_mod[,.(StopTime, Model)], by= "StopTime", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat[, .(StopTime, Model, Target)], id.vars = c("StopTime"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tourfirststoptime_val.csv"))
+assign("db_tab_tt_build_tourfirststoptime_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "StopTime", yvar = "PctTours",  fill = "Source", position = "dodge", xlabel = "Arrival Time at the First Stop on the Tour", ylabel = "Percentage of Tours", png_name = "p_tt_build_tourfirststoptime_val.png")
+
+```
+
+### Trip Start Time
+
+```{r Chart_tt_trip_start_time_Val}
+# Organize
+
+# for this summary comparing the final set of trip start times
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[, .(StopTime = floor(as.numeric(MAMDepart)/60))]
+dat_mod <- dat_mod[, .(ModelTrips = .N), keyby = StopTime]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour))]
+
+dat <- merge(dat_obs, dat_mod[,.(StopTime, Model)], by= "StopTime", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat[, .(StopTime, Model, Target)], id.vars = c("StopTime"), variable.name = "Source", value.name = "PctTrips")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripstarttime_val.csv"))
+assign("db_tab_tt_build_tripstarttime_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "StopTime", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Hour", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripstarttime_val.png")
+
+```
