@@ -234,6 +234,121 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripdistancedist_va
 assign("db_tab_tt_build_tripdistancedist_val", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_cv_sim_scheduledtrips_all.png", xrotate = TRUE)
+bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_val.png", xrotate = TRUE)
+
+```
+
+### Percent Trips by Distance and District: Model
+
+```{r Chart_tt_trip_dist_Val_mod}
+# Organize
+dat_mod <- TripTable[, .(ModelTrips = sum(trips)), keyby = .(OriginCounty = ODistrictName, Distance = round(dist,-1))]
+dat_mod[is.na(ModelTrips), ModelTrips := 0]
+dat_mod[, Model := ModelTrips/sum(ModelTrips), by = OriginCounty]
+
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripdistancedist_district[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = BaseDistrict, Distance = round(Trip_dist,-1))]
+dat_obs[is.na(TargetTrips), TargetTrips := 0]
+dat_obs[, Target := TargetTrips/sum(TargetTrips), by = OriginCounty]
+
+dat <- merge(dat_obs, dat_mod, by = c("Distance", "OriginCounty"), all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat[, Difference := Model - Target]
+dat[, DistanceLabel := paste0(Distance, "-", Distance+10)]
+dat[, DistanceLabel := factor(DistanceLabel, levels = unique(dat[,.(DistanceLabel, Distance)])[order(Distance)]$DistanceLabel)]
+dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
+
+dat_mod <- add_totals(dcast.data.table(dat,
+                                  DistanceLabel ~ OriginCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Model"),
+                      rowtotal = FALSE)
+
+# Save
+fwrite(dat_mod, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_distance_val_mod.csv"))
+assign("db_tab_tt_build_county_distance_val_mod", dat_mod, envir = db_inputs)
+
+# Table
+kable(dat_mod, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat_mod), background = "#f2f2f2")
+
+```
+
+### Percent Trips by Distance and District: Observed
+
+```{r Chart_tt_trip_dist_Val_obs}
+# Organize
+
+dat_obs <- add_totals(dcast.data.table(dat,
+                                  DistanceLabel ~ OriginCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Target"),
+                      rowtotal = FALSE)
+
+# Save
+fwrite(dat_obs, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_distance_val_obs.csv"))
+assign("db_tab_tt_build_county_distance_val_obs", dat_obs, envir = db_inputs)
+
+# Table
+kable(dat_obs, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat_obs), background = "#f2f2f2")
+
+```
+
+### Percent Trips by Distance and District: Difference (Model - Observed)
+
+```{r Chart_tt_trip_dist_Val_diff}
+# Organize
+
+dat_obs <- add_totals(dcast.data.table(dat,
+                                  DistanceLabel ~ OriginCounty,
+                                   fun.aggregate = sum,
+                                   value.var = "Difference"),
+                      rowtotal = FALSE)
+
+# Save
+fwrite(dat_obs, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_distance_val_diff.csv"))
+assign("db_tab_tt_build_county_distance_val_diff", dat_obs, envir = db_inputs)
+
+# Table
+kable(dat_obs, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  row_spec(nrow(dat_obs), background = "#f2f2f2")
+
+```
+
+### Percent Trips by Distance for Chicago
+
+```{r Chart_tt_trip_dist_chicago_Val}
+# Organize
+dat <- melt.data.table(dat[, .(Distance, OriginCounty, Model, Target)], id.vars = c("OriginCounty", "Distance"), variable.name = "Source", value.name = "PctTrips")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripdistancedist_district_val.csv"))
+assign("db_tab_tt_build_tripdistancedist_district_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[OriginCounty == "Chicago"], xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_chicago_val.png", xrotate = TRUE)
+
+```
+
+### Percent Trips by Distance for Cook County (Outside Chicago)
+
+```{r Chart_tt_trip_dist_cook_Val}
+# Plot
+bar_plotter(dat[OriginCounty == "COOK, IL (Outside Chicago)"], xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_cook_val.png", xrotate = TRUE)
+```
+
+### Percent Trips by Distance for Rest of CMAP MPO Area (Outside Cook)
+
+```{r Chart_tt_trip_dist_cmap_Val}
+dat <- dat[!OriginCounty %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
+           .(PctTrips = sum(PctTrips)), keyby = .(Distance, Source)]
+
+# Plot
+bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_cmap_val.png", xrotate = TRUE)
 
 ```

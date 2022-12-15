@@ -45,6 +45,43 @@ tripdistancedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                     "Calibration Targets",
                                     "TripDistanceDistribution.csv"))
 
+tripdistancedist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                    "CVGPS",
+                                    "Calibration Targets",
+                                    "TripDistanceDistribution_district.csv"))
+
+# Base to stop distribution overall from GPS data
+basestopdist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                         "CVGPS",
+                                         "Calibration Targets",
+                                         "BaseStopDist_district_CVGPS.csv"))
+
+
+# Tour Distance overall from GPS
+tourdistance <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                         "CVGPS",
+                                         "Calibration Targets",
+                                         "TotalTourDistance.csv"))
+
+# Tour Number of Stops
+tournumstopsdistance <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                "CVGPS",
+                                "Calibration Targets",
+                                "Tour_NStops_CVGPS.csv"))
+
+# Tour First Stop Arrival
+tourfirststoparrival <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                        "CVGPS",
+                                        "Calibration Targets",
+                                        "TourFirstArrival_CVGPS.csv"))
+
+# Trip Time of Day
+# tripstarttimedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+#                                         "CVGPS",
+#                                         "Calibration Targets",
+#                                         ".csv"))
+
+
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
 model_step_targets_tt_sim <- list()
@@ -71,7 +108,8 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 districtod_all = districtod_all,
                                                 districtod_light = districtod_light,
                                                 districtod_medium = districtod_medium,
-                                                tripdistancedist = tripdistancedist)
+                                                tripdistancedist = tripdistancedist,
+                                                tripdistancedist_district = tripdistancedist_district)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 

@@ -197,3 +197,4 @@ kable(dat, escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
 
 ```
+
