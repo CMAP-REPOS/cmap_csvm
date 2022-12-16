@@ -22,7 +22,7 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
                              names(TAZLandUseCVTM)[grep(pattern = "NEmp_", names(TAZLandUseCVTM))])
   uEmpCatGroupedName <- uEmpCatGroupedName[!uEmpCatGroupedName %in% c("Total")]
   uEmpCatGroupedName.Missing <- uEmpCatGroupedName[!uEmpCatGroupedName %in% names(firmActivities)]
-  firmActivities[, (uEmpCatGroupedName.Missing) := 0]
+  if(length(uEmpCatGroupedName.Missing) > 0) firmActivities[, (uEmpCatGroupedName.Missing) := 0]
   
   progressUpdate(subtaskprogress = 0.2, subtask = "Stop Generation", prop = 1/7, dir = SCENARIO_LOG_PATH)
   

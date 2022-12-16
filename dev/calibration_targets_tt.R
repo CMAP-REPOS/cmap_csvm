@@ -48,7 +48,12 @@ tripdistancedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
 tripdistancedist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                     "CVGPS",
                                     "Calibration Targets",
-                                    "TripDistanceDistribution_district.csv"))
+                                    "TripDistanceDistribution_tripOriginDistrict.csv"))
+
+tripdistancedist_basedistrict <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                             "CVGPS",
+                                             "Calibration Targets",
+                                             "TripDistanceDistribution_baseDistrict.csv"))
 
 # Base to stop distribution overall from GPS data
 basestopdist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
@@ -115,6 +120,7 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 districtod_medium = districtod_medium,
                                                 tripdistancedist = tripdistancedist,
                                                 tripdistancedist_district = tripdistancedist_district,
+                                                tripdistancedist_basedistrict = tripdistancedist_basedistrict,
                                                 basestopdist_district = basestopdist_district,
                                                 tourdistance = tourdistance,
                                                 tournumstopsdistance = tournumstopsdistance,
