@@ -188,6 +188,7 @@ db_build_process_inputs <- function(envir){
                              Hours = c("8pm-6am","6am-7am", "7am-9am",
                                             "9am-10am", "10am-2pm", "2pm-4pm", 
                                             "4pm-6pm", "6pm-8pm"))
+    
     tab_template[tod_labels, Hours := i.Hours, on = "TOD"]
     
     tmh_vtods <- merge(tab_template, 

@@ -347,6 +347,7 @@ bar_plotter(dat[OriginCounty == "COOK, IL (Outside Chicago)"], xvar = "Distance"
 ```{r Chart_tt_trip_dist_cmap_Val}
 dat <- dat[!OriginCounty %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
            .(PctTrips = sum(PctTrips)), keyby = .(Distance, Source)]
+dat[, PctTrips := PctTrips/sum(PctTrips), keyby = Source]
 
 # Plot
 bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_cmap_val.png", xrotate = TRUE)
@@ -463,7 +464,7 @@ bar_plotter(dat, xvar = "StopTime", yvar = "PctTours",  fill = "Source", positio
 
 ```
 
-### Trip Start Time
+### Trip Start Time by Hour
 
 ```{r Chart_tt_trip_start_time_Val}
 # Organize
@@ -489,3 +490,107 @@ assign("db_tab_tt_build_tripstarttime_val", dat, envir = db_inputs)
 bar_plotter(dat, xvar = "StopTime", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Hour", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripstarttime_val.png")
 
 ```
+
+### Trip Start Time by Time Period
+
+```{r Chart_tt_trip_start_tod_Val}
+# Organize
+
+# for this summary comparing the final set of trip start times
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[, .(ModelTrips = .N), keyby = TOD]
+dat_mod[, Model := ModelTrips/sum(ModelTrips)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour))]
+
+# p1 - 8 pm to 6 am
+# p2 - 6 am to 7 am
+# p3 - 7 am to 9 am
+# p4 - 9 am to 10 am
+# p5 - 10 am to 2 pm
+# p6 - 2 pm to 4 pm
+# p7 - 4 pm to 6 pm
+# p8 - 6 pm to 8 pm
+dat_obs[, TOD := c(rep("P1",6),"P2", rep("P3",2), "P4", rep("P5",4), rep("P6",2), rep("P7",2), rep("P8",2), rep("P1", 4))]
+dat_obs <- dat_obs[,.(Target = sum(Target)), keyby = TOD]
+
+dat <- merge(dat_obs, dat_mod[,.(TOD, Model)], by= "TOD", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat[, .(TOD, Model, Target)], id.vars = c("TOD"), variable.name = "Source", value.name = "PctTrips")
+dat[tod_labels, Hours := i.Hours, on = "TOD"]
+dat[, TOD_Label := paste(TOD, Hours)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripstarttime_tod_val.csv"))
+assign("db_tab_tt_build_tripstarttime_tod_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_val.png")
+
+```
+
+### Trip Start Time by Time Period for Chicago
+
+```{r Chart_tt_trip_start_tod_chicago_Val}
+# Organize
+
+# for this summary comparing the final set of trip start times
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod <- cv_trips[, .(ModelTrips = .N), keyby = .(TOD, OriginCounty = Region.Origin)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips), keyby = OriginCounty]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist_district[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour), OriginCounty = BaseDistrict)]
+
+# p1 - 8 pm to 6 am
+# p2 - 6 am to 7 am
+# p3 - 7 am to 9 am
+# p4 - 9 am to 10 am
+# p5 - 10 am to 2 pm
+# p6 - 2 pm to 4 pm
+# p7 - 4 pm to 6 pm
+# p8 - 6 pm to 8 pm
+tod_hours <- data.table(StopTime = 0:23,
+                        TOD = c(rep("P1",6),"P2", rep("P3",2), "P4", rep("P5",4), rep("P6",2), rep("P7",2), rep("P8",2), rep("P1", 4)))
+
+dat_obs[tod_hours, TOD := i.TOD, on = "StopTime"]
+dat_obs <- dat_obs[,.(Target = sum(Target)), keyby = .(TOD, OriginCounty)]
+
+dat <- merge(dat_obs, dat_mod[,.(OriginCounty, TOD, Model)], by = c("TOD", "OriginCounty"), all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat, id.vars = c("OriginCounty", "TOD"), variable.name = "Source", value.name = "PctTrips")
+dat[tod_labels, Hours := i.Hours, on = "TOD"]
+dat[, TOD_Label := paste(TOD, Hours)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripstarttime_tod_district_val.csv"))
+assign("db_tab_tt_build_tripstarttime_tod_district_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat[OriginCounty == "Chicago"], xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_chicago_val.png")
+
+```
+
+### Trip Start Time by Time Period for Cook County (Outside Chicago)
+
+```{r Chart_tt_trip_start_tod_cook_Val}
+
+# Plot
+bar_plotter(dat[OriginCounty == "COOK, IL (Outside Chicago)"], xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_cook_val.png")
+
+```
+
+### Trip Start Time by Time Period for Rest of CMAP MPO Area (Outside Cook)
+
+```{r Chart_tt_trip_start_tod_cmap_Val}
+
+dat <- dat[!OriginCounty %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
+           .(PctTrips = sum(PctTrips)), keyby = .(TOD_Label, Source)]
+dat[, PctTrips := PctTrips/sum(PctTrips), keyby = Source]
+
+# Plot
+bar_plotter(dat, xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_cmap_val.png")
+
+```
+
