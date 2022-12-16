@@ -149,8 +149,8 @@ for(model_step_num in 1:length(models)){
   # Use the repeated process: load outputs from previous step, run step, save results
   # Loop over the submodels
   
-  #####for(submodel_num in 1:length(model_step_submodels)){
-  for(submodel_num in 3:length(model_step_submodels)){
+  for(submodel_num in 1:length(model_step_submodels)){
+  #for(submodel_num in 3:length(model_step_submodels)){
     
     #submodel_num <- 3
     # Name to use for submodel files
