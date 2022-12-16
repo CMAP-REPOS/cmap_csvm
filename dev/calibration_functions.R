@@ -389,7 +389,7 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
       submodel_comparison_stop_dist_gps_mean <- rbind(submodel_comparison_stop_dist_gps_mean[, c("Activity", "coefficient") := .("Goods", "log(dist)")],
                                                       submodel_comparison_stop_dist_gps_mean[, c("Activity", "coefficient") := .("Goods", "log(time)")])
       
-      coefficients[submodel_comparison_stop_dist[,.(Activity, coefficient, modelstep = "zero", Adjustment)],
+      coefficients[submodel_comparison_stop_dist_gps_mean[,.(Activity, coefficient, modelstep = "zero", Adjustment)],
                    adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
       

@@ -86,10 +86,15 @@ tripstarttimedist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                         "Calibration Targets",
                                         "TripDepartHour_CVGPS.csv"))
 
-tripstarttimedist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+tripstarttimedist_basedistrict <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                      "CVGPS",
                                      "Calibration Targets",
-                                     "TripDepartHour_district_CVGPS.csv"))
+                                     "TripDepartHour_baseDistrict_CVGPS.csv"))
+
+tripstarttimedist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                                  "CVGPS",
+                                                  "Calibration Targets",
+                                                  "TripDepartHour_tripOriginDistrict_CVGPS.csv"))
 
 
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
@@ -126,7 +131,8 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 tournumstopsdistance = tournumstopsdistance,
                                                 tourfirststoparrival = tourfirststoparrival,
                                                 tripstarttimedist = tripstarttimedist,
-                                                tripstarttimedist_district = tripstarttimedist_district)
+                                                tripstarttimedist_district = tripstarttimedist_district,
+                                                tripstarttimedist_basedistrict = tripstarttimedist_basedistrict)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 

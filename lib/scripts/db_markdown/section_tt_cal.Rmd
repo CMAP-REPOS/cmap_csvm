@@ -246,7 +246,7 @@ dat_mod <- TripTable[, .(ModelTrips = sum(trips)), keyby = .(OriginCounty = ODis
 dat_mod[is.na(ModelTrips), ModelTrips := 0]
 dat_mod[, Model := ModelTrips/sum(ModelTrips), by = OriginCounty]
 
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripdistancedist_district[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = BaseDistrict, Distance = round(Trip_dist,-1))]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripdistancedist_district[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = tripOrigin_District, Distance = round(Trip_dist,-1))]
 dat_obs[is.na(TargetTrips), TargetTrips := 0]
 dat_obs[, Target := TargetTrips/sum(TargetTrips), by = OriginCounty]
 
@@ -539,7 +539,7 @@ bar_plotter(dat, xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", positi
 # use the cv_trips table as the TripTable is too aggregated
 dat_mod <- cv_trips[, .(ModelTrips = .N), keyby = .(TOD, OriginCounty = Region.Origin)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips), keyby = OriginCounty]
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist_district[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour), OriginCounty = BaseDistrict)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist_district[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour), OriginCounty = tripOrigin_district)]
 
 # p1 - 8 pm to 6 am
 # p2 - 6 am to 7 am
