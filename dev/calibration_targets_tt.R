@@ -96,6 +96,18 @@ tripstarttimedist_district <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                                   "Calibration Targets",
                                                   "TripDepartHour_tripOriginDistrict_CVGPS.csv"))
 
+# Stop Duration
+
+duration_stop_dist <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                      "CVGPS",
+                                      "Calibration Targets",
+                                      "duration_stops_CVGPS.csv"))
+
+duration_stop_mean <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                      "CVGPS",
+                                      "Calibration Targets",
+                                      "duration_stops_Mean_CVGPS.csv"))
+
 
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
