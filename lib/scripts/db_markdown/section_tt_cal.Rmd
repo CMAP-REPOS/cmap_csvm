@@ -380,6 +380,71 @@ bar_plotter(dat, xvar = "BaseDistrict", yvar = "Distance",  fill = "Source", pos
 
 ```
 
+### Stop Duration
+
+```{r Chart_tt_stop_duration_Val}
+# Organize
+
+# for this summary comparing the complete set of stop durations base 
+# use the cv_trips table as the TripTable is too aggregated
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$duration_stop_dist[, .(duration_group, Target)]
+duration_bins <- c(0,16,31,46,61,76,91,151,211,271)
+
+dat_mod <- cv_trips[Activity != "Return", .(ModelDuration = StopDuration)]
+dat_mod[, duration_group := dat_obs$duration_group[findInterval(ModelDuration, duration_bins)]]
+dat_mod <- dat_mod[, .(ModelStops = .N), keyby = duration_group]
+dat_mod[, Model := ModelStops/sum(ModelStops)]
+
+dat <- merge(dat_obs, dat_mod, by= "duration_group", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+dat[, duration_group := factor(duration_group, levels = dat_obs$duration_group)]
+
+dat <- melt.data.table(dat[, .(duration_group, Model, Target)], id.vars = c("duration_group"), variable.name = "Source", value.name = "PctStops")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_stop_duration_val.csv"))
+assign("db_tab_tt_build_stop_duration_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "duration_group", yvar = "PctStops",  fill = "Source", position = "dodge", xlabel = "Stop Duration", ylabel = "Percentage of Stops", png_name = "p_tt_build_stop_duration_val.png", xrotate = TRUE)
+
+```
+
+### Tour Cluster Size
+
+```{r Chart_tt_tour_cluster_Val}
+# Organize
+
+# for this summary comparing the complete set of cluster distances for multistop tours 
+# use the cv_trips table as the TripTable is too aggregated
+dist_bin <- c(0,1,seq(5,50,by = 5))
+dist_label <- c("0", paste(dist_bin[2:(length(dist_bin)-1)], dist_bin[3:length(dist_bin)]-1, sep="-"), "50+")
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tour_cluster[, .(TourMatrixAvgDist, Target)]
+dat_obs[, distance_group := dist_label[findInterval(TourMatrixAvgDist, dist_bin)]]
+dat_obs <- dat_obs[,.(Target = sum(Target)), keyby = distance_group]
+dat_mod <- cv_trips_cluster[,.(ModelTours = .N), keyby = .(TourMatrixAvgDist = floor(MeanDist))]
+dat_mod[, distance_group := dist_label[findInterval(TourMatrixAvgDist, dist_bin)]]
+dat_mod[, Model := ModelTours/sum(ModelTours)]
+dat_mod <- dat_mod[,.(Model = sum(Model)), keyby = distance_group]
+
+dat <- merge(dat_obs, dat_mod, by= "distance_group", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+dat[, distance_group := factor(distance_group, levels = dist_label)]
+
+dat <- melt.data.table(dat[, .(distance_group, Model, Target)], id.vars = c("distance_group"), variable.name = "Source", value.name = "PctTours")
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tour_cluster_val.csv"))
+assign("db_tab_tt_build_tour_cluster_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "distance_group", yvar = "PctTours",  fill = "Source", position = "dodge", xlabel = "Tour Cluster Distance", ylabel = "Percentage of Tours", png_name = "p_tt_build_tour_cluster_val.png", xrotate = TRUE)
+
+```
+
+
 ### Tour Distance Distribution
 
 ```{r Chart_tt_tour_distance_dist_Val}

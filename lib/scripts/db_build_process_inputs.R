@@ -93,6 +93,30 @@ db_build_process_inputs <- function(envir){
     
     envir[["cv_trips"]] <- cv_trips
     
+    # calculate the average cluster distance 
+    # for multistop tours: distance between all stop combinations excluding the tour start/end
+    # In this case include intermediate stops added later to match with the validation data
+    # in which scheduled and intermediate stops cannot be distinguished
+    cv_trips_cluster <- cv_trips[Activity != "Return",.(TourID, TripID, Region.Start, OTAZ, DTAZ)]
+    cv_trips_cluster <- cv_trips_cluster[, NumStops := .N, by = TourID][NumStops > 1]
+    # Stops are all DTAZs on the tour
+    clusterMeanDist <- function(stop.TAZs, dist.mat){
+      idx <- as.character(stop.TAZs)
+      dist.mat.subset <- dist.mat[idx, idx, drop = FALSE]
+      diag(dist.mat.subset) <- NA
+      return(mean(dist.mat.subset, na.rm = TRUE))
+    }
+    
+    # Convert skims to a matrix
+    dist.mat <- as.matrix(dcast.data.table(data = skims[,.(OTAZ, DTAZ, distance = dist.avg)], 
+                                           formula = OTAZ~DTAZ, 
+                                           value.var = "distance")[, -1])
+    rownames(dist.mat) <- colnames(dist.mat)
+    
+    cv_trips_cluster[, MeanDist := clusterMeanDist(DTAZ, dist.mat), by = TourID]
+    cv_trips_cluster <- cv_trips_cluster[TripID == 1, .(Region.Start, TourID, NumStops, MeanDist)]
+    envir[["cv_trips_cluster"]] <- cv_trips_cluster
+    
   }
   
   if(SCENARIO_DB_TT){
