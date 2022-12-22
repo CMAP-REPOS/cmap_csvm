@@ -115,6 +115,13 @@ tour_cluster <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                 "Calibration Targets",
                                 "TourODMatrixDistAvg_CVGPS.csv"))
 
+# Summary table
+gps_summary_table <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                     "CVGPS",
+                                     "Calibration Targets",
+                                     "dashboard_table.csv"))
+
+
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
 model_step_targets_tt_sim <- list()
@@ -153,7 +160,8 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 tripstarttimedist_basedistrict = tripstarttimedist_basedistrict,
                                                 duration_stop_dist = duration_stop_dist,
                                                 duration_stop_mean = duration_stop_mean,
-                                                tour_cluster = tour_cluster)
+                                                tour_cluster = tour_cluster,
+                                                gps_summary_table = gps_summary_table)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 
