@@ -677,18 +677,19 @@ dcast.data.table(duration_stops_activity_vehicle,
                  fun.aggregate = sum,
                  value.var = "Stops")
 
-###TODO add the stop durations from GPS data here
+### CV GPS
 
-# Duration distribution from the CMAP GPS data
-# Aggregate and by vehicle type
-# Compare with the SEMCOG distributions -- any notable differences?
-# Format similarly to the SEMCOG distributions and add to the list (duration_stops_cmap, duration_stops_vehicle_cmap)
+# Read in the summaries from the CMAP CV GPS data
+gps_duration_stops <- fread('dev/Data_Processed/CVGPS/Calibration Targets/duration_stops_CVGPS.csv')
+gps_duration_stops_mean <- fread('dev/Data_Processed/CVGPS/Calibration Targets/duration_stops_Mean_CVGPS.csv')
 
 
 # Add the targets to the list
 model_step_targets_cv_sim[["cv_sim_stopduration"]] <- list(duration_stops = duration_stops,
                                                            duration_stops_activity = duration_stops_activity,
-                                                           duration_stops_activity_vehicle = duration_stops_activity_vehicle)
+                                                           duration_stops_activity_vehicle = duration_stops_activity_vehicle,
+                                                           gps_duration_stops = gps_duration_stops,
+                                                           gps_duration_stops_mean = gps_duration_stops_mean)
 
 ### cv_sim_tours  -----------------------------------------------------------
 
@@ -960,6 +961,17 @@ dcast.data.table(tour_duration_industry,
                  fun.aggregate = sum,
                  value.var = "Tours")
 
+### CV GPS
+
+# Read in the summaries from the CMAP CV GPS data
+gps_duration_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/tourDuration_CVGPS.csv')
+gps_distance_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/TotalTourDistance.csv')
+gps_numstops_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/Tour_NStops_CVGPS.csv')
+gps_singlemulti_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/TourSingleMulti_CVGPS.csv')
+gps_tourtype_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/TourType_CVGPS.csv')
+gps_cluster_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/TourODMatrixDistAvg_CVGPS.csv')
+
+
 # Add the targets to the list
 model_step_targets_cv_sim[["cv_sim_tours"]] <- list(tour_types = tour_types,
                                                     tour_types_vehicle = tour_types_vehicle,
@@ -969,7 +981,13 @@ model_step_targets_cv_sim[["cv_sim_tours"]] <- list(tour_types = tour_types,
                                                     tour_stops_industry = tour_stops_industry,
                                                     tour_duration = tour_duration,
                                                     tour_duration_vehicle = tour_duration_vehicle,
-                                                    tour_duration_industry = tour_duration_industry)
+                                                    tour_duration_industry = tour_duration_industry,
+                                                    gps_duration_tour = gps_duration_tour,
+                                                    gps_distance_tour = gps_distance_tour,
+                                                    gps_numstops_tour = gps_numstops_tour,
+                                                    gps_singlemulti_tour = gps_singlemulti_tour,
+                                                    gps_tourtype_tour = gps_tourtype_tour,
+                                                    gps_cluster_tour = gps_cluster_tour)
 
 ### cv_sim_scheduledtrips  -----------------------------------------------------------
 
@@ -1061,11 +1079,17 @@ dcast.data.table(tour_arrival_type,
                  fun.aggregate = sum,
                  value.var = "Tours")
 
+### CV GPS
+
+# Read in the summaries from the CMAP CV GPS data
+gps_arrival_tour <- fread('dev/Data_Processed/CVGPS/Calibration Targets/TourFirstArrival_CVGPS.csv')
+
 # Add the targets to the list
 model_step_targets_cv_sim[["cv_sim_scheduledtrips"]] <- list(tour_arrival = tour_arrival,
                                                              tour_arrival_vehicle = tour_arrival_vehicle,
                                                              tour_arrival_industry = tour_arrival_industry,
-                                                             tour_arrival_type = tour_arrival_type)
+                                                             tour_arrival_type = tour_arrival_type,
+                                                             gps_arrival_tour = gps_arrival_tour)
 
 ### cv_sim_intermediatestops -----------------------------------------------------------
 
