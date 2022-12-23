@@ -273,6 +273,8 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   # "gps_dist"
   # "gps_dist_veh"
   # "gps_dist_mean"
+  # "gps_tour_repzones_visits"
+  # "gps_tour_repzones_unique"
   
   # model_step_target$stop_taz_hh_emp:
   # Stops per sum of employment and HH in a TAZ by activity

@@ -122,6 +122,16 @@ gps_summary_table <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                      "dashboard_table.csv"))
 
 
+gps_tour_repzones_visits <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                            "CVGPS",
+                                            "Calibration Targets",
+                                            "repeatZones_nVisits_CVGPS.csv"))
+
+gps_tour_repzones_unique <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                            "CVGPS",
+                                            "Calibration Targets",
+                                            "repeatZones_UniqueZones_CVPGS.csv"))
+
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
 model_step_targets_tt_sim <- list()
@@ -161,7 +171,9 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 duration_stop_dist = duration_stop_dist,
                                                 duration_stop_mean = duration_stop_mean,
                                                 tour_cluster = tour_cluster,
-                                                gps_summary_table = gps_summary_table)
+                                                gps_summary_table = gps_summary_table,
+                                                gps_tour_repzones_visits = gps_tour_repzones_visits,
+                                                gps_tour_repzones_unique = gps_tour_repzones_unique)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 

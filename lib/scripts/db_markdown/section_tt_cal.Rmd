@@ -538,6 +538,45 @@ bar_plotter(dat, xvar = "NStops", yvar = "PctTours",  fill = "Source", position 
 
 ```
 
+### Tours With Stops in Same TAZ
+
+```{r Chart_tt_tour_repeatstops_Val}
+# Organize
+
+# for this summary comparing the final set of tour stops
+# use the cv_trips table as the TripTable is too aggregated
+dat_mod_reps <- cv_trips[Activity != "Return", .(NStops = .N), keyby = .(TourID, DTAZ)]
+dat_mod_reps <- dat_mod_reps[NStops > 1, .(RepeatZones = .N, Visits = sum(NStops)), keyby = TourID]
+dat_mod_tours <- cv_trips[Activity != "Return",.(NStops = .N), keyby = .(TourID)]
+dat_mod_tours[dat_mod_reps, c("RepeatZones", "Visits") := .(i.RepeatZones, i.Visits), on = "TourID"]
+dat_mod_tours[is.na(RepeatZones), RepeatZones := 0]
+dat_mod_tours[is.na(Visits), Visits := 0]
+dat_mod <- dat_mod_tours[,.(ModelTours = .N), keyby = RepeatZones]
+dat_mod[, Model := ModelTours/sum(ModelTours)]
+
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$gps_tour_repzones_unique[,.(RepeatZones, TargetTours = Tours, Target = Target_amongAllTours)]
+dat_obs <- rbind(data.table(RepeatZones = 0, TargetTours = 0, Target = 1 - sum(dat_obs$Target)),
+                 dat_obs)
+dat_obs[RepeatZones == 0, TargetTours := sum(dat_obs[RepeatZones > 0]$TargetTours)/sum(dat_obs[RepeatZones > 0]$Target) * Target]
+
+dat <- merge(dat_obs, dat_mod, by= "RepeatZones", all = TRUE)
+dat[is.na(Target), Target := 0]
+dat[is.na(Model), Model := 0]
+
+dat <- melt.data.table(dat[, .(RepeatZones, Model, Target)], id.vars = c("RepeatZones"), variable.name = "Source", value.name = "PctTours")
+dat[, RepeatZones := factor(RepeatZones)]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tourrepeatstops_val.csv"))
+assign("db_tab_tt_build_tourrepeatstops_val", dat, envir = db_inputs)
+
+# Plot
+bar_plotter(dat, xvar = "RepeatZones", yvar = "PctTours",  fill = "Source", position = "dodge", xlabel = "Number of Repeated Stops (Same Zone) on the Tour", ylabel = "Percentage of Tours", png_name = "p_tt_build_tourrepeatstops_val.png")
+
+```
+
+
+
 ### Tour First Stop Arrival Time
 
 ```{r Chart_tt_tour_first_stop_time_Val}
