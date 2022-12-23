@@ -33,7 +33,7 @@ Daily trip table validation, comparing trip table characteristics such as county
 # average cluster distance
 # average stop duration
 
-dat <- gps_summary_table[,.(Field, Statistic, Observed = value)]
+dat <- cal_results$calibration_targets_tt_sim$tt_build$gps_summary_table[,.(Field, Statistic, Observed = value)]
 
 dat[Field == "Trips: Distance", Model := round(mean(cv_trips$Distance, na.rm = TRUE), 2)]
 dat[Field == "Tours: Distance", Model := round(mean(cv_trips[,.(Distance = sum(Distance)), by = TourID]$Distance),2)]
