@@ -438,6 +438,8 @@ dcast.data.table(stops_taz_ind_hh_emp,
 gps_dist <- fread('dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_CVGPS.csv')
 gps_dist_veh <- fread('dev/Data_Processed/CVGPS/Calibration Targets/BaseStopDist_vehicle_CVGPS.csv')
 gps_dist_mean <- fread('dev/Data_Processed/CVGPS/Calibration Targets/BaseStopMean_CVGPS.csv')
+gps_tour_repzones_visits <- fread('dev/Data_Processed/CVGPS/Calibration Targets/repeatZones_nVisits_CVGPS.csv')
+gps_tour_repzones_unique <- fread('dev/Data_Processed/CVGPS/Calibration Targets/repeatZones_UniqueZones_CVPGS.csv')
 
 # Add the targets to the list
 model_step_targets_cv_sim[["cv_sim_scheduledstops"]] <- list(mean_stop_distance = mean_stop_distance,
@@ -452,7 +454,9 @@ model_step_targets_cv_sim[["cv_sim_scheduledstops"]] <- list(mean_stop_distance 
                                                            stops_taz_ind_hh_emp = stops_taz_ind_hh_emp,
                                                            gps_dist = gps_dist,
                                                            gps_dist_veh = gps_dist_veh,
-                                                           gps_dist_mean = gps_dist_mean)
+                                                           gps_dist_mean = gps_dist_mean,
+                                                           gps_tour_repzones_visits = gps_tour_repzones_visits,
+                                                           gps_tour_repzones_unique = gps_tour_repzones_unique)
 
 ### cv_sim_vehicle -----------------------------------------------------------
 
