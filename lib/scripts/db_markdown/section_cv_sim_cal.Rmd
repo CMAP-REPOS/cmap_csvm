@@ -185,7 +185,7 @@ kable(dat, escape=FALSE) %>%
 ```{r Table_cv_sim_scheduledstops_base_stop_activity}
 
 # Organize
-dat <- cal_results$cv_sim_scheduledstops$submodel_extra$submodel_comparison_stop_dist[, .(Activity, Target = round(Target,2), Model = round(Model,2), Ratio = round(Ratio,2))]
+dat <- cal_results$cv_sim_scheduledstops$submodel_extra$submodel_comparison_stop_dist[, .(Activity, Target = round(Target,2), Model = round(Model,2), Ratio = round(Model/Target,2))]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_base_stop_activity_tab.csv"), row.names = FALSE)
