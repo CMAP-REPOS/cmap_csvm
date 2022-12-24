@@ -320,6 +320,26 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   submodel_comparison_stop_dist_gps_mean <- cbind(model_step_target$gps_dist_mean[, .(Target = mean)], 
                                              submodel_results[,.(Model = mean(Distance))])
   
+  
+  # model_step_target$gps_tour_repzones_unique
+  # Calculate the prpoortion of Businesses that have more than one stop generated in a TAZ
+  # Not quite the same as tours given that clustering and vehicle assignment is still to take place
+  # but most stops in the same TAZ get put in the same cluster and most stops are light vehicle
+  # the overestimate here is balanced out by the addition of intermediate stops 
+  # which often end in the same TAZ as an existing stop
+  submodel_results_bus <- submodel_results[, .(Stops = .N), keyby = .(BusID)]
+  submodel_results_viz <- submodel_results[, .(Visits = .N), keyby = .(BusID, DTAZ)][Visits > 1]
+  submodel_results_viz <- submodel_results_viz[,.(Repeats = .N), keyby = BusID]
+  submodel_results_bus[submodel_results_viz, Repeats := i.Repeats, on = "BusID"]
+  submodel_results_bus[is.na(Repeats), Repeats := 0]
+  submodel_results_rep <- submodel_results_bus[,.(Tours = .N), keyby = Repeats]
+  submodel_results_rep[, PctTours := Tours/sum(Tours)]
+  
+  # express the adjustment based on the target of tours with a repeated stop 
+  # the model is a count model so a more positive value for the intercept gives higher likelihood of repeated stops
+  submodel_comparison_rep <- cbind(model_step_target$gps_tour_repzones_unique[, .(Target = sum(Target_amongAllTours))], 
+                                   submodel_results_rep[Repeats == 0, .(Model = 1- PctTours)])
+  
   # Comparison: 
   # The difference between the model and target stops
   # should be small but is not expected to be zero due to simulation differences. 
@@ -376,33 +396,35 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
     submodel_comparison_stop_dist_gps_mean[, Ratio := Target/Model]
     submodel_comparison_stop_dist_gps_mean[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
     
+    # Repeated Stops
+    submodel_comparison_rep[, Ratio := (Target)/(Model)]
+    submodel_comparison_rep[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
+    
     # calibration approach: 
     # adjust intercept and then employment specific constants
     # then activity specifc adjustment to distance or time coeffs, then overall adjustment to distance or time coeffs
-    # 1. intercept, 
+    # then adjust count intercept to correct repeated stops in same TAZ
+    # 1. intercept in zero model, 
     # 2. employment specific constants
     # 3. distance or time by activity
     # 4. overall distance or time
-    # maximum iter is 25 so 6 complete cycles and final intercept adjustment
-    if(submodel_iter %%4 == 0){ # 4,8,12 etc iterations
+    # 5. count intercepts
+    # maximum iter is 31 so 6 complete cycles and final intercept adjustment
+    if(submodel_iter %%5 == 0){ # 5,10,15 etc iterations
       
-      # Apply the overall mean distance adjustments 
-      # to the relevant distance or time coefficient in the zero model
-      submodel_comparison_stop_dist_gps_mean <- rbind(submodel_comparison_stop_dist_gps_mean[, c("Activity", "coefficient") := .("Goods", "log(dist)")],
-                                                      submodel_comparison_stop_dist_gps_mean[, c("Activity", "coefficient") := .("Goods", "log(time)")])
-      
-      coefficients[submodel_comparison_stop_dist_gps_mean[,.(Activity, coefficient, modelstep = "zero", Adjustment)],
-                   adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+      # Apply the total adjustment to the intercept in the counts model
+      coefficients[modelstep == "count" & coefficient == "(Intercept)",
+                   adjustment := submodel_comparison_rep$Adjustment]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
       
-    } else if (submodel_iter %%4 == 1) { # 1,5,9,13 etc iterations
+    } else if (submodel_iter %%5 == 1) { # 1,6,11,16 etc iterations
       
       # Apply the total adjustment to the intercept
       coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",.(Activity, coefficient = "(Intercept)", modelstep = "zero", Adjustment)], 
                    adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
       
-    } else if (submodel_iter %%4 == 2) { # 2,6,10,14 etc iterations
+    } else if (submodel_iter %%5 == 2) { # 2,7,12,17 etc iterations
       
       # Normalize the adjustments to zero out retail adjustment (it is the zero level)
       submodel_comparison_emp_stops[submodel_comparison_emp_stops[EmpCatGroupedName == "Retail"], 
@@ -414,7 +436,7 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
                    adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
     
-    } else if (submodel_iter %%4 == 3) { # 3,7,11,15 etc iterations
+    } else if (submodel_iter %%5 == 3) { # 3,8,13,18 etc iterations
       
       # Apply the mean distance adjustments by activity
       # to the relevant distance or time coefficient in the zero model
@@ -422,6 +444,18 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
       coefficients[submodel_comparison_stop_dist[,.(Activity, coefficient, modelstep = "zero", Adjustment)],
                    adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
+      
+    } else if (submodel_iter %%5 == 4) { # 4,9,14,19 etc iterations
+      
+      # Apply the overall mean distance adjustments 
+      # to the relevant distance or time coefficient in the zero model
+      submodel_comparison_stop_dist_gps_mean <- rbind(submodel_comparison_stop_dist_gps_mean[, c("Activity", "coefficient") := .("Goods", "log(dist)")],
+                                                      submodel_comparison_stop_dist_gps_mean[, c("Activity", "coefficient") := .("Service", "log(time)")])
+      
+      coefficients[submodel_comparison_stop_dist_gps_mean[,.(Activity, coefficient, modelstep = "zero", Adjustment)],
+                   adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+      coefficients[!is.na(adjustment), estimate := estimate + adjustment]
+      
     }
     
     new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
@@ -432,12 +466,21 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
     names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
     model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
     
+    new_coefficients_count_goods = coefficients[Activity == "Goods" & modelstep == "count", estimate]
+    names(new_coefficients_count_goods) = coefficients[Activity == "Goods" & modelstep == "count", coefficient]
+    model_step_inputs$model_step_env$cv_goods_model$coefficients$count = new_coefficients_count_goods
+    
+    new_coefficients_count_service = coefficients[Activity == "Service" & modelstep == "count", estimate]
+    names(new_coefficients_count_service) = coefficients[Activity == "Service" & modelstep == "count", coefficient]
+    model_step_inputs$model_step_env$cv_service_model$coefficients$count = new_coefficients_count_service
+    
   }
   
   submodel_comparison = submodel_comparison_emp_stops
   submodel_extra = list(submodel_comparison_stop_dist = submodel_comparison_stop_dist,
                         submodel_comparison_stop_dist_ind = submodel_comparison_stop_dist_ind,
-                        submodel_comparison_stop_dist_gps_mean = submodel_comparison_stop_dist_gps_mean)
+                        submodel_comparison_stop_dist_gps_mean = submodel_comparison_stop_dist_gps_mean,
+                        submodel_comparison_rep = submodel_comparison_rep)
                          
   submodel_parameters[["cv_goods_model"]] = model_step_inputs$model_step_env$cv_goods_model
   submodel_parameters[["cv_service_model"]] = model_step_inputs$model_step_env$cv_service_model
