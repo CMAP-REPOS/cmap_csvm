@@ -18,7 +18,7 @@ source("./dev/calibration_functions.R")
 ### 1. Settings
 CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations (gets set to model specific values)
 CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
-CALIBRATION_RUN <- "Calibration_Run_10"
+CALIBRATION_RUN <- "Calibration_Run_11"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   stop("Calibration Folder Exists. Update the CALIBRATION_RUN name")
 } else {
@@ -152,7 +152,7 @@ for(model_step_num in 1:length(models)){
   for(submodel_num in 1:length(model_step_submodels)){
   #for(submodel_num in 3:length(model_step_submodels)){
     
-    #submodel_num <- 2
+    #submodel_num <- 5
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     
@@ -230,12 +230,13 @@ for(model_step_num in 1:length(models)){
     # save the updated submodel parameters
     if(!is.null(models[[model_step_num]][[submodel_name]]$estimated_models)) {
       
-      # save the calibration model objects to their respective files
-      ### TODO update if objects need to be something other than an RDS file
+      # save the calibrated model objects to their respective files
       lapply(1:length(models[[model_step_num]][[submodel_name]]$estimated_models),
              function(x) saveRDS(object = submodel_calibrated_list$submodel_parameters[[x]],
                                  file = file.path(SYSTEM_DATA_PATH,
                                                   paste0(models[[model_step_num]][[submodel_name]]$estimated_models[[x]],".RDS"))))
+      
+      ### TODO add a function here to also save the cv_settings.Rdata file if that is needed
       
       print(paste("  Calibration complete and parameters saved for", submodel_name))
       

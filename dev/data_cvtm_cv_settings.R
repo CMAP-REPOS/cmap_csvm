@@ -16,7 +16,7 @@ names(temp.envir$d_bars) <- unique(empcats$EmpCatGroupedName)
 
 # update industres in branch.limit
 temp.envir$branch.limit <- data.table(EmpCatName = sort(unique(empcats$EmpCatName)),
-                                      brlim.mu = 1.5, 
+                                      brlim.mu = 1.3, 
                                       brlim.sd = 0.5)
 
 # update number of zones samples

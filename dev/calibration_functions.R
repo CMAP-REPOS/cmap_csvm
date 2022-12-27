@@ -836,6 +836,12 @@ calibrate_cv_sim_tours =
     submodel_comparison[is.na(Target), Target := 0]
     submodel_comparison[is.na(Model), Model := 0]
     
+    # Summarize single vs multi stop
+    submodel_comparison_single_multi <- submodel_comparison[,.(TargetTours = sum(TargetTours),
+                                                               ModelTours = sum(ModelTours)),
+                                                            by = SingleMultiple]
+    submodel_comparison_single_multi[, c("Target", "Model") := .(TargetTours/sum(TargetTours), ModelTours/sum(ModelTours))]
+    
     # Comparison: 
     # The difference between the model and target shares by duration alternative
     
@@ -854,8 +860,18 @@ calibrate_cv_sim_tours =
     } else {
       # Adjust the constants in the model
       
-      if(submodel_iter %% 2 == 1){ # iter 1,3, etc
+      # if(submodel_iter %% 3 == 1){ # iter 1,4, etc
+      # 
+      #   # Adjust the clustering parameters (branch limits) 
+      #   # to create the right proportion of single vs multi stop clusters
+      #   
+      #   
+      #   
+      #   
+      # } else 
         
+        if(submodel_iter %% 2 == 1){ # iter 2,5, etc
+          
         # Alternative specific constants
         # Normalize adjustment to keep asc_bbm at zero for multiple stop tours
         # Normalize adjustment to keep asc_bbs at initial value for single stop tours
@@ -877,7 +893,7 @@ calibrate_cv_sim_tours =
         submodel_comparison_adj[SingleMultiple == "Single", 
                                 Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_bbs"]$Adjustment]
         
-      } else {  # iter 2,4, etc
+      } else {  # iter 3,6, etc
         
         # Vehicle variables
         # Normalize adjustments to base level at zero
@@ -915,6 +931,7 @@ calibrate_cv_sim_tours =
     }
     
     submodel_parameters[["cv_tours_model"]] = model_step_inputs$model_step_env$cv_tours_model
+    submodel_extra = list(submodel_comparison_single_multi = submodel_comparison_single_multi)
     
     # return a list of items to support calibration and debugging
     return(list(submodel_calibrated = submodel_calibrated,
@@ -922,7 +939,8 @@ calibrate_cv_sim_tours =
                 submodel_difference_threshold = submodel_difference_threshold,
                 submodel_criteria = submodel_criteria,
                 submodel_test = submodel_test,
-                submodel_parameters = submodel_parameters))
+                submodel_parameters = submodel_parameters,
+                submodel_extra = submodel_extra))
     
   }
 
