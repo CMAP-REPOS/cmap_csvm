@@ -992,8 +992,9 @@ calibrate_cv_sim_scheduledtrips =
       submodel_calibrated <- TRUE
     } else {
       # Adjust the constants in the model
-      
-      if(submodel_iter %% 2 == 1){ # iter 1,3, etc
+      # More (2/3) iterations adjusting the overall constants as there are a lot of them
+      # End with final iterations (15th) adjusting overall constants
+      if(submodel_iter %% 3 %in% c(0,1)){ # iter 1,3,4,6 etc
         
         # Alternative specific constants
         # Normalize adjustment to keep asc_overnight at zero
@@ -1010,7 +1011,7 @@ calibrate_cv_sim_scheduledtrips =
         
         submodel_comparison_adj[, Adjustment := Adjustment - submodel_comparison_adj[coefficient == "asc_overnight"]$Adjustment]
         
-      } else {  # iter 2,4, etc
+      } else {  # iter 2,5, etc
         
         # Vehicle variables
         # Normalize adjustments to base level at zero

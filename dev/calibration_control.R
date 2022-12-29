@@ -18,7 +18,7 @@ source("./dev/calibration_functions.R")
 ### 1. Settings
 CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations (gets set to model specific values)
 CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
-CALIBRATION_RUN <- "Calibration_Run_11"
+CALIBRATION_RUN <- "Calibration_Run_12"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   stop("Calibration Folder Exists. Update the CALIBRATION_RUN name")
 } else {
@@ -71,7 +71,7 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                                                           submodel_results_name = "scheduledTrips",
                                                           last_output_step = "cv_sim_tours",
                                                           estimated_models = list(cv_arrival_model = "cv_arrival_model"),
-                                                          max_iterations = 10),
+                                                          max_iterations = 15),
                              cv_sim_intermediatestops = list(require_calibration = TRUE,
                                                              submodel_results_name = "allTrips",
                                                              last_output_step = "cv_sim_scheduledtrips",
