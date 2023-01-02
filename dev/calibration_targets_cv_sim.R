@@ -31,11 +31,19 @@ for(n in ls(cv_inputs, all.names=TRUE)) assign(n, get(n, cv_inputs), environment
 # Skims
 skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
 
+### Import SEMCOG data, careful to distinguish SEMCOG defs from CMAP data
+
 #EMPCAT
-NAICS3_to_EmpCats <- read.csv('dev/Data_Processed/SEMCOG_Data/NAICS3_SEMCOGEmpCats_CMAP.csv')
+NAICS3_to_EmpCats <- fread('dev/Data_Processed/SEMCOG_Data/NAICS3_SEMCOGEmpCats_CMAP.csv')
 
 #TAZSocioEconomics
-TAZSocioEconomics <- read.csv('dev/Data_Processed/SEMCOG_Data/TAZSocioEconomics.csv')
+TAZSocioEconomicsSEMCOG <- fread('dev/Data_Processed/SEMCOG_Data/TAZSocioEconomics.csv')
+
+#TAZSystem
+TAZ_System_SEMCOG <- fread('dev/Data_Processed/SEMCOG_Data/TAZ_System.csv')
+
+# Skims
+skims_tod_semcog <- readRDS('dev/Data_Processed/SEMCOG_Data/skims_avg.rds')
 
 # Datasets processed for estimation
 # Stop Counts (SEMCOG data)
@@ -121,24 +129,6 @@ rm(good_stop_counts, service_stop_counts)
 stop_counts[, NAICS2 := as.integer(NAICS2)]
 stop_counts[, NAICS3 := as.integer(NAICS3)]
 
-
-# looking for NAICS3_to_EmpCats but now we have a new file
-# no longer needed?
-# stop_counts[
-#   NAICS3_to_EmpCats[, list(NAICS2 = NAICSn2n3, EmpCatName, EmpCatDesc)],
-#   model_emp_cat_n2 := i.EmpCatName,
-#   on = "NAICS2"]
-# 
-# stop_counts[
-#   NAICS3_to_EmpCats[, list(NAICS3 = NAICSn2n3, EmpCatName, EmpCatDesc)],
-#   model_emp_cat_n3 := i.EmpCatName,
-#   on = "NAICS3"]
-# 
-# stop_counts[, 
-#             model_emp_cat := 
-#               ifelse(!is.na(model_emp_cat_n2), model_emp_cat_n2, model_emp_cat_n3)]
-# stop_counts[, c("model_emp_cat_n2", "model_emp_cat_n3") := NULL]
-
 # Summaries by stop type
 # Mean firm-to-stop distance, by industry group, 
 mean_stop_distance <- stop_counts[,.(Stops = sum(STOPS), 
@@ -158,24 +148,20 @@ stop_distance_dist <- stop_counts[,.(Stops = sum(STOPS),
                WeightedStops = sum(WEIGHTED_STOPS)), keyby = .(Activity, distance_bin)][, c("PctStops", "Target") := .(Stops/sum(Stops), WeightedStops/sum(WeightedStops)), by = Activity]
 
 # Number of stops generated per establishment employee.  
-# Use weighted stops and total employment in the model region in that industry
-library(tidyverse)
-TAZLandUseCVTM <- TAZLandUseCVTM %>% 
-  select(-HH)
-
+# Use weighted stops and total employment in the SEMCOG model region in that industry
 
 #going to crop the NEmp_ off of the front
-emp_ind <- melt.data.table(TAZLandUseCVTM, #old reference 
-                id.vars = c("TAZ", 'Mesozone', 'CountyFIPS'),
-                variable.name = "EmpCatGroupedName",
+TAZEmpSEMCOG <- copy(TAZSocioEconomicsSEMCOG)[,c("HH", "POP") := NULL]
+emp_ind <- melt.data.table(TAZEmpSEMCOG,
+                id.vars = c("TAZ"),
+                variable.name = "EmpCatName",
                 value.name = "Employment")
 
-library(tidyverse)
-emp_ind <- emp_ind %>% 
-  mutate(EmpCatGroupedName = str_sub(EmpCatGroupedName, start = 6))
+emp_ind[NAICS3_to_EmpCats, EmpCatGroupedName := CMAPGroup, on = "EmpCatName"]
 
-# emp_ind[UEmpCats, IndustryCat := i.EmpCatGroupedName, on = "EmpCatName"]
-emp_ind_total <- emp_ind[TAZ %in% BASE_TAZ_INTERNAL,.(Employment = sum(Employment)), 
+# sum by EmpCatGroupedName for just the internal SEMCOG TAZs
+emp_ind_total <- emp_ind[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
+                         .(Employment = sum(Employment)), 
                          by = EmpCatGroupedName]
 
 emp_stops  <- merge(emp_ind_total,
@@ -191,13 +177,13 @@ emp_stops[, StopsEmp := WeightedStops/Employment]
 
 # summarize establishments
 
-#changed based_model_region to BASE_TAZ_CMAP - Ricky
-est <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,.(dist = min(dist)), by = .(SITE_TAZID, SITEID, IndustryCat, TAZ)]
+est <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
+                   .(dist = min(dist)), by = .(SITE_TAZID, SITEID, IndustryCat, TAZ)]
 # add TAZ area
 #assuming sqmi is the same as AREA - RICKY 
-est[TAZ_System[,.(TAZ, AREA = sqmi)], AREA := i.AREA, on = "TAZ"]
+est[TAZ_System_SEMCOG[,.(TAZ, AREA)], AREA := i.AREA, on = "TAZ"]
 # add SE data
-est[TAZSocioEconomics, c("HH", "POP") := .(i.HH, i.POP), on = "TAZ"]
+est[TAZSocioEconomicsSEMCOG, c("HH", "POP") := .(i.HH, i.POP), on = "TAZ"]
 est[emp_ind[,.(Employment = sum(Employment)), by = TAZ],
     NEmp_Total := i.Employment, on = "TAZ"]
 
@@ -253,7 +239,7 @@ stop_counts[est_density[DistThresh == "1 mile"],
             on = "SITEID"]
 
 # 1 mile, HH
-mean_stop_distance_dens1hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens1hh <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                           .(Stops = sum(STOPS), 
                                      MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                      WeightedStops = sum(WEIGHTED_STOPS),
@@ -261,7 +247,7 @@ mean_stop_distance_dens1hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
                                      keyby = .(Activity, DensHHbin)]
 
 # 1 mile, EMP
-mean_stop_distance_dens1emp <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens1emp <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                            .(Stops = sum(STOPS), 
                                              MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                              WeightedStops = sum(WEIGHTED_STOPS),
@@ -274,7 +260,7 @@ stop_counts[est_density[DistThresh == "2 miles"],
             on = "SITEID"]
 
 # 2 mile, HH
-mean_stop_distance_dens2hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens2hh <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                           .(Stops = sum(STOPS), 
                                              MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                              WeightedStops = sum(WEIGHTED_STOPS),
@@ -282,7 +268,7 @@ mean_stop_distance_dens2hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
                                           keyby = .(Activity, DensHHbin)]
 
 # 2 mile, EMP
-mean_stop_distance_dens2emp <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens2emp <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                            .(Stops = sum(STOPS), 
                                               MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                               WeightedStops = sum(WEIGHTED_STOPS),
@@ -295,7 +281,7 @@ stop_counts[est_density[DistThresh == "5 miles"],
             on = "SITEID"]
 
 # 5 mile, HH
-mean_stop_distance_dens5hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens5hh <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                           .(Stops = sum(STOPS), 
                                              MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                              WeightedStops = sum(WEIGHTED_STOPS),
@@ -303,7 +289,7 @@ mean_stop_distance_dens5hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
                                           keyby = .(Activity, DensHHbin)]
 
 # 5 mile, EMP
-mean_stop_distance_dens5emp <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens5emp <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                            .(Stops = sum(STOPS), 
                                               MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                               WeightedStops = sum(WEIGHTED_STOPS),
@@ -316,7 +302,7 @@ stop_counts[est_density[DistThresh == "10 miles"],
             on = "SITEID"]
 
 # 10 mile, HH
-mean_stop_distance_dens10hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens10hh <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                            .(Stops = sum(STOPS), 
                                              MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                              WeightedStops = sum(WEIGHTED_STOPS),
@@ -324,7 +310,7 @@ mean_stop_distance_dens10hh <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
                                            keyby = .(Activity, DensHHbin)]
 
 # 10 mile, EMP
-mean_stop_distance_dens10emp <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens10emp <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                             .(Stops = sum(STOPS), 
                                               MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                               WeightedStops = sum(WEIGHTED_STOPS),
@@ -333,7 +319,7 @@ mean_stop_distance_dens10emp <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
 
 # split by industry
 # 10 mile, HH
-mean_stop_distance_dens10hh_ind <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens10hh_ind <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                                .(Stops = sum(STOPS), 
                                               MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                               WeightedStops = sum(WEIGHTED_STOPS),
@@ -351,7 +337,7 @@ dcast.data.table(mean_stop_distance_dens10hh_ind,
                  value.var = "Stops")
 
 # 10 mile, EMP
-mean_stop_distance_dens10emp_ind <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+mean_stop_distance_dens10emp_ind <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                                                 .(Stops = sum(STOPS), 
                                                MeanDistance = sum(dist * STOPS)/sum(STOPS),
                                                WeightedStops = sum(WEIGHTED_STOPS),
@@ -369,11 +355,11 @@ dcast.data.table(mean_stop_distance_dens10emp_ind,
                  value.var = "Stops")
 
 # Look at stops per TAZ based on TAZ employment and HH
-stops_taz <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+stops_taz <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                          .(Stops = sum(STOPS), WeightedStops = sum(WEIGHTED_STOPS)), 
                          keyby = .(TAZ, Activity)]
 
-stops_taz[TAZSocioEconomics, c("HH", "POP") := .(i.HH, i.POP), on = "TAZ"]
+stops_taz[TAZSocioEconomicsSEMCOG, c("HH", "POP") := .(i.HH, i.POP), on = "TAZ"]
 stops_taz[emp_ind[,.(Employment = sum(Employment)), by = TAZ],
               NEmp_Total := i.Employment, on = "TAZ"]
 stops_taz[, StopsHH := ifelse(HH > 0, WeightedStops/HH, 0)]
@@ -400,10 +386,10 @@ stop_taz_hh_emp <- stops_taz[,.(Stops = sum(Stops),
              HH_Emp = sum(HH_Emp)),
           keyby = .(Activity, HH_Emp_bin)][, Rate := WeightedStops/HH_Emp][]
 
-stops_taz_ind <- stop_counts[TAZ %in% BASE_TAZ_INTERNAL,
+stops_taz_ind <- stop_counts[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                              .(Stops = sum(STOPS), WeightedStops = sum(WEIGHTED_STOPS)), 
                              keyby = .(TAZ, Activity, IndustryCat)]
-stops_taz_ind[TAZSocioEconomics, c("HH", "POP") := .(i.HH, i.POP), on = "TAZ"]
+stops_taz_ind[TAZSocioEconomicsSEMCOG, c("HH", "POP") := .(i.HH, i.POP), on = "TAZ"]
 stops_taz_ind[emp_ind[,.(Employment = sum(Employment)), by = TAZ],
           NEmp_Total := i.Employment, on = "TAZ"]
 stops_taz_ind[, StopsHH := ifelse(HH > 0, WeightedStops/HH, 0)]
@@ -642,8 +628,8 @@ cv_stopduration_data[, Activity := ifelse(activity_deliver + activity_pickup > 0
                                             ifelse(activity_return > 0, "Return", "Intermediate")))]
 #need to get new employment groups
 # Industry
-setnames(cv_stopduration_data, "NAICS2", "EmpCatName")
-cv_stopduration_data[UEmpCats, IndustryCat := i.EmpCatGroupedName, on = "EmpCatName"]
+setnames(cv_stopduration_data, "model_emp_cat", "EmpCatName")
+cv_stopduration_data[NAICS3_to_EmpCats, IndustryCat := i.CMAPGroup, on = "EmpCatName"]
 
 # Duration shares: weighted percent of durations
 duration_stops <- cv_stopduration_data[,.(Stops = .N, FINAL_FACTOR = sum(FINAL_FACTOR)), 
@@ -941,7 +927,7 @@ tour_duration_vehicle <- cv_tours_data[!is.na(tour_type_choice) & tour_type_choi
 dcast.data.table(tour_duration_vehicle,
                  duration_bin ~ Vehicle,
                  fun.aggregate = sum,
-                 value.var = "Target")GPS
+                 value.var = "Target")
 
 # Sample sizes (number of tours) by vehicle
 dcast.data.table(tour_duration_vehicle,
@@ -1161,7 +1147,7 @@ cv_intermediate_data[, veh_class_name := factor(veh_choice, labels = c("Light" ,
 
 # Industry
 setnames(cv_intermediate_data, "model_emp_cat", "EmpCatName")
-cv_intermediate_data[UEmpCats, IndustryCat := i.EmpCatGroupedName, on = "EmpCatName"]
+cv_intermediate_data[NAICS3_to_EmpCats, IndustryCat := i.EmpCatGroupedName, on = "EmpCatName"]
   
 # Add the total trip distance
 cv_intermediate_data[cv_intermediate_data[STOP_SEQ > 1, 
