@@ -320,6 +320,11 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   submodel_comparison_stop_dist_gps_mean <- cbind(model_step_target$gps_dist_mean[, .(Target = mean)], 
                                              submodel_results[,.(Model = mean(Distance))])
   
+  # Fator the the Target value to account for intermediate stops reducing the mean distance when added later
+  # the observed data already includes the intermediate stops so is too short
+  # distance is running at about 15% too low
+  DISTANCE_CORRECTION = 1.15
+  submodel_comparison_stop_dist_gps_mean[, Target := Target * DISTANCE_CORRECTION]
   
   # model_step_target$gps_tour_repzones_unique
   # Calculate the prpoortion of Businesses that have more than one stop generated in a TAZ

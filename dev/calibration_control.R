@@ -18,7 +18,7 @@ source("./dev/calibration_functions.R")
 ### 1. Settings
 CALIBRATION_MAX_ITER <- 8 # Maximum number of iterations (gets set to model specific values)
 CALIBRATION_RESET_TO_ESTIMATED <- TRUE # whether to copy over original estimated models to reset the model
-CALIBRATION_RUN <- "Calibration_Run_13"
+CALIBRATION_RUN <- "Calibration_Run_14"
 if(dir.exists(file.path("./dev/Calibration", CALIBRATION_RUN))){
   stop("Calibration Folder Exists. Update the CALIBRATION_RUN name")
 } else {
@@ -152,7 +152,7 @@ for(model_step_num in 1:length(models)){
   for(submodel_num in 1:length(model_step_submodels)){
   #for(submodel_num in 3:length(model_step_submodels)){
     
-    #submodel_num <- 5
+    #submodel_num <- 2
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     

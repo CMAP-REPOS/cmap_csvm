@@ -26,6 +26,13 @@ for(n in ls(firm_inputs, all.names=TRUE)) assign(n, get(n, firm_inputs), environ
 
 model_step_targets_firm_sim <- list()
 
+### establishment data
+Establishments[,sum(est), keyby = CountyFIPS]
+Establishments[,sum(est)]
+# emp/est
+TAZEmployment[,sum(Employees.SE)]/Establishments[,sum(est)]
+
+
 ### firm_sim_taz_land_use ---------------------------------------------------------------------------------
 
 # Calibration of the firm_sim_taz_land_use step:
