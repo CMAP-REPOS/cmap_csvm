@@ -18,6 +18,43 @@ Highlights {data-width=150}
 
 Daily trip table validation, comparing trip table characteristics such as county to county OD patterns with those derived from observed data such as truck GPS data.
 
+### VMT Validation
+
+```{r Chart_tt_val_vmt_tab}
+# # Organize
+# # summary/mean values in a table with measure, model, target
+# 
+# # average trip distance
+# # average tour distance
+# # average tour time
+# # average stops per tour (excluding return stop)
+# # percent single stop tours (vs multistop)
+# # average base to stop distance
+# # average cluster distance
+# # average stop duration
+# 
+# dat <- cal_results$calibration_targets_tt_sim$tt_build$gps_summary_table[,.(Field, Statistic, Observed = value)]
+# 
+# dat[Field == "Trips: Distance", Model := round(mean(cv_trips$Distance, na.rm = TRUE), 2)]
+# dat[Field == "Tours: Distance", Model := round(mean(cv_trips[,.(Distance = sum(Distance)), by = TourID]$Distance),2)]
+# dat[Field == "Tours: Number of Stops (Excluding Return to Base)", Model := round(mean(cv_trips[Activity != "Return",.(NumStops = .N), by = TourID]$NumStops),2)]
+# dat[Field == "Tours: Single Stop Tours (vs. Multi-Stop)", Model := round((cv_trips[Activity != "Return",.N,by = TourID][N==1,.N])/uniqueN(cv_trips$TourID),2)]
+# dat[Field == "Trips: Base-to-StopDistance", Model := round(mean(cv_trips[Activity != "Return"]$Distance.Start),2)]
+# dat[Field == "Tours: Cluster Distance", Model := round(mean(cv_trips_cluster$MeanDist),2)]
+# dat[Field == "Trips: Stop Duration", Model := round(mean(cv_trips[Activity != "Return"]$StopDuration),2)]
+# dat[Field == "Tours: Tour Duration", Model := round(mean(cv_trips[,.(TourDuration = sum(TravelTime, StopDuration)), by = TourID]$TourDuration),2)]
+# 
+# # Save
+# fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_val_summary_tab.csv"))
+# assign("db_tab_tt_build_val_summary_tab", dat, envir = db_inputs)
+# 
+# # Table
+# kable(dat, escape=FALSE, digits = 3) %>%
+#   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+
+```
+
+
 ### Validation Summary
 
 ```{r Chart_tt_val_summary_tab}
