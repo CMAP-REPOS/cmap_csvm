@@ -11,7 +11,7 @@ editor_options:
 Validation {data-navmenu="Trip Tables"}
 ============================================
 
-Highlights {data-width=150}
+Highlights {data-width=250}
 --------------------------------------------
 
 **Trip Tables: Validation**
@@ -21,39 +21,27 @@ Daily trip table validation, comparing trip table characteristics such as county
 ### VMT Validation
 
 ```{r Chart_tt_val_vmt_tab}
-# # Organize
-# # summary/mean values in a table with measure, model, target
-# 
-# # average trip distance
-# # average tour distance
-# # average tour time
-# # average stops per tour (excluding return stop)
-# # percent single stop tours (vs multistop)
-# # average base to stop distance
-# # average cluster distance
-# # average stop duration
-# 
-# dat <- cal_results$calibration_targets_tt_sim$tt_build$gps_summary_table[,.(Field, Statistic, Observed = value)]
-# 
-# dat[Field == "Trips: Distance", Model := round(mean(cv_trips$Distance, na.rm = TRUE), 2)]
-# dat[Field == "Tours: Distance", Model := round(mean(cv_trips[,.(Distance = sum(Distance)), by = TourID]$Distance),2)]
-# dat[Field == "Tours: Number of Stops (Excluding Return to Base)", Model := round(mean(cv_trips[Activity != "Return",.(NumStops = .N), by = TourID]$NumStops),2)]
-# dat[Field == "Tours: Single Stop Tours (vs. Multi-Stop)", Model := round((cv_trips[Activity != "Return",.N,by = TourID][N==1,.N])/uniqueN(cv_trips$TourID),2)]
-# dat[Field == "Trips: Base-to-StopDistance", Model := round(mean(cv_trips[Activity != "Return"]$Distance.Start),2)]
-# dat[Field == "Tours: Cluster Distance", Model := round(mean(cv_trips_cluster$MeanDist),2)]
-# dat[Field == "Trips: Stop Duration", Model := round(mean(cv_trips[Activity != "Return"]$StopDuration),2)]
-# dat[Field == "Tours: Tour Duration", Model := round(mean(cv_trips[,.(TourDuration = sum(TravelTime, StopDuration)), by = TourID]$TourDuration),2)]
-# 
-# # Save
-# fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_val_summary_tab.csv"))
-# assign("db_tab_tt_build_val_summary_tab", dat, envir = db_inputs)
-# 
-# # Table
-# kable(dat, escape=FALSE, digits = 3) %>%
-#   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+# Organize
+
+dat <- cal_results$calibration_targets_tt_sim$tt_build$vmt_est_fhwa[,.(Vehicle, Total_VMT = TotalVMT, Observed_CSVM_VMT = CSV_Int_VMT)]
+
+dat[tmh_vtods[,.(Model_VMT = sum(VMT)), keyby = .(Vehicle)],
+    Model_VMT := i.Model_VMT, on = "Vehicle"]
+
+dat <- add_totals(dat, rowtotal = FALSE)                  
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_val_vmt_tab.csv"))
+assign("db_tab_tt_build_val_vmt_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))  %>%
+  row_spec(nrow(dat), background = "#f2f2f2")
 
 ```
 
+> Total_VMT is estimated commercial vehicle VMT based on FHWA reported average daily VMT by vehicle type for the Chicago IL-IN urban area in 2017, factored up to the 21 county model region with light vehicle VMT allocated to commercial based on the proportion from the SEMCOG region and factored to average weekday. Observed_CSVM_VMT is the proportion of the VMT that is internal to internal and is from an industry covered by the model (i.e, excluding freight model covered industries, manufacturing and transportation and warehousing).
 
 ### Validation Summary
 
@@ -92,7 +80,7 @@ kable(dat, escape=FALSE, digits = 3) %>%
 ```
 
 
-Column {data-width=600, .tabset}
+Column {data-width=500, .tabset}
 --------------------------------------------
 
 ### County Origins (All Vehicles) 
