@@ -35,6 +35,9 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_val_vmt_tab.csv"))
 assign("db_tab_tt_build_val_vmt_tab", dat, envir = db_inputs)
 
 # Table
+cols <- names(dat)[2:ncol(dat)]
+dat[, (cols) := lapply(.SD, format, digits = 0, big.mark = ",", scientific = FALSE), .SDcols = cols]
+
 kable(dat, escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))  %>%
   row_spec(nrow(dat), background = "#f2f2f2")
