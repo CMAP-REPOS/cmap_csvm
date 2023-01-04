@@ -150,7 +150,6 @@ stop_distance_dist <- stop_counts[,.(Stops = sum(STOPS),
 # Number of stops generated per establishment employee.  
 # Use weighted stops and total employment in the SEMCOG model region in that industry
 
-#going to crop the NEmp_ off of the front
 TAZEmpSEMCOG <- copy(TAZSocioEconomicsSEMCOG)[,c("HH", "POP") := NULL]
 emp_ind <- melt.data.table(TAZEmpSEMCOG,
                 id.vars = c("TAZ"),
