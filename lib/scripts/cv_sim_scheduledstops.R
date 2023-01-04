@@ -90,10 +90,12 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
   
   # Attach zone attributes
   
-  ### TODO update subsetting of TAZLandUseCVTM to match with updated model object
   cols <- c("TAZ", "HH", names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))])
   names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))]
   firmStops.Service <- merge(firmStops.Service, TAZLandUseCVTM[,cols, with = FALSE], by.x = "DTAZ", by.y = "TAZ")
+  
+  # Scenario Specific adjustment of hurdle constant
+  cv_service_model$coefficients$zero["(Intercept)"] <- cv_service_model$coefficients$zero["(Intercept)"] + asc_service_adj
   
   # Simulate number of scheduled stops
   firmStops.Service[, NStops := as.integer(montecarlo.predict(object = cv_service_model, newdata = .SD, at = hurdle_support))]
@@ -120,9 +122,11 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
   
   # Attach zone attributes
   
-  ### TODO update subsetting of TAZLandUseCVTM to match with updated model object
   cols <- c("TAZ", "HH", names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))])
   names(TAZLandUseCVTM)[grepl("NEmp", names(TAZLandUseCVTM))]
+  
+  # Scenario Specific adjustment of hurdle constant
+  cv_goods_model$coefficients$zero["(Intercept)"] <- cv_goods_model$coefficients$zero["(Intercept)"] + asc_goods_adj
   
   firmStops.Goods <- merge(firmStops.Goods, TAZLandUseCVTM[,cols, with = FALSE], by.x = "DTAZ", by.y = "TAZ")
   

@@ -31,6 +31,9 @@ cv_sim_process_inputs <- function(envir) {
   ScenarioFirms <- firm_sim_results[["ScenarioFirms"]][!is.na(TAZ)]
   
   ### Load scenario input files
+  
+  scenario.files <- c(scenario_configuration = file.path(SCENARIO_INPUT_PATH, "scenario_adjustments.R"))
+  loadInputs(files = scenario.files, envir = envir)
 
   ### Load skims
   

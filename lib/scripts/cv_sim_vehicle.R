@@ -80,7 +80,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
       ### List of utilities: these must use the same names as in mnl_settings, order is irrelevant
       V = list()
       V[['light']]  = 
-        asc_light +
+        asc_light + asc_vehicle_light_adj +
         beta_v1_industry_retail *	industry_retail +
         beta_v1_industry_wholesale * industry_wholesale +
         beta_v1_industry_construction *	industry_construction +
@@ -99,7 +99,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v1_dist_20_p  * dist_20_p 
       
       V[['medium']] = 
-        asc_medium + 
+        asc_medium + asc_vehicle_medium_adj +
         beta_v2_industry_retail *	industry_retail +
         beta_v2_industry_wholesale * industry_wholesale +
         beta_v2_industry_construction *	industry_construction +
@@ -117,7 +117,7 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
         beta_v2_dist_10_20 * dist_10_20 + 
         beta_v2_dist_20_p  * dist_20_p 
       
-      V[['heavy']]  = asc_heavy
+      V[['heavy']]  = asc_heavy + asc_vehicle_heavy_adj
       
       ### Define settings for MNL model component
       mnl_settings = list(
