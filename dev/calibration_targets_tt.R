@@ -8,6 +8,8 @@ TAZ_System <- fread(file.path(SYSTEM_DATA_PATH, "TAZ_System.csv"))
 
 skims_tod <- readRDS(file.path(SCENARIO_OUTPUT_PATH, "skims_tod.rds"))
 
+NAICS3_to_EmpCats <- fread(file.path(SYSTEM_DEV_DATA_PATH, "SEMCOG_Data", "NAICS3_SEMCOGEmpCats_CMAP.csv"))
+
 # Tables derived from GPS data
 countyod_all <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                             "CVGPS",
@@ -132,6 +134,13 @@ gps_tour_repzones_unique <- fread(file.path(SYSTEM_DEV_DATA_PATH,
                                             "Calibration Targets",
                                             "repeatZones_UniqueZones_CVPGS.csv"))
 
+# VMT Targets
+
+semcog_industry_veh_od <- fread(file.path(SYSTEM_DEV_DATA_PATH,
+                                          "SEMCOG_Data",
+                                          "data_proc_cvs_trips_vmt_ind_veh_ie.csv"))
+
+
 ### DEVELOP LIST OF TARGET TABLES  ------------------------------------------------------------------------
 
 model_step_targets_tt_sim <- list()
@@ -145,11 +154,45 @@ model_step_targets_tt_sim <- list()
 # County to county trips by vehicle type
 # Similar measures for VMT and VHT
 
-
 # Trip length frequencies for time and distance by
 # Overall
 # vehicle type
 # Region (e.g., Chicago, Cook (Not Chicago), Rest of CMAP, Rest of Region)
+
+
+# VMT Targets
+# Need targets by vehicle type based on the FHWA data 
+# discounted for transport industry sector and without IX/XI/XX
+
+semcog_industry_veh_od[NAICS3_to_EmpCats,
+                       EmpCatGroupedName := i.CMAPGroup,
+                       on = "EmpCatName"]
+
+semcog_industry_veh_od <- semcog_industry_veh_od[,.(NumberTrips = sum(NumberTrips),
+                                                    ExpandedTrips = sum(ExpandedTrips),
+                                                    VMT = round(sum(VMT))), 
+                                                 keyby = .(EmpCatGroupedName, VehClassLMH, ODGroup)]
+
+# Calculate total by vehicle for transport_Industry vs other industries and internal vs external
+semcog_industry_veh_od[, Industry_Included := ifelse(EmpCatGroupedName == "Transport_Industry", "Exclude", "Include")]
+
+semcog_indinc_intext <- semcog_industry_veh_od[,.(NumberTrips = sum(NumberTrips),
+                                                  ExpandedTrips = sum(ExpandedTrips),
+                                                  VMT = round(sum(VMT))), 
+                                               keyby = .(VehClassLMH, ODGroup,Industry_Included)]
+
+semcog_indinc_intext[, PctVMT := VMT/sum(VMT), by = VehClassLMH]
+semcog_indinc_intext[Industry_Included == "Include" & ODGroup == "Internal Trip"]
+### TODO check the definition of the external trips...are too high a proportion of trips account for as external?
+
+# Estimates of VMT by class based on FHWA data
+vmt_est_fhwa <- data.table(Vehicle = c("Light", "Medium", "Heavy"),
+                           TotalVMT = c(20912265,	 9195910, 12597821))
+
+vmt_est_fhwa[semcog_indinc_intext[Industry_Included == "Include" & ODGroup == "Internal Trip", .(Vehicle = VehClassLMH, PctVMT)],
+             VMTFactor := i.PctVMT, on = "Vehicle"] 
+
+vmt_est_fhwa[, CSV_Int_VMT := TotalVMT * VMTFactor]
 
 # Add the target to the list 
 model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
@@ -173,7 +216,8 @@ model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
                                                 tour_cluster = tour_cluster,
                                                 gps_summary_table = gps_summary_table,
                                                 gps_tour_repzones_visits = gps_tour_repzones_visits,
-                                                gps_tour_repzones_unique = gps_tour_repzones_unique)
+                                                gps_tour_repzones_unique = gps_tour_repzones_unique,
+                                                vmt_est_fhwa = vmt_est_fhwa)
 
 ### SAVE THE LIST OF TARGETS --------------------------------------------------------------------------------
 
