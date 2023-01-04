@@ -337,12 +337,6 @@ firmStopsVeh <- cv_sim_vehicle(database = firmStops,
                                skims = skims_tod[, .(OTAZ, DTAZ, dist = dist.avg)],
                                model = cv_vehicle_model)
 gc()
-###
-#will this model allow for heavy vehicles? Given there were none in the GPS data?
-#-RICKY 9/19/22
-#modify code for no heavy vehicles via the mode specific constants - Colin 9/20/2022
-
-###
 
 # Simulate stop duration
 firmStopsVehDur <- cv_sim_stopduration(database = firmStopsVeh, 
