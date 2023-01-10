@@ -183,11 +183,159 @@ semcog_indinc_intext <- semcog_industry_veh_od[,.(NumberTrips = sum(NumberTrips)
 
 semcog_indinc_intext[, PctVMT := VMT/sum(VMT), by = VehClassLMH]
 semcog_indinc_intext[Industry_Included == "Include" & ODGroup == "Internal Trip"]
-### TODO check the definition of the external trips...are too high a proportion of trips account for as external?
 
 # Estimates of VMT by class based on FHWA data
-vmt_est_fhwa <- data.table(Vehicle = c("Light", "Medium", "Heavy"),
-                           TotalVMT = c(20912265,	 9195910, 12597821))
+# Read in from the FHWA spreadsheets and process here to create targets
+
+# From FHWA HS 2017
+# https://www.fhwa.dot.gov/policyinformation/statistics/2017/hm71.cfm
+hm71 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                  sheet = "UA VMT", startRow = 15))
+vm2 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                            sheet = "Annual VMT", startRow = 15))
+vm4urban <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                                 sheet = "Pct Veh Urban", startRow = 15))
+
+# UA definition 
+ua <- fread(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "ua_county_rel_10.txt"))
+ua[, CountyFIPS := STATE * 1000 + COUNTY]
+
+# semcog model report to estimate share of commercial vehicles as proportion of all passenger
+# (model calibrated to combination of Urban area VMT and Expanded SEMCOG CVS data)
+
+semcog_vmt_model <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                                         sheet = "SEMCOG", rows = 58:70))
+
+# Process for the CMAP/Chicago region
+# Records representing Chicago IL-IN urban area
+chicago <- ua[UANAME == "Chicago, IL--IN Urbanized Area"]
+
+# Rest of the model region
+cmap_fips <- unique(TAZ_System$CountyFIPS)
+cmap <- ua[CountyFIPS %in% cmap_fips]
+cmap[, CHICAGO := ifelse(UANAME == "Chicago, IL--IN Urbanized Area", "In_UA", "Outside_UA")]
+cmap_summary <- cmap[,.(POPPT = sum(POPPT), HUPT = sum(HUPT)), keyby = .(CHICAGO) ][, POP_Pct := POPPT/sum(POPPT)][]
+
+chicago_vmt <- hm71[UrbanizedArea == "Chicago, IL--IN"]$Dvmt_Total * 1000
+cmap_summary[, DVMT := ifelse(CHICAGO =="In_UA", 
+                              chicago_vmt, 
+                              chicago_vmt/cmap_summary[CHICAGO == "In_UA"]$POP_Pct * POP_Pct)]
+
+fwrite(cmap_summary, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "cmap_summary.csv"))
+
+# Bench mark against SEMCOG 
+detroit <- ua[UANAME == "Detroit, MI Urbanized Area"]
+semcog_fips <- unique(detroit[CNAME != "Lapeer County"]$CountyFIPS)
+semcog <- ua[CountyFIPS %in% semcog_fips]
+semcog[, DETROIT := ifelse(UANAME == "Detroit, MI Urbanized Area", "In_UA", "Outside_UA")]
+semcog_summary <- semcog[,.(POPPT = sum(POPPT), HUPT = sum(HUPT)), keyby = .(DETROIT) ][, POP_Pct := POPPT/sum(POPPT)][]
+
+# A tiny part of the UA is in Lapeer County, outside the SEMCOG model area
+# but it is negligible (71 people) so ignore
+detroit[CNAME == "Lapeer County"]
+
+detroit_vmt <- hm71[UrbanizedArea == "Detroit, MI"]$Dvmt_Total * 1000
+semcog_summary[, DVMT := ifelse(DETROIT =="In_UA", 
+                                detroit_vmt, 
+                                detroit_vmt/semcog_summary[DETROIT == "In_UA"]$POP_Pct * POP_Pct)]
+
+fwrite(semcog_summary, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "semcog_summary.csv"))
+
+# Allocation factors for VMT to vehicle types
+# Calculate Annual VMT by Interstate, Other Arterials, and Other roads
+vm2 <- vm2[State %in% c("Illinois", "Michigan"),.(State, Urban_Interstate, Urban_OtherFreeways, Urban_OtherPrincipalArterials,
+                                                  Urban_MinorArterial, Urban_MajorCollector, Urban_MinorCollector,         
+                                                  Urban_Local, Urban_Total)]
+
+vm2[, Urban_OtherArterials := Urban_OtherFreeways + Urban_OtherPrincipalArterials + Urban_MinorArterial]
+vm2[, Urban_Other := Urban_MajorCollector + Urban_MinorCollector + Urban_Local]
+vm2 <- melt.data.table(vm2,
+                       id.vars = "State",
+                       variable.name = "Area_Road",
+                       value.name = "Avmt")
+vm2[, c("Area", "Road") := tstrsplit(Area_Road, split = "_", fixed = TRUE)]
+
+# Allocate VMT by vehicle class
+vm4urban <- melt.data.table(vm4urban[State %in% c("Illinois", "Michigan")],
+                            id.vars = "State",
+                            variable.name = "Road_Vehicle",
+                            value.name = "PctVmt")
+vm4urban[, PctVmt := PctVmt/100]
+vm4urban[, c("Road", "Vehicle") := tstrsplit(Road_Vehicle, split = "_", fixed = TRUE)]
+vm4urban[vm2, Avmt := i.Avmt, on = c("State", "Road")]
+vm4urban[, Avmt_Road_Vehicle := Avmt * PctVmt]
+vm4urban[Vehicle != "Total", 
+         Pct_Avmt_Road_Vehicle := Avmt_Road_Vehicle/sum(Avmt_Road_Vehicle), 
+         by = .(Road, State)]
+
+# Apply rates to the Urban Area VMT to estimate VMT by vehicle class by Roads class in UAs
+hm71 <- hm71[UrbanizedArea %in% c("Chicago, IL--IN", "Detroit, MI"),
+             .(UrbanizedArea, 
+               Dvmt_Interstate, 
+               Dvmt_OtherFreeways, Dvmt_OtherPrincipalArterials, Dvmt_MinorArterial, 
+               Dvmt_MajorCollector, Dvmt_MinorCollector, Dvmt_Local, Dvmt_Total)]
+
+hm71[, Dvmt_OtherArterials := Dvmt_OtherFreeways + Dvmt_OtherPrincipalArterials + Dvmt_MinorArterial]
+hm71[, Dvmt_Other := Dvmt_MajorCollector + Dvmt_MinorCollector + Dvmt_Local]
+hm71 <- melt.data.table(hm71,
+                       id.vars = "UrbanizedArea",
+                       variable.name = "Measure_Road",
+                       value.name = "Dvmt")
+hm71[, c("Measure", "Road") := tstrsplit(Measure_Road, split = "_", fixed = TRUE)]
+hm71[, State := ifelse(UrbanizedArea == "Chicago, IL--IN", "Illinois", "Michigan")]
+
+vm4urban[hm71, c("Dvmt", "UrbanizedArea") := .(i.Dvmt, i.UrbanizedArea), on = c("State", "Road")]
+vm4urban[, Dvmt_Road_Vehicle := Dvmt * Pct_Avmt_Road_Vehicle]
+
+# Sum by urbanized area by vehicle type
+vmt_vehicle <- vm4urban[Vehicle != "Total",.(Dvmt_Vehicle = sum(Dvmt_Road_Vehicle)), by = .(State, UrbanizedArea, Vehicle)]
+vmt_vehicle[, Pct_Dvmt_Vehicle := Dvmt_Vehicle/sum(Dvmt_Vehicle), by = State]
+
+# Scale the Dvmt to the large model region 
+vmt_vehicle[, ModelRegion := ifelse(UrbanizedArea == "Chicago, IL--IN", "CMAP", "SEMCOG")]
+cmap_summary <- add_totals(cmap_summary, rowtotal = FALSE)
+cmap_dvmt_ua_ratio <- cmap_summary[CHICAGO == "Total"]$DVMT/cmap_summary[CHICAGO == "In_UA"]$DVMT
+semcog_summary <- add_totals(semcog_summary, rowtotal = FALSE)
+semcog_dvmt_ua_ratio <- semcog_summary[DETROIT == "Total"]$DVMT/semcog_summary[DETROIT == "In_UA"]$DVMT
+
+vmt_vehicle[, UA_Ratio := ifelse(ModelRegion == "CMAP", cmap_dvmt_ua_ratio, semcog_dvmt_ua_ratio)]
+vmt_vehicle[, Dvmt_Vehicle_ModelRegion := Dvmt_Vehicle * UA_Ratio]
+
+# Calculate factors for splitting the light vehicle into passenger and light commercial
+# And for converting an average day to an average weekday
+
+semcog_vmt_model[, Passenger := SOV + HOV2 + HOV3]
+semcog_vmt_model[, LightVehicle := Passenger + LightTruck]
+pct_light_com = semcog_vmt_model[FunctionalClass == "Total"]$LightTruck/semcog_vmt_model[FunctionalClass == "Total"]$LightVehicle
+pct_all_com = semcog_vmt_model[FunctionalClass == "Total"]$LightTruck/semcog_vmt_model[FunctionalClass == "Total"]$Total
+
+daily_weekday_factor = semcog_vmt_model[FunctionalClass == "Total"]$Total/semcog_summary[DETROIT == "Total"]$DVMT
+
+vmt_vehicle[ , VehicleLMH := ifelse(Vehicle == "CombinationTrucks", "Heavy",
+                                    ifelse(Vehicle == "SingleUnitTrucks", "Medium", "Light"))]
+
+# Factor DVMT to weekday
+vmt_vehicle[, Dvmt_Vehicle_ModelRegion_Weekday := Dvmt_Vehicle_ModelRegion * daily_weekday_factor]
+
+# Split light vehicle vmt by passenger and commercial 
+vmt_vehiclelmh <- vmt_vehicle[, .(Dvmt_Weekday = sum(Dvmt_Vehicle_ModelRegion_Weekday)),
+                              by = .(VehicleLMH, State, UrbanizedArea, ModelRegion)]
+vmt_vehiclelmh[, Passenger_LC := ifelse(VehicleLMH == "Light", Dvmt_Weekday * (1-pct_light_com), 0)]
+vmt_vehiclelmh[, Commercial_LC := ifelse(VehicleLMH == "Light", Dvmt_Weekday * pct_light_com, Dvmt_Weekday)]
+
+vmt_vehiclelmh[, Dvmt_Total := sum(Dvmt_Weekday), by = ModelRegion]
+vmt_vehiclelmh[, Commercial_AC := ifelse(VehicleLMH == "Light", Dvmt_Total * pct_all_com, Dvmt_Weekday)]
+vmt_vehiclelmh[, Dvmt_Truck := sum(Commercial_AC), by = ModelRegion]
+vmt_vehiclelmh[, Passenger_AC := ifelse(VehicleLMH == "Light", Dvmt_Total - Dvmt_Truck, 0)]
+
+# Average across the two methods and convert to miles
+vmt_vehiclelmh[, Passenger := (Passenger_LC + Passenger_AC)/2 * 1000]
+vmt_vehiclelmh[, Commercial := (Commercial_LC + Commercial_AC)/2 * 1000]
+
+# SUmmarize for truck for CMAP
+vmt_est_fhwa <- vmt_vehiclelmh[ModelRegion == "CMAP",
+                               .(Vehicle = VehicleLMH,
+                                 TotalVMT = Commercial)]
 
 vmt_est_fhwa[semcog_indinc_intext[Industry_Included == "Include" & ODGroup == "Internal Trip", .(Vehicle = VehClassLMH, PctVMT)],
              VMTFactor := i.PctVMT, on = "Vehicle"] 
