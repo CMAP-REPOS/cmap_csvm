@@ -286,6 +286,7 @@ hm71[, State := ifelse(UrbanizedArea == "Chicago, IL--IN", "Illinois", "Michigan
 
 vm4urban[hm71, c("Dvmt", "UrbanizedArea") := .(i.Dvmt, i.UrbanizedArea), on = c("State", "Road")]
 vm4urban[, Dvmt_Road_Vehicle := Dvmt * Pct_Avmt_Road_Vehicle]
+fwrite(vm4urban, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "vm4urban.csv"))
 
 # Sum by urbanized area by vehicle type
 vmt_vehicle <- vm4urban[Vehicle != "Total",.(Dvmt_Vehicle = sum(Dvmt_Road_Vehicle)), by = .(State, UrbanizedArea, Vehicle)]
@@ -316,6 +317,7 @@ vmt_vehicle[ , VehicleLMH := ifelse(Vehicle == "CombinationTrucks", "Heavy",
 
 # Factor DVMT to weekday
 vmt_vehicle[, Dvmt_Vehicle_ModelRegion_Weekday := Dvmt_Vehicle_ModelRegion * daily_weekday_factor]
+fwrite(vmt_vehicle, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "vmt_vehicle.csv"))
 
 # Split light vehicle vmt by passenger and commercial 
 vmt_vehiclelmh <- vmt_vehicle[, .(Dvmt_Weekday = sum(Dvmt_Vehicle_ModelRegion_Weekday)),
@@ -331,6 +333,7 @@ vmt_vehiclelmh[, Passenger_AC := ifelse(VehicleLMH == "Light", Dvmt_Total - Dvmt
 # Average across the two methods and convert to miles
 vmt_vehiclelmh[, Passenger := (Passenger_LC + Passenger_AC)/2 * 1000]
 vmt_vehiclelmh[, Commercial := (Commercial_LC + Commercial_AC)/2 * 1000]
+fwrite(vmt_vehiclelmh, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "vmt_vehiclelmh.csv"))
 
 # SUmmarize for truck for CMAP
 vmt_est_fhwa <- vmt_vehiclelmh[ModelRegion == "CMAP",
@@ -341,6 +344,7 @@ vmt_est_fhwa[semcog_indinc_intext[Industry_Included == "Include" & ODGroup == "I
              VMTFactor := i.PctVMT, on = "Vehicle"] 
 
 vmt_est_fhwa[, CSV_Int_VMT := TotalVMT * VMTFactor]
+fwrite(vmt_est_fhwa, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "vmt_est_fhwa.csv"))
 
 # Add the target to the list 
 model_step_targets_tt_sim[["tt_build"]] <- list(countyod_all = countyod_all,
