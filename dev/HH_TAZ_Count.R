@@ -47,6 +47,8 @@ HH_summary2 <- HH_2 %>%
   distinct() %>% 
   as.data.frame()
 
+sum(HH_summary2$HH)
+
 # write the file ----------------------------------------------------------
 #base scenario
 write_csv(HH_summary2, 'scenarios/base/inputs/data_hh.csv')

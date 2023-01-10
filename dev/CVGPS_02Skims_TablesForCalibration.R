@@ -50,7 +50,9 @@ GPS2 <- GPS2 %>%
   filter(!`Tour ID` %in% c(ToursWithNA$Tour_ID))
 
 
-
+GPS %>% 
+  select(`Tour ID`) %>% 
+  distinct()
 
 
 

@@ -3,7 +3,9 @@ library(tidyverse)
 library(readxl)
 library(sf)
 # Process Internal (Updated File Received 11/10/22) -----
-Emp <- read.csv('dev/Data_Processed/CBP_Emp_HH/subzonetm_211_2019.csv')
+## Base Year
+#Emp <- read.csv('dev/Data_Processed/CBP_Emp_HH/subzonetm_211_2019.csv')
+## FUTure Year
 
 Emp1 <- Emp %>% 
   select(subzone_id, contains('jobs')) %>% 
@@ -116,3 +118,31 @@ write_csv(CompleteEmp, 'scenarios/base/inputs/data_emp_control_taz.csv')
 sum(CompleteEmp$Employment)
 
 
+# Sum by Employment Industry
+
+
+CompleteEmp_wDescr <- CompleteEmp %>% 
+  group_by(NAICS) %>% 
+  tally(Employment) %>% 
+  mutate(IndustryNam = case_when(
+    NAICS == '11' ~ 'Agriculture, Forestry, Fishing and Hunting',
+    NAICS == '21' ~ 'Mining, Quarrying, and Oil and Gas Extraction',
+    NAICS == '22' ~ 'Utilities',
+    NAICS == '23' ~ 'Construction',
+    NAICS == '31' ~ 'Manufacturing',
+    NAICS == '42' ~ 'Wholesale Trade',
+    NAICS == '44' ~ 'Retail Trade',
+    NAICS == '48' ~ 'Transportation and Warehousing',
+    NAICS == '51' ~ 'Information',
+    NAICS == '52' ~ 'Finances and Inurance',
+    NAICS == '53' ~ 'Real Estate and Rental and Leasing',
+    NAICS == '54' ~ 'Professional, Scientific, and Technical Services',
+    NAICS == '55' ~ 'Management of Companies and Enterprises',
+    NAICS == '56' ~ 'Administrative and Support and Waste Management and Remdediation Services',
+    NAICS == '61' ~ 'Educational Services',
+    NAICS == '62' ~ 'Health Care and Social Assistance',
+    NAICS == '71' ~ 'Arts, Entertainment, and Recreation',
+    NAICS == '72' ~ 'Accommodation and Food Services',
+    NAICS == '81' ~ 'Other Services (Except Public Administration)',
+    NAICS == '92' ~ 'Public Administration'
+  ))
