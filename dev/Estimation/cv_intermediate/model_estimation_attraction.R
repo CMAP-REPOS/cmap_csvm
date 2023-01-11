@@ -1,4 +1,5 @@
 ### Load Apollo library
+rm(list = ls())
 library(apollo)
 library(data.table)
 
@@ -90,13 +91,13 @@ apollo_fixed =
     "b_emp_vs", 
     "b_pop_vs", 
     "b_retail_vs", 
-    "b_foodDrink_vs", 
+    #"b_foodDrink_vs", 
     "b_emp_ot", 
     "b_pop_ot", 
     #"b_foodDrink_ot",
     "b_dist_ot",
-    "b_retail_ot",
-    "b_foodDrink")
+    "b_retail_ot")#,
+    #"b_foodDrink")
 
 # ################################################################# #
 #### GROUP AND VALIDATE INPUTS                                   ####
