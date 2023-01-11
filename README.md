@@ -44,10 +44,12 @@ Links to Resources
 - Future year visualization dashboard: https://cmap-repos.github.io/cmap_csvm/ReportDashboardFuture.html.
 - User guide: to be added
 
-Scenario Specific Adjustments
+Creating Scenarios and Making Scenario Specific Adjustments
 ======================================================================
 
-This section of the README discusses the scenario specific inputs to the model and how to adjust then to test out alternative scenarios.
+### Scenario Inputs
+
+This section of the README discusses the scenario specific inputs to the model and how to adjust them to test out alternative scenarios.
 
 Each scenario's inputs and outputs are contained in a directory called ```scenarios\[scenario name]```. The set of input files required in each scenario are as follows:
 
@@ -56,13 +58,16 @@ cmap_csvm\scenarios\[scenario name]
 * Inputs                         Scenario inputs directory
   + data_emp_control_taz.csv     Land use data describing TAZ employment
   + data_hh.csv                  Land use data describing TAZ households
-  + htruck_congested_skims       Heavy truck congested travel time and distance skims
-  + ltruck_congested_skims       Light truck congested travel time and distance skims
-  + mtruck_congested_skims       Medium truck congested travel time and distance skims
+  + htruck_congested_skims.omx   Heavy truck congested travel time and distance skims
+  + ltruck_congested_skims.omx   Light truck congested travel time and distance skims
+  + mtruck_congested_skims.omx   Medium truck congested travel time and distance skims
   + scenario_adjustments.R       R script containing scenario specific parameter adjustments
 * Ouputs                          Scenario outputs directory
 
 ```
+### Creating a New Scenario
+
+A new scenario can be added to the model by copying (in File Explorer) a similar scenario that is most like the alternative scenario that is to be tested. For example, if you want to test a future scenario but with an alternative land use forecast, copy the ```scenarios\future``` directory and paste it into the ```scenarios``` directory. Then rename the folder to something like ```future_alt_landuse```. Once the new folder is there the input files in ```scenarios\future_alt_landuse\inputs``` can be adjusted to reflect the specification of the scenario.
 
 ### Land Use Scenarios
 
@@ -70,6 +75,33 @@ In order to test alternative land use scenarios, the files ```data_emp_control_t
 
 ### Transportation Supply Scenarios
 
-The model is sensitive to travel times based on the zone to zone travel times included in the skim files. In order to evaluate the impact of transportion projects or to test out a more general increase or decrease in region wide congestion, the skims file should be updated (e.g., based on network updates and a new run of the travel demand model)
+The model is sensitive to travel times based on the zone to zone travel times included in the skim files. In order to evaluate the impact of transportion projects or to test out a more general increase or decrease in region wide congestion, the skims files (```ltruck_congested_skims.omx```, etc.) should be updated (e.g., based on network updates and a new run of the travel demand model)
 
 ### Parameter Adjustments
+
+The script file ```scenario_adjustments.R``` allows the model user to assert adjustments to the parameters of the scheduled stop generation model and the vehicle choice model to evaluate higher and lower stop generation by activity and changing patterns in vehicle usage. The script is shown below. As noted in the script comments, positive values for the parameter adjustments will results in an increase in the measure (e.g., number of good stops, use of light vehicles) 
+In both cases, the adjustments are to the values of constants in a logit model and as such are not targets. Instead, small changes can be tested experimentally (for example, by making changes to the adjustments in increments of 0.1) to understand the downstream effects of a given changes in the number of stops or percentage change in vehicles choices. 
+
+```
+# CMAP CSVM
+# Scenario Specific Parameter Adjustments
+# This script is read at run time and asserts adjustments to choice models in the CSVM structure
+
+# Stops Generation
+# Good deliveries (poitive adjustment = additional goods deliveries)
+asc_goods_adj = 0
+
+# Service calls (positive adjustment = additional goods deliveries)
+asc_service_adj = 0
+
+# Vehicle Type 
+# Mode specific constant adjustments by vehicle type (positive adjustment = trips shift towards that vehicle type)
+asc_vehicle_light_adj = 0
+asc_vehicle_medium_adj = 0
+asc_vehicle_heavy_adj = 0
+
+```
+
+### Running an Alternative Scenario
+
+An alternative scenario is run in the same way as the existing scenarios provided with the model are run, using the batch file in the root of the CVSM folder, ```run_cmap_csvm.bat```. The scenario name in the batch file must match the name of the new scenario created in the ```scenarios``` directory.  
