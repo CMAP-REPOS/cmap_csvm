@@ -34,8 +34,45 @@ installed and set up to run using the following steps:
 
 Running the Model 
 ======================================================================
-1. The batch file in the root of the CVSM folder, ```run_cmap_csvm.bat``` will run the model when the batch file is double clicked or executed from the command line. The command line arguments that are passed in the batch file identify the name and year of the scenario to be run. The scenario name must match the name of a scenario in the ```scenarios``` directory. A full list of command line arguments that can be passed to the model is described in ```run_cmap_csvm.R```.
+1. The batch file in the root of the CVSM folder, ```run_cmap_csvm.bat```  will run the model when the batch file is double clicked or executed from the command line. The contents of the batch file are shown below. The command line arguments that are passed in the batch file identify the name and year of the scenario to be run, the reference scenario for comparisons in the dashboard, and the model steps to run. The scenario name must match the name of a scenario in the ```scenarios``` directory. A full list of command line arguments that can be passed to the model is described in ```run_cmap_csvm.R```.
+
+```
+:: CMAP Commercial Services Vehicle Model Batch File
+
+:: Variable definitions
+:: Scenario and Year
+set scenarioname="base"
+set scenarioyear=2017
+
+:: Reference scenario and year to use for scenario comparison
+:: Note: this scenario must have already been run
+set reference="base"
+set referenceyear=2017
+
+:: Steps of the model to run (TRUE or FALSE, use upper case)
+set runfirmsyn="TRUE"
+set runcvtm="TRUE"
+set runttexp="TRUE"
+set rundashboard="TRUE"
+
+:: For reference scenario, if this is the base scenario change to validation
+if [%scenarioname%]==["base"] set reference="Validation"
+if [%scenarioname%]==["base"] set referenceyear=2017
+
+:: Run CSVM Model For Selected Scenario and Components
+Rscript run_cmap_csvm.R %scenarioname% %scenarioyear% %runfirmsyn% %runcvtm% %runttexp% %rundashboard% %reference% %referenceyear% >run_cmap_csvm_log.txt 2>&1
+
+:: Check for errors, exit and return error code if error
+if %errorlevel% neq 0 exit /B %errorlevel%
+
+:: Add pause to keep command window open at end of run
+pause
+
+```
+
 2. The base scenario for the CSVM must be run before any alternative scenario can be run as the firm synthesis outputs from the base are required by alternative scenarios. The CSVM model is currently set up with the base scenario folder called "base". The selection of which scenario is the base scenario is a parameter setting, ```BASE_SCENARIO_BASE_NAME``` in ```lib/scripts/_BASE_VARIABLES.R```.
+
+3. To run only parts of the model for a scenario, some of the switches in the batchfile (```runfirmsyn```, ```runcvtm```,```runttexp```, ```rundashboard```) can be set to "FALSE" to not run that step. This is particularly helpful if you want to say run the dashboard again with a different reference scenario, when just the dashboard step can be run after updating the name of the reference scenario. It is impotant to be careful with these settings so as to not accidently skip a model step when it is intended to be run. 
 
 Links to Resources
 ======================================================================
@@ -104,4 +141,16 @@ asc_vehicle_heavy_adj = 0
 
 ### Running an Alternative Scenario
 
-An alternative scenario is run in the same way as the existing scenarios provided with the model are run, using the batch file in the root of the CVSM folder, ```run_cmap_csvm.bat```. The scenario name in the batch file must match the name of the new scenario created in the ```scenarios``` directory.  
+An alternative scenario is run in the same way as the existing scenarios provided with the model are run, using the batch file in the root of the CVSM folder, ```run_cmap_csvm.bat```. The scenario name in the batch file must match the name of the new scenario created in the ```scenarios``` directory. 
+
+### Changing the Dashboard Reference Scenario
+
+When an alternative scenario is run, you might want to compare the results to something other than the base scenario. For example, an alternative future land use scenario might be compared with the standard future scenario. To build the dashboard using the future scenario as the reference, change the reference scenario and reference year variables in the ```run_cmap_csvm.bat``` batch file as shown below:
+
+```
+:: Reference scenario and year to use for scenario comparison
+:: Note: this scenario must have already been run
+set reference="future"
+set referenceyear=2050
+
+```
