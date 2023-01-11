@@ -65,6 +65,7 @@ apollo_beta =
     b_dist = 0,
     b_retail = 0,
     b_foodDrink = 0,
+    b_foodDrink_dn = 0,
     b_emp_vs = 0,
     b_pop_vs = 0,
     b_dist_vs = 0,
@@ -91,13 +92,13 @@ apollo_fixed =
     "b_emp_vs", 
     "b_pop_vs", 
     "b_retail_vs", 
-    #"b_foodDrink_vs", 
+    "b_foodDrink_vs", 
     "b_emp_ot", 
     "b_pop_ot", 
-    #"b_foodDrink_ot",
+    "b_foodDrink_ot",
     "b_dist_ot",
-    "b_retail_ot")#,
-    #"b_foodDrink")
+    "b_retail_ot",
+    "b_foodDrink")
 
 # ################################################################# #
 #### GROUP AND VALIDATE INPUTS                                   ####
@@ -127,12 +128,20 @@ apollo_probabilities =
 
   for (alt in 1:max_num_alts) {
     
-    V[[paste0("alt_", alt)]] = 
-      (b_emp + b_emp_vs * is_vs + b_emp_ot * is_ot) * get(paste0("EMP_", alt)) / 1000 +
-      (b_pop + b_pop_vs * is_vs + b_pop_ot * is_ot) * get(paste0("POP_", alt)) / 1000 +
+    # V[[paste0("alt_", alt)]] = 
+    #   (b_emp + b_emp_vs * is_vs + b_emp_ot * is_ot) * get(paste0("EMP_", alt)) / 1000 +
+    #   (b_pop + b_pop_vs * is_vs + b_pop_ot * is_ot) * get(paste0("POP_", alt)) / 1000 +
+    #   (b_dist + b_dist_vs * is_vs + b_dist_ot * is_ot) * get(paste0("dist_", alt)) / 0.25 +
+    #   (b_retail + b_retail_vs * is_vs + b_retail_ot * is_ot) * get(paste0("e05_retail_", alt)) / 1000 +
+    #   (b_foodDrink + b_foodDrink_vs * is_vs + b_foodDrink_ot * is_ot) * get(paste0("e16_leisure_", alt)) / 1000
+    
+    V[[paste0("alt_", alt)]] =
+      (b_emp + b_emp_vs * is_vs + b_emp_ot * is_ot) * log1p(get(paste0("EMP_", alt))) +
+      (b_pop + b_pop_vs * is_vs + b_pop_ot * is_ot) * log1p(get(paste0("POP_", alt))) +
       (b_dist + b_dist_vs * is_vs + b_dist_ot * is_ot) * get(paste0("dist_", alt)) / 0.25 +
-      (b_retail + b_retail_vs * is_vs + b_retail_ot * is_ot) * get(paste0("e05_retail_", alt)) / 1000 +
-      (b_foodDrink + b_foodDrink_vs * is_vs + b_foodDrink_ot * is_ot) * get(paste0("e16_leisure_", alt)) / 1000
+      (b_retail + b_retail_vs * is_vs + b_retail_ot * is_ot) * log1p(get(paste0("e05_retail_", alt))) +
+      #(b_foodDrink + b_foodDrink_vs * is_vs + b_foodDrink_ot * is_ot) * log1p(get(paste0("e16_leisure_", alt)))
+      (b_foodDrink + b_foodDrink_dn * is_dn + b_foodDrink_vs * is_vs + b_foodDrink_ot * is_ot) * log1p(get(paste0("e16_leisure_", alt)))
     
   }  
     
@@ -181,4 +190,4 @@ apollo_modelOutput(model)
 #---- FORMATTED OUTPUT (TO FILE, using model name)               ----
 # ----------------------------------------------------------------- #
 
-saveRDS(model, file.path(model_loc, "cv_intermediate_model_attraction.rds"))
+saveRDS(model, file.path(model_loc, "cv_intermediate_attraction_model.rds"))
