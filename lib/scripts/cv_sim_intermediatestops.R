@@ -281,9 +281,9 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
                     by = c("OTAZ", "StopTAZ"))
     
     # Get skims to possible intermediate zones
-    # Only include zones with land use data
+    # Only include zones with land use data (require employment greater than zero, not just households)
     tempDT <- merge(tempDT, 
-                    skims_tod[DTAZ %in% TAZLandUseCVTM$TAZ & dist.avg <= min.distance, 
+                    skims_tod[DTAZ %in% TAZLandUseCVTM[NEmp_Total > 0]$TAZ & dist.avg <= min.distance, 
                               .(OTAZ, DTAZ, T_ik = time.avg, D_ik = dist.avg)],
                     by = "OTAZ", allow.cartesian = TRUE)
     
@@ -314,11 +314,11 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
     tempDT[intstop.deviations, deviation.dist := i.deviation.dist, on = "Vehicle"]
     
     # Apply the attraction model (manually, not using apollo::prediction)
-    tempDT[, u := intStop.attr["b_emp"] * TotalEmp/1000 +
+    tempDT[, u := intStop.attr["b_emp"] * log1p(TotalEmp) +
                   (intStop.attr["b_dist"] + 
                      intStop.attr["b_dist_vs"] * (Activity == "Vehicle Service")) * DeltaD_k/0.25 + 
-                  intStop.attr["b_retail"] * Retail/1000 +
-                  intStop.attr["b_foodDrink_ot"] * (Activity == "Other") * Service_FoodDrink/1000]
+                  intStop.attr["b_retail"] * log1p(Retail) +
+                  intStop.attr["b_foodDrink_dn"] * (Activity == "Break/Meal") * log1p(Service_FoodDrink)]
     tempDT[, eu := exp(u)]
     tempDT[, p := eu/sum(eu), by = .(BusID, Vehicle, TourID, TripID, IntID)]
     
