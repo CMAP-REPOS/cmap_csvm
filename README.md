@@ -34,7 +34,7 @@ installed and set up to run using the following steps:
 
 Running the Model 
 ======================================================================
-1. The batch file in the root of the CVSM folder, ```run_cmap_csvm.bat``` will run the model when the batch file is double clicked or executed from the command line. The command line arguments that are passed in the batch file identify the name and year of the scenario to be run. The scenario name must batch the name of a scenario in the ```scenarios``` directory. A full list of command line arguments that can be passed to the model is described in ```run_cmap_csvm.R```.
+1. The batch file in the root of the CVSM folder, ```run_cmap_csvm.bat``` will run the model when the batch file is double clicked or executed from the command line. The command line arguments that are passed in the batch file identify the name and year of the scenario to be run. The scenario name must match the name of a scenario in the ```scenarios``` directory. A full list of command line arguments that can be passed to the model is described in ```run_cmap_csvm.R```.
 2. The base scenario for the CSVM must be run before any alternative scenario can be run as the firm synthesis outputs from the base are required by alternative scenarios. The CSVM model is currently set up with the base scenario folder called "base". The selection of which scenario is the base scenario is a parameter setting, ```BASE_SCENARIO_BASE_NAME``` in ```lib/scripts/_BASE_VARIABLES.R```.
 
 Links to Resources
@@ -62,6 +62,14 @@ cmap_csvm\scenarios\[scenario name]
   + scenario_adjustments.R       R script containing scenario specific parameter adjustments
 * Ouputs                          Scenario outputs directory
 
-
 ```
 
+### Land Use Scenarios
+
+In order to test alternative land use scenarios, the files ```data_emp_control_taz.csv``` and ```data_hh.csv``` can be edited to increase or decrease the amount of employment of the number of households in each TAZ, respectively.
+
+### Transportation Supply Scenarios
+
+The model is sensitive to travel times based on the zone to zone travel times included in the skim files. In order to evaluate the impact of transportion projects or to test out a more general increase or decrease in region wide congestion, the skims file should be updated (e.g., based on network updates and a new run of the travel demand model)
+
+### Parameter Adjustments
