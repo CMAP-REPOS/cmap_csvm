@@ -46,9 +46,7 @@ firm_sim_results$ScenarioFirms[,.N, keyby = n2]
 
 # Load Survey Data --------------------------------------------------------
 est <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xlsx', sheet = 1)
-#driver <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xlsx', sheet = 2)
-#trips <- read_excel('dev/Data_Processed/Survey/CMAP data for RSG 20220328 v1.0.xlsx', sheet = 3)
-#not joining yet, using just est for now
+
 
 est_vars <- est %>% 
   select(EMP_telkey, AGEN_NAICS, AQ5, AQ6A_OPEN_A:AQ6C_OPEN_D, ExpansionWeight, NormalizedWeight) #add AQ5 to validate trip activity
