@@ -117,6 +117,70 @@ db_build_process_inputs <- function(envir){
     cv_trips_cluster <- cv_trips_cluster[TripID == 1, .(Region.Start, TourID, NumStops, MeanDist)]
     envir[["cv_trips_cluster"]] <- cv_trips_cluster
     
+    # add a debug summary to look for outliers in the stops by activity by stop to check for high values
+    # in absolute terms and per HH/per Emp
+    cv_trips_act <- cv_trips[, .(Trips = .N), keyby = .(TAZ = DTAZ, Activity, Scheduled)]
+    cv_trips_taz <- dcast.data.table(cv_trips_act,
+                                     TAZ ~ Activity,
+                                     fun.aggregate = sum,
+                                     value.var = "Trips")
+    setnames(cv_trips_taz, "Break/Meal","BreakMeal")
+    setnames(cv_trips_taz, "Vehicle Service","VehicleService")
+    cv_trips_taz[, Scheduled := Goods + Service]
+    cv_trips_taz[, Intermediate := BreakMeal + VehicleService + Other]
+    cv_trips_taz[, Stops := Scheduled + Intermediate + Return]
+    cv_trips_taz <- merge(cv_trips_taz,
+                          firm_inputs$TAZLandUseCVTM,
+                          by = "TAZ",
+                          all.x = TRUE)
+    
+    cv_trips_taz[, PctIntermediate := Intermediate/Stops]
+    cv_trips_taz[, StopPerHH := ifelse(HH > 0, Stops/HH, 0)]
+    cv_trips_taz[, StopPerEmp := ifelse(NEmp_Total > 0, Stops/NEmp_Total, 0)]
+    
+    cv_trips_taz[order(-Stops)]
+    cv_trips_taz[order(-Scheduled)]
+    cv_trips_taz[order(-Return)]
+    cv_trips_taz[order(-Intermediate)]
+    cv_trips_taz[order(-Other)]
+    cv_trips_taz[order(-NEmp_Total)]
+    cv_trips_taz[order(-NEmp_Service_FoodDrink)]
+
+    cv_trips_taz[order(-PctIntermediate)][Stops > 500][1:50]
+    cv_trips_taz[NEmp_Total == 0 & Stops > 0]
+
+    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$Goods, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$Service, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$Return, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$BreakMeal, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$VehicleService, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$Other, cv_trips_taz$NEmp_Total)
+    # 
+    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Retail)
+    # plot(cv_trips_taz$Goods, cv_trips_taz$NEmp_Retail)
+    # plot(cv_trips_taz$Service, cv_trips_taz$NEmp_Retail)
+    # plot(cv_trips_taz$Return, cv_trips_taz$NEmp_Retail)
+    # plot(cv_trips_taz$BreakMeal, cv_trips_taz$NEmp_Retail)
+    # plot(cv_trips_taz$VehicleService, cv_trips_taz$NEmp_Retail)
+    # plot(cv_trips_taz$Other, cv_trips_taz$NEmp_Retail)
+    # 
+    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Service_FoodDrink)
+    # plot(cv_trips_taz$Goods, cv_trips_taz$NEmp_Service_FoodDrink)
+    # plot(cv_trips_taz$Service, cv_trips_taz$NEmp_Service_FoodDrink)
+    # plot(cv_trips_taz$Return, cv_trips_taz$NEmp_Service_FoodDrink)
+    # plot(cv_trips_taz$BreakMeal, cv_trips_taz$NEmp_Service_FoodDrink)
+    # plot(cv_trips_taz$VehicleService, cv_trips_taz$NEmp_Service_FoodDrink)
+    # plot(cv_trips_taz$Other, cv_trips_taz$NEmp_Service_FoodDrink)
+    # 
+    # plot(cv_trips_taz[cv_trips_taz$Other > 100]$PctIntermediate, cv_trips_taz[cv_trips_taz$Other > 100]$NEmp_Service_FoodDrink)
+    # 
+    # plot(cv_trips_taz$Stops, cv_trips_taz$HH)
+    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$StopPerEmp, cv_trips_taz$NEmp_Total)
+    # plot(cv_trips_taz$StopPerHH, cv_trips_taz$HH)
+
+    envir[["cv_trips_taz"]] <- cv_trips_taz
   }
   
   if(SCENARIO_DB_TT){
