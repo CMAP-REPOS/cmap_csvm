@@ -12,6 +12,8 @@ asc_service_adj = 0.0
 
 # Proximity of stops to businesses (to represent for example localization)
 # Proportional adjustment (positive adjustment is a factor > 1, negative adjustment is a factor < 1)
+# Since businesses (and all industries) do a mix of both activities, in application the factors are blended
+# The effect of the goods factor on industries that have a higher emphasis on goods delivery is more pronounced and vice versea
 base_dist_goods_factor = 1.0
 base_dist_service_factor = 1.0
 
