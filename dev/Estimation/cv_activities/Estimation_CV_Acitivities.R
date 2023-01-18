@@ -103,11 +103,12 @@ est_Q6_sums <- est_Q6_sums %>%
 firm_activity <- est_Q6_sums %>% 
   mutate(Activity = case_when(Goods_yesno == 1 & Services_yesno == 0 ~ 'Goods',
                               Goods_yesno == 0 & Services_yesno == 1 ~ 'Services',
-                              Goods_yesno == 0 & Services_yesno == 0 ~ 'Other',
+                              Goods_yesno == 0 & Services_yesno == 0 ~ 'NoTrips',
                               Goods_yesno == 1 & Services_yesno == 'NA' ~ 'Goods_NASerivces',
-                              Goods_yesno == 'NA' & Services_yesno ==1 ~ 'Other',
+                              Goods_yesno == 'NA' & Services_yesno ==1 ~ 'Services_NAGoods',
                               Goods_yesno == 'NA' & Services_yesno == 'NA' ~ 'NoData',
-                              Goods_yesno == 1 & Services_yesno == 1 ~ 'GoodsAndServices')) %>%
+                              Goods_yesno == 1 & Services_yesno == 1 ~ 'GoodsAndServices')
+         ) %>%
   mutate(Activity = case_when(Own_Vehicles == 0 & Activity == 'NoData' ~ 'Other',
                               T ~ Activity))
 
@@ -140,7 +141,7 @@ firm_activity %>%
   group_by(Own_Vehicles, Activity) %>% 
   summarise(n = n()) %>% 
   spread(Activity, n) %>% 
-  select(Goods, GoodsAndServices, Services, Other)
+  select(Goods, GoodsAndServices, Services, NoTrips, Other)
 
 
 #Exploring Cases where Q5 = 0 but trips is positive
@@ -171,7 +172,8 @@ MissingInfo <- est %>%
 #Results Summary
 firm_activity_expansion <- firm_activity %>% 
   select(-(1:15)) %>% 
-  filter(!is.na(Activity))
+  filter(!is.na(Activity)) %>% 
+  mutate(all_trips = Goods + Services)
 
  
 
@@ -181,19 +183,20 @@ firm_activity_weighted_count <-  firm_activity_expansion %>%
   group_by(EmpCatName, Activity) %>%
   tally(wt = ExpansionWeight) %>% 
   subset(select = c('EmpCatName', 'Activity', 'n'))%>% 
-  spread(Activity, n)%>% 
+  spread(Activity, n) %>% 
+  select(Goods, GoodsAndServices, Services, Other) %>% 
   mutate(
-    across(Goods:Services, ~replace_na(.x, 0))) %>% 
+    across(Goods:Other, ~replace_na(.x, 0))) %>% 
   mutate(
-    across(Goods:Services, round, 5)) %>%
+    across(Goods:Other, round, 5)) %>%
   select(EmpCatGroupedName = EmpCatName, 
          Goods, 
          GoodsAndService = GoodsAndServices,
-         Other,
-         Service = Services) %>%
-  mutate(Total = sum(across(Goods:Service))) %>%
-  mutate(across(Goods:Service, )) %>% 
-  filter(!is.na(EmpCatGroupedName)) 
+         Service = Services, 
+         Other) %>%
+  filter(!is.na(EmpCatGroupedName)) %>% 
+  mutate(Total = sum(across(Goods:Other)))
+ 
 
 firm_activity_weighted_prop <- firm_activity_weighted_count
 firm_activity_weighted_prop[,2:5] <- sweep(firm_activity_weighted_count[,2:5], 1, rowSums(firm_activity_weighted_count[,2:5]), FUN="/") 
@@ -206,121 +209,22 @@ firm_activity_weighted_prop_final <- firm_activity_weighted_prop %>%
   as.data.table()
 
 
-saveRDS(firm_activity_weighted_prop_final, 'dev/Estimation/cv_activities/cv_activities_model.RDS')
+#saveRDS(firm_activity_weighted_prop_final, 'dev/Estimation/cv_activities/cv_activities_model.RDS')
 
 
 
 # Summary Tables ----------------------------------------------------------
-#Breakdown of NAICS2 Group for Activity = Other
-firm_activity_expansion %>% 
-  group_by(Activity) %>% 
-  count(EmpCatName) %>% 
-  filter(Activity == 'Other') %>% 
+#Count of expanded trips for each activity
+expanded_trips <- firm_activity_expansion %>% 
+  group_by(EmpCatName) %>% 
+  summarise(ExpandedTrips = sum(all_trips*ExpansionWeight, na.rm = T)) %>% 
   as.data.table()
 
-#Count of firms for each activity
-firm_activity_expansion %>% 
-  group_by(Activity) %>% 
-  count() %>% 
-  as.data.table()
-
-#Raw Count of Activity for each firm by NAICS2 Groups
-firm_activity_expansion %>% 
-  group_by(EmpCatName, Activity) %>%
-  count() %>% 
-  subset(select = c('EmpCatName', 'Activity', 'n')) %>% 
-  spread(Activity, n) %>% 
-  filter(!is.na(EmpCatName)) %>% 
-  as.data.table()
-  
 
 
 
 
 
 
-
-# # Example Code ------------------------------------------------------------
-# # standardise naming in CVS processing
-# # employment category should be called EmpCatName
-# setnames(est, "Model_EmpCat", "EmpCatName")
-# 
-# est[trip[,.N,.(SITEID)],TotalStops:=i.N,on=.(SITEID)]
-# est[is.na(TotalStops),TotalStops:=0]
-# 
-# est[,.(NAICS2 = list(sort(unique(NAICS2))),
-#        NAICS3 = list(sort(unique(NAICS3)))),by=.(EmpCatName)][order(EmpCatName)]
-# 
-# empcat_to_empgrp <- c("e01_nrm" = "Production",
-# "e02_constr" = "Industrial",
-# "e03_manuf" = "Production",
-# "e04_whole" = "Retail",
-# "e05_retail" = "Retail",
-# "e06_trans" = "Transportation",
-# "e07_utility" = "Industrial",
-# "e08_infor" = "Info_FIRE_Prof", #Private
-# "e09_finan" = "Info_FIRE_Prof",
-# "e10_pstsvc" = "Info_FIRE_Prof",
-# "e11_compmgt" = "Info_FIRE_Prof",
-# "e12_admsvc" = "Ed_Pub_Other_Ser", #Public Service
-# "e13_edusvc" = "Ed_Pub_Other_Ser",
-# "e14_medfac" = "Medical_Services",
-# "e15_hospit" = "Medical_Services",
-# "e16_leisure" = "Leisure", 
-# "e17_othsvc" = "Ed_Pub_Other_Ser",
-# "e18_pubadm" = "Ed_Pub_Other_Ser")
-# 
-# est[, EmpCatGroupedName := empcat_to_empgrp[EmpCatName]]
-# 
-# # Perform Unweighted Estimation
-# # Data Prepartion
-# # Assign model empcat to trips using establishment id (SITEID)
-# trip[est, EmpCatName := i.EmpCatName, on = .(SITEID)]
-# trip[est, EstWght := i.ESTABLISHMENT_WGHT_FCTR, on = .(SITEID)]
-# 
-# # Create new feature
-# trip[,StopType:=ifelse(any(StopPurpose=="Goods") & any(StopPurpose=="Service"),
-#                        "GoodsAndService", ifelse(any(StopPurpose=="Goods"), "Goods",
-#                                                  ifelse(any(StopPurpose=="Service"),"Service","Other"))),
-#      by=.(SITEID)]
-# 
-# # Classify firm by activity
-# firm_activity = dcast(trip[,.N,.(EmpCatName, SITEID, StopPurpose ,EstWght)],
-#                       EmpCatName+SITEID+EstWght~StopPurpose,
-#                       value.var = "N", fill=0)
-# firm_activity_unwgt = firm_activity[,.(Goods=sum(as.integer((Goods > 0) & (Service==0))),
-#                                        Service=sum(as.integer((Service > 0) & (Goods == 0))),
-#                                        Total=.N),
-#                                     .(EmpCatName)]
-# 
-# firm_activity = dcast(trip[,.(EmpCatName, SITEID, StopPurpose, StopType, EstWght)], 
-#                       EmpCatName+SITEID+EstWght~StopType, 
-#                       value.var = "SITEID", fill=0, fun.aggregate=length)
-# firm_activity[,EmpGrp:=empcat_to_empgrp[EmpCatName]]
-# setkey(firm_activity, SITEID)
-# 
-# setkey(est, SITEID)
-# est[firm_activity,c("Goods", "Service", "GoodsAndService", "Other"):=
-#       .(i.Goods, i.Service, i.GoodsAndService, i.Other)]
-# est[,c("Goods", "Service", "GoodsAndService", "Other"):=lapply(.SD, function(x) ifelse(is.na(x),0,x)),
-#     .SDcols=c("Goods", "Service", "GoodsAndService", "Other")]
-# 
-# est[,TotalStops:=Goods+Service+GoodsAndService+Other]
-# 
-# # mpreddata = est[,.N,.(EmpCatGroupedName)]
-# # mpreddata[, c("Goods", "Service", "GoodsAndService", "Other"):=NULL]
-# # mpreddata[,N:=NULL]
-# # mpreddata = melt(mpreddata, id.vars = "EmpCatGroupedName", variable.name = "Activity", value.name="Proportion",
-# #                  variable.factor = FALSE, value.factor = FALSE)
-# # 
-# # ggplot(mpreddata,aes(x=EmpCatGroupedName, y=Proportion))+
-# #   geom_label(data=m2preddata,aes(label=paste0(EstSize)))+
-# #   geom_point(color="red")+facet_wrap(~Activity)+
-# #   xlab("Employment Group")
-# # ggsave("dev/Estimation/cv_activities/summaries/EmpGrpEstSizeProportion.png",
-# #        width=16,height = 10)
-# 
-# saveRDS(dcast(mpreddata, EmpCatGroupedName~Activity, value.var = "Proportion"),
-#         "dev/Estimation/cv_activities/cv_activities_model.RDS")
 
 

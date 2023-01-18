@@ -1,8 +1,16 @@
 library(tidyverse)
-skims_cng <- readRDS('scenarios/base/outputs/skims_tod_vehicle.rds') %>% 
+
+#Base Year Skims
+# skims_cng <- readRDS('scenarios/base/outputs/skims_tod_vehicle.rds') %>% 
+#   as_tibble()
+# skims_ff <- readRDS('scenarios/base_freeflow/outputs/skims_tod_vehicle.rds') %>% 
+#   as_tibble()
+
+
+#Future Year Congested Skims
+skims_cng <- readRDS('scenarios/future/outputs/skims_tod_vehicle.rds') %>% 
   as_tibble()
-skims_ff <- readRDS('scenarios/base_freeflow/outputs/skims_tod_vehicle.rds') %>% 
-  as_tibble()
+
 
 
 #want
