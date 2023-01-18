@@ -21,11 +21,11 @@ The CSVM runs in ```R 4.1.2```, available from the CRAN R Project website at htt
 Installation Instructions 
 ======================================================================
 
-The current release zip file of the CSVM, ```cmap_csvm-v0.5.0.zip``` is
+The current release zip file of the CSVM, ```cmap_csvm-v0.5.2.zip``` is
 installed and set up to run using the following steps:
 
-1. Download the ```cmap_csvm-v0.5.0.zip``` file from https://github.com/CMAP-REPOS/cmap_csvm/archive/refs/tags/v0.5.0.zip
-2. Extract the contents of ```cmap_csvm-v0.5.0.zip``` into the parent directory that you wish to use for running the CSVM.
+1. Download the ```cmap_csvm-v0.5.2.zip``` file from https://github.com/CMAP-REPOS/cmap_csvm/archive/refs/tags/v0.5.2.zip
+2. Extract the contents of ```cmap_csvm-v0.5.2.zip``` into the parent directory that you wish to use for running the CSVM.
 3. Copy in three skim OMX files (```htruck_congested_skim.omx```, ```ltruck_congested_skim.omx```, ```mtruck_congested_skim.omx```) to the base scenario's inputs folder (```scenarios/base/inputs```)
 4. Install the version of ```R``` that has been tested with this model, which is currently ```R 4.1.2```, from the CRAN R Project website at https://cran.r-project.org/bin/windows/base/R-4.1.2-win.exe.
 5. Set the appropriate number of cores for the size of computer that the model is installed on. The file ```lib/scripts/_USER_VARIABLES.R``` constains a setting ```USER_PROCESSOR_CORES```. If this is set to a value more than 1, several of the steps in the model will run in parallel. While this reduces run time, it requires more memory, and, in certain circumstances, the overhead of parallel process data copying and management can reduce or remove the benefit of parallelization. 
@@ -116,8 +116,9 @@ The model is sensitive to travel times based on the zone to zone travel times in
 
 ### Parameter Adjustments
 
-The script file ```scenario_adjustments.R``` allows the model user to assert adjustments to the parameters of the scheduled stop generation model and the vehicle choice model to evaluate higher and lower stop generation by activity and changing patterns in vehicle usage. The script is shown below. As noted in the script comments, positive values for the parameter adjustments will results in an increase in the measure (e.g., number of good stops, use of light vehicles) 
-In both cases, the adjustments are to the values of constants in a logit model and as such are not targets. Instead, small changes can be tested experimentally (for example, by making changes to the adjustments in increments of 0.1) to understand the downstream effects of a given changes in the number of stops or percentage change in vehicles choices. 
+The script file ```scenario_adjustments.R``` allows the model user to assert adjustments to the parameters of the scheduled stop generation model and the vehicle choice model to evaluate higher and lower stop generation by activity, increases or decreases in the area serviced by a particular businesses, changes in sensitivity to cost of travel, and changing patterns in vehicle usage. The script is shown below. As noted in the script comments, positive values for the parameter adjustments will results in an increase in the measure (e.g., number of good stops, use of light vehicles) 
+
+In all cases, the adjustments are to the values of model parameters (e.g., constants and variables in logit models) and as such are not targets. Instead, small changes can be tested experimentally (for example, by making changes to the adjustments in increments of 0.1) to understand the downstream effects of a given changes in the number of stops, the distance to stops, or percentage change in vehicles choices. 
 
 ```
 # CMAP CSVM
@@ -126,16 +127,33 @@ In both cases, the adjustments are to the values of constants in a logit model a
 
 # Stops Generation
 # Good deliveries (poitive adjustment = additional goods deliveries)
-asc_goods_adj = 0
+asc_goods_adj = 0.0
 
+# Stops Generation
 # Service calls (positive adjustment = additional goods deliveries)
-asc_service_adj = 0
+asc_service_adj = 0.0
+
+# Proximity of stops to businesses (to represent for example localization)
+# Proportional adjustment (positive adjustment is a factor > 1, negative adjustment is a factor < 1)
+# Since businesses (and all industries) do a mix of both activities, in application the factors are blended
+# The effect of the goods factor on industries that have a higher emphasis on goods delivery is more pronounced and vice versea
+base_dist_goods_factor = 1.0
+base_dist_service_factor = 1.0
+
+# Travel cost sensitivity adjustment
+# This factors distance or time variables 
+# (representing generalized impendance in the stop generation model,
+# a factor greater than one will reduce base to stop distance and also reduce overall stop generation,
+# a factor less than one will increase base to stop distance and also increase overall stop generation)
+impedance_goods_factor = 1.0
+impedance_service_factor = 1.0
 
 # Vehicle Type 
 # Mode specific constant adjustments by vehicle type (positive adjustment = trips shift towards that vehicle type)
-asc_vehicle_light_adj = 0
-asc_vehicle_medium_adj = 0
-asc_vehicle_heavy_adj = 0
+asc_vehicle_light_adj = 0.0
+asc_vehicle_medium_adj = 0.0
+asc_vehicle_heavy_adj = 0.0
+
 
 ```
 
