@@ -187,14 +187,21 @@ semcog_indinc_intext[Industry_Included == "Include" & ODGroup == "Internal Trip"
 # Estimates of VMT by class based on FHWA data
 # Read in from the FHWA spreadsheets and process here to create targets
 
-# From FHWA HS 2017
+# From FHWA HS 2017 (use 2017 numbers for SEMCOG) and 2019 (use 2019 numbers for CMAP)
 # https://www.fhwa.dot.gov/policyinformation/statistics/2017/hm71.cfm
-hm71 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
-                  sheet = "UA VMT", startRow = 15))
-vm2 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
-                            sheet = "Annual VMT", startRow = 15))
-vm4urban <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
-                                 sheet = "Pct Veh Urban", startRow = 15))
+hm71_2017 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                  sheet = "UA VMT 2017", startRow = 15))
+vm2_2017 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                            sheet = "Annual VMT 2017", startRow = 15))
+vm4urban_2017 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                                 sheet = "Pct Veh Urban 2017", startRow = 15))
+
+hm71_2019 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                                  sheet = "UA VMT 2019", startRow = 15))
+vm2_2019 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                                 sheet = "Annual VMT 2019", startRow = 15))
+vm4urban_2019 <- data.table(read.xlsx(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "FHWA_VMT_Data.xlsx"),
+                                      sheet = "Pct Veh Urban 2019", startRow = 15))
 
 # UA definition 
 ua <- fread(file.path(SYSTEM_DEV_DATA_PATH, "VMT", "ua_county_rel_10.txt"))
@@ -216,7 +223,7 @@ cmap <- ua[CountyFIPS %in% cmap_fips]
 cmap[, CHICAGO := ifelse(UANAME == "Chicago, IL--IN Urbanized Area", "In_UA", "Outside_UA")]
 cmap_summary <- cmap[,.(POPPT = sum(POPPT), HUPT = sum(HUPT)), keyby = .(CHICAGO) ][, POP_Pct := POPPT/sum(POPPT)][]
 
-chicago_vmt <- hm71[UrbanizedArea == "Chicago, IL--IN"]$Dvmt_Total * 1000
+chicago_vmt <- hm71_2019[UrbanizedArea == "Chicago, IL--IN"]$Dvmt_Total * 1000
 cmap_summary[, DVMT := ifelse(CHICAGO =="In_UA", 
                               chicago_vmt, 
                               chicago_vmt/cmap_summary[CHICAGO == "In_UA"]$POP_Pct * POP_Pct)]
@@ -234,7 +241,7 @@ semcog_summary <- semcog[,.(POPPT = sum(POPPT), HUPT = sum(HUPT)), keyby = .(DET
 # but it is negligible (71 people) so ignore
 detroit[CNAME == "Lapeer County"]
 
-detroit_vmt <- hm71[UrbanizedArea == "Detroit, MI"]$Dvmt_Total * 1000
+detroit_vmt <- hm71_2017[UrbanizedArea == "Detroit, MI"]$Dvmt_Total * 1000
 semcog_summary[, DVMT := ifelse(DETROIT =="In_UA", 
                                 detroit_vmt, 
                                 detroit_vmt/semcog_summary[DETROIT == "In_UA"]$POP_Pct * POP_Pct)]
@@ -243,9 +250,12 @@ fwrite(semcog_summary, file.path(SYSTEM_DEV_DATA_PATH, "VMT", "semcog_summary.cs
 
 # Allocation factors for VMT to vehicle types
 # Calculate Annual VMT by Interstate, Other Arterials, and Other roads
-vm2 <- vm2[State %in% c("Illinois", "Michigan"),.(State, Urban_Interstate, Urban_OtherFreeways, Urban_OtherPrincipalArterials,
+vm2 <- rbind(vm2_2017[State %in% c("Michigan"),.(State, Urban_Interstate, Urban_OtherFreeways, Urban_OtherPrincipalArterials,
                                                   Urban_MinorArterial, Urban_MajorCollector, Urban_MinorCollector,         
-                                                  Urban_Local, Urban_Total)]
+                                                  Urban_Local, Urban_Total)],
+             vm2_2019[State %in% c("Illinois"),.(State, Urban_Interstate, Urban_OtherFreeways, Urban_OtherPrincipalArterials,
+                                                             Urban_MinorArterial, Urban_MajorCollector, Urban_MinorCollector,         
+                                                             Urban_Local, Urban_Total)])
 
 vm2[, Urban_OtherArterials := Urban_OtherFreeways + Urban_OtherPrincipalArterials + Urban_MinorArterial]
 vm2[, Urban_Other := Urban_MajorCollector + Urban_MinorCollector + Urban_Local]
@@ -256,7 +266,10 @@ vm2 <- melt.data.table(vm2,
 vm2[, c("Area", "Road") := tstrsplit(Area_Road, split = "_", fixed = TRUE)]
 
 # Allocate VMT by vehicle class
-vm4urban <- melt.data.table(vm4urban[State %in% c("Illinois", "Michigan")],
+vm4urban <- rbind(vm4urban_2017[State %in% c("Michigan")],
+                  vm4urban_2019[State %in% c("Illinois")])
+
+vm4urban <- melt.data.table(vm4urban,
                             id.vars = "State",
                             variable.name = "Road_Vehicle",
                             value.name = "PctVmt")
@@ -269,6 +282,9 @@ vm4urban[Vehicle != "Total",
          by = .(Road, State)]
 
 # Apply rates to the Urban Area VMT to estimate VMT by vehicle class by Roads class in UAs
+hm71 <- rbind(hm71_2017[UrbanizedArea %in% c("Detroit, MI")],
+              hm71_2019[UrbanizedArea %in% c("Chicago, IL--IN")])
+
 hm71 <- hm71[UrbanizedArea %in% c("Chicago, IL--IN", "Detroit, MI"),
              .(UrbanizedArea, 
                Dvmt_Interstate, 
