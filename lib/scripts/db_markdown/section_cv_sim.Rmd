@@ -113,78 +113,78 @@ map.fitBounds(bounds);
 
 Column {data-width=375, .tabset}
 --------------------------------------------
-### Stop Activities by County
+### Stop Activities by District
 
-```{r Chart_Commercial_Stop_Activity_by_County}
+```{r Chart_Commercial_Stop_Activity_by_District}
 # Organize
-dat <- cv_trips[,.N, keyby = .(County = Region.Destination, Activity)]
+dat <- cv_trips[,.N, keyby = .(District = Region.Destination, Activity)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County.csv"), row.names = FALSE)
-assign("db_tab_cv_stop_activity_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_District.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Commercial Vehicle Stops", coord_flip = TRUE)
+bar_plotter(dat, xvar = "District", yvar = "N", fill = "Activity", xlabel = "Stop Location District", ylabel = "Commercial Vehicle Stops", coord_flip = TRUE)
 ```
 
-### Stop Activities by County for Light Vehicles
+### Stop Activities by District for Light Vehicles
 
-```{r Chart_Commercial_Stop_Activity_by_County_Light}
+```{r Chart_Commercial_Stop_Activity_by_District_Light}
 # Organize
-dat <- cv_trips[Vehicle == "Light",.N, keyby = .(County = Region.Destination, Activity)]
+dat <- cv_trips[Vehicle == "Light",.N, keyby = .(District = Region.Destination, Activity)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Light.csv"), row.names = FALSE)
-assign("db_tab_cv_stop_activity_county_light", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_District_Light.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_district_light", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Light Vehicle Stops", coord_flip = TRUE)
+bar_plotter(dat, xvar = "District", yvar = "N", fill = "Activity", xlabel = "Stop Location District", ylabel = "Light Vehicle Stops", coord_flip = TRUE)
 ```
 
-### Stop Activities by County for Medium Trucks
+### Stop Activities by District for Medium Trucks
 
-```{r Chart_Commercial_Stop_Activity_by_County_Medium}
+```{r Chart_Commercial_Stop_Activity_by_District_Medium}
 # Organize
-dat <- cv_trips[Vehicle == "Medium",.N, keyby = .(County = Region.Destination, Activity)]
+dat <- cv_trips[Vehicle == "Medium",.N, keyby = .(District = Region.Destination, Activity)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Medium.csv"), row.names = FALSE)
-assign("db_tab_cv_stop_activity_county_medium", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_District_Medium.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_district_medium", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Medium Truck Stops", coord_flip = TRUE)
+bar_plotter(dat, xvar = "District", yvar = "N", fill = "Activity", xlabel = "Stop Location District", ylabel = "Medium Truck Stops", coord_flip = TRUE)
 ```
 
-### Stop Activities by County for Heavy Trucks
+### Stop Activities by District for Heavy Trucks
 
-```{r Chart_Commercial_Stop_Activity_by_County_Heavy}
+```{r Chart_Commercial_Stop_Activity_by_District_Heavy}
 # Organize
-dat <- cv_trips[Vehicle == "Heavy",.N, keyby = .(County = Region.Destination, Activity)]
+dat <- cv_trips[Vehicle == "Heavy",.N, keyby = .(District = Region.Destination, Activity)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Heavy.csv"), row.names = FALSE)
-assign("db_tab_cv_stop_activity_county_heavy", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_District_Heavy.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_district_heavy", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "N", fill = "Activity", xlabel = "Stop Location County", ylabel = "Heavy Vehicle Stops", coord_flip = TRUE)
+bar_plotter(dat, xvar = "District", yvar = "N", fill = "Activity", xlabel = "Stop Location District", ylabel = "Heavy Vehicle Stops", coord_flip = TRUE)
 ```
 
-### Stop Activities by County and Vehicle (Table)
+### Stop Activities by District and Vehicle (Table)
 
-```{r Table_Commercial_Stop_Activity_by_County_Vehicle}
+```{r Table_Commercial_Stop_Activity_by_District_Vehicle}
 # Organize
-dat <- cv_trips[,.N, keyby = .(County = Region.Destination, Activity, Vehicle)]
+dat <- cv_trips[,.N, keyby = .(District = Region.Destination, Activity, Vehicle)]
 
 dat <- add_totals(dcast.data.table(dat,
-                                  Vehicle + Activity ~ County,
+                                  Vehicle + Activity ~ District,
                                    fun.aggregate = sum,
                                    value.var = "N"),
                   idcols = 2L)
 dat[is.na(Vehicle), Vehicle := ""]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_County_Vehicle.csv"), row.names = FALSE)
-assign("db_tab_cv_stop_activity_county_vehicle", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Stop_Activity_by_District_Vehicle.csv"), row.names = FALSE)
+assign("db_tab_cv_stop_activity_district_vehicle", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%
@@ -471,20 +471,20 @@ valueBox(value, caption = "Commercial Vehicle Tours (Model Region)", icon = "fa-
 Column {data-width=400, .tabset}
 --------------------------------------------
 
-### Tour Start Locations by County
+### Tour Start Locations by District
 
-```{r Chart_Commercial_Tour_Starts_by_County}
+```{r Chart_Commercial_Tour_Starts_by_District}
 # Organize
 dat <- cv_trips[TripID == 1, .(Region = Region.Start, Vehicle)]
 dat[, Region := factor(Region, levels = sort_levels(Region))]
 dat <- dat[,.N, by = .(Region, Vehicle)][order(Region)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_Start_Locations_by_Region.csv"), row.names = FALSE)
-assign("db_tab_cv_tour_start_region", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Tour_Start_Locations_by_District.csv"), row.names = FALSE)
+assign("db_tab_cv_tour_start_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Tour Start County", ylabel = "Commercial Vehicle Tours", coord_flip = TRUE)
+bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Tour Start District", ylabel = "Commercial Vehicle Tours", coord_flip = TRUE)
 ```
 
 > Includes all CV tours in the model region
@@ -819,23 +819,23 @@ assign("db_tab_cv_trip_tod_vehicle", dat, envir = db_inputs)
 bar_plotter(dat, xvar = "TOD", yvar = "N", fill = "Vehicle", xlabel = "Time Period", ylabel = "Commercial Vehicle Trips", position = "dodge")
 ```
 
-### Trip Origins by County
+### Trip Origins by District
 
-```{r Chart_Commercial_Trips_Origins_by_County}
+```{r Chart_Commercial_Trips_Origins_by_District}
 # Organize
 dat <- cv_trips[, .(Region = Region.Origin, Vehicle)]
 dat[, Region := factor(Region, levels = sort_levels(Region))]
 dat <- dat[,.N, by = .(Region, Vehicle)][order(Region)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_Origins_by_County.csv"), row.names = FALSE)
-assign("db_tab_cv_trip_origin_county_buffer", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_Origins_by_District.csv"), row.names = FALSE)
+assign("db_tab_cv_trip_origin_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Trip Origin County", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
+bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Trip Origin District", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
 ```
 
-### Trip Destinations by County
+### Trip Destinations by District
 
 ```{r Chart_Commercial_Trips_Destinations_by_Region}
 # Organize
@@ -844,11 +844,11 @@ dat[, Region := factor(Region, levels = sort_levels(Region))]
 dat <- dat[,.N, by = .(Region, Vehicle)][order(Region)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_Destinations_by_County.csv"), row.names = FALSE)
-assign("db_tab_cv_trip_destination_county_buffer", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_Trip_Destinations_by_District.csv"), row.names = FALSE)
+assign("db_tab_cv_trip_destination_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Trip Destination County", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
+bar_plotter(dat, xvar = "Region", yvar = "N", fill = "Vehicle", xlabel = "Trip Destination District", ylabel = "Commercial Vehicle Trips", coord_flip = TRUE)
 ```
 
 ### Trip Length by Vehicle Type
@@ -896,23 +896,23 @@ plotly_build(p)
 Column {data-width=400, .tabset}
 --------------------------------------------
 
-### Total Trip Origins by County and TOD
+### Total Trip Origins by District and TOD
 
-```{r Table_County_TOD_AllVehicle}
+```{r Table_District_TOD_AllVehicle}
 # Organize
-dat <- cv_trips[,.(Vehicle = "All Vehicles", .N), keyby = .(County = Region.Origin, TOD)]
+dat <- cv_trips[,.(Vehicle = "All Vehicles", .N), keyby = .(District = Region.Origin, TOD)]
 dat[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
 
 dat <- add_totals(dcast.data.table(dat,
-                                  Vehicle + County ~ TOD,
+                                  Vehicle + District ~ TOD,
                                    fun.aggregate = sum,
                                    value.var = "N"),
                   idcols = 2L)
 dat[is.na(Vehicle), Vehicle := ""]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_County_TOD_AllVehicles.csv"), row.names = FALSE)
-assign("db_tab_cv_county_tod_allvehicles", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_District_TOD_AllVehicles.csv"), row.names = FALSE)
+assign("db_tab_cv_district_tod_allvehicles", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%
@@ -922,23 +922,23 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
-### Light Vehicle Trip Origins by County and TOD
+### Light Vehicle Trip Origins by District and TOD
 
-```{r Table_County_TOD_LightVehicle}
+```{r Table_District_TOD_LightVehicle}
 # Organize
-dat <- cv_trips[Vehicle == "Light",.(.N), keyby = .(County = Region.Origin, TOD, Vehicle)]
+dat <- cv_trips[Vehicle == "Light",.(.N), keyby = .(District = Region.Origin, TOD, Vehicle)]
 dat[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
 
 dat <- add_totals(dcast.data.table(dat,
-                                  Vehicle + County ~ TOD,
+                                  Vehicle + District ~ TOD,
                                    fun.aggregate = sum,
                                    value.var = "N"),
                   idcols = 2L)
 dat[is.na(Vehicle), Vehicle := ""]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_County_TOD_Light.csv"), row.names = FALSE)
-assign("db_tab_cv_county_tod_light", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_District_TOD_Light.csv"), row.names = FALSE)
+assign("db_tab_cv_district_tod_light", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%
@@ -948,23 +948,23 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
-### Medium Truck Trip Origins by County and TOD
+### Medium Truck Trip Origins by District and TOD
 
-```{r Table_County_TOD_MediumVehicle}
+```{r Table_District_TOD_MediumVehicle}
 # Organize
-dat <- cv_trips[Vehicle == "Medium",.(.N), keyby = .(County = Region.Origin, TOD, Vehicle)]
+dat <- cv_trips[Vehicle == "Medium",.(.N), keyby = .(District = Region.Origin, TOD, Vehicle)]
 dat[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
 
 dat <- add_totals(dcast.data.table(dat,
-                                  Vehicle + County ~ TOD,
+                                  Vehicle + District ~ TOD,
                                    fun.aggregate = sum,
                                    value.var = "N"),
                   idcols = 2L)
 dat[is.na(Vehicle), Vehicle := ""]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_County_TOD_Medium.csv"), row.names = FALSE)
-assign("db_tab_cv_county_tod_medium", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_District_TOD_Medium.csv"), row.names = FALSE)
+assign("db_tab_cv_district_tod_medium", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%
@@ -974,23 +974,23 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
-### Heavy Truck Trip Origins by County and TOD
+### Heavy Truck Trip Origins by District and TOD
 
-```{r Table_County_TOD_HeavyVehicle}
+```{r Table_District_TOD_HeavyVehicle}
 # Organize
-dat <- cv_trips[Vehicle == "Heavy",.(.N), keyby = .(County = Region.Origin, TOD, Vehicle)]
+dat <- cv_trips[Vehicle == "Heavy",.(.N), keyby = .(District = Region.Origin, TOD, Vehicle)]
 dat[, TOD := factor(TOD, levels = names(BASE_TOD_RANGES))]
 
 dat <- add_totals(dcast.data.table(dat,
-                                  Vehicle + County ~ TOD,
+                                  Vehicle + District ~ TOD,
                                    fun.aggregate = sum,
                                    value.var = "N"),
                   idcols = 2L)
 dat[is.na(Vehicle), Vehicle := ""]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_County_TOD_Heavy.csv"), row.names = FALSE)
-assign("db_tab_cv_county_tod_heavy", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Commercial_District_TOD_Heavy.csv"), row.names = FALSE)
+assign("db_tab_cv_district_tod_heavy", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%

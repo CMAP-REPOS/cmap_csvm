@@ -56,55 +56,55 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 
 ```
 
-### firm_sim_taz_land_use: Employment by County
+### firm_sim_taz_land_use: Employment by District
 
-```{r Chart_firm_sim_taz_land_use_emp_county}
+```{r Chart_firm_sim_taz_land_use_emp_District}
 
 # Organize
 # Current scenario
 dat_scen <- melt.data.table(TAZLandUseCVTM, id.vars = c("TAZ", "Mesozone", "CountyFIPS"), variable.name = "Industry", value.name = "Employment")[Industry %in% c("HH", "NEmp_Total")]
 dat_scen[, Industry := sub("NEmp_", "", Industry)]
-dat_scen[TAZ_System, County := i.DistrictName, on = "TAZ"]
+dat_scen[TAZ_System, District := i.DistrictName, on = "TAZ"]
 dat_scen[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP MPO Area", "Rest of Model Region")]
-dat_scen <- dat_scen[TAZ_TYPE == "CMAP MPO Area", .(Employment = sum(Employment), Source = SCENARIO_NAME), keyby = .(Industry, County)] 
+dat_scen <- dat_scen[, .(Employment = sum(Employment), Source = SCENARIO_NAME), keyby = .(Industry, District)] 
 
 # Reference scenario
 dat_ref <- melt.data.table(ref_TAZLandUseCVTM, id.vars = c("TAZ", "Mesozone", "CountyFIPS"), variable.name = "Industry", value.name = "Employment")[Industry %in% c("HH", "NEmp_Total")]
 dat_ref[, Industry := sub("NEmp_", "", Industry)]
-dat_ref[TAZ_System, County := i.DistrictName, on = "TAZ"]
+dat_ref[TAZ_System, District := i.DistrictName, on = "TAZ"]
 dat_ref[, TAZ_TYPE := ifelse(TAZ %in% BASE_TAZ_CMAP, "CMAP MPO Area", "Rest of Model Region")]
-dat_ref <- dat_ref[TAZ_TYPE == "CMAP MPO Area", .(Employment = sum(Employment), Source = SCENARIO_REFERENCE_NAME), keyby = .(Industry, County)] 
+dat_ref <- dat_ref[, .(Employment = sum(Employment), Source = SCENARIO_REFERENCE_NAME), keyby = .(Industry, District)] 
 
 # Combine
 dat <- rbind(dat_scen[Industry == "Total"], dat_ref[Industry == "Total"])
 dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
-dat[, County := factor(County, levels = levels(TAZ_System$DistrictName))]
+dat[, District := factor(District, levels = levels(TAZ_System$DistrictName))]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_emp_county.csv"))
-assign("db_tab_firm_sim_taz_land_use_emp_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_emp_district.csv"))
+assign("db_tab_firm_sim_taz_land_use_emp_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "Employment", fill = "Source", position = "dodge", coord_flip = TRUE, png_name = "p_firm_sim_taz_land_use_emp_county.png")
+bar_plotter(dat, xvar = "District", yvar = "Employment", fill = "Source", position = "dodge", coord_flip = TRUE, png_name = "p_firm_sim_taz_land_use_emp_district.png")
 
 ```
 
-### firm_sim_taz_land_use: Households by County
+### firm_sim_taz_land_use: Households by District
 
-```{r Chart_firm_sim_taz_land_use_hh_county}
+```{r Chart_firm_sim_taz_land_use_hh_district}
 # Organize
 # Combine
 dat <- rbind(dat_scen[Industry == "HH"], dat_ref[Industry == "HH"])
 dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
 setnames(dat, c("Industry", "Employment"), c("Landuse", "Households"))
-dat[, County := factor(County, levels = levels(TAZ_System$DistrictName))]
+dat[, District := factor(District, levels = levels(TAZ_System$DistrictName))]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_hh_county.csv"))
-assign("db_tab_firm_sim_taz_land_use_hh_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_taz_land_use_hh_district.csv"))
+assign("db_tab_firm_sim_taz_land_use_hh_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "Households", fill = "Source", position = "dodge", coord_flip = TRUE, png_name = "p_firm_sim_taz_land_use_hh_county.png")
+bar_plotter(dat, xvar = "District", yvar = "Households", fill = "Source", position = "dodge", coord_flip = TRUE, png_name = "p_firm_sim_taz_land_use_hh_district.png")
 
 ```
 
@@ -134,26 +134,26 @@ bar_plotter(dat, xvar = "Industry", yvar = "Employment",  fill = "Source", posit
 
 ```
 
-### firm_sim_scale_employees: Employment by County
+### firm_sim_scale_employees: Employment by District
 
-```{r Chart_firm_sim_scale_employees_county}
+```{r Chart_firm_sim_scale_employees_District}
 # Organize
 # Current scenario
-dat_scen <- ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_NAME), keyby = .(County = Region)] 
+dat_scen <- ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_NAME), keyby = .(District = Region)] 
 
 # Reference scenario
-dat_ref <- ref_ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_REFERENCE_NAME), keyby = .(County = Region)] 
+dat_ref <- ref_ScenarioFirms[, .(Employment = sum(Employees), Source = SCENARIO_REFERENCE_NAME), keyby = .(District = Region)] 
 
 # Combine
 dat <- rbind(dat_scen, dat_ref)
 dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
-dat[, County := factor(County, levels = levels(TAZ_System$DistrictName))]
+dat[, District := factor(District, levels = levels(TAZ_System$DistrictName))]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_scale_employees_county.csv"))
-assign("db_tab_firm_sim_scale_employees_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_scale_employees_district.csv"))
+assign("db_tab_firm_sim_scale_employees_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "County", yvar = "Employment", fill = "Source", position = "dodge", coord_flip = TRUE, png_name = "p_firm_sim_scale_employees_county.png")
+bar_plotter(dat, xvar = "District", yvar = "Employment", fill = "Source", position = "dodge", coord_flip = TRUE, png_name = "p_firm_sim_scale_employees_district.png")
 
 ```

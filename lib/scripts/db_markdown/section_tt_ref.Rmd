@@ -11,7 +11,7 @@ editor_options:
 Comparison {data-navmenu="Trip Tables"}
 ============================================
 
-Highlights {data-width=150}
+Highlights {data-width=300}
 --------------------------------------------
 
 **Trip Tables: Comparison with Reference Scenario**
@@ -23,21 +23,107 @@ Scenarios being compared:
 - the current scenario is **`r SCENARIO_NAME`**
 - the reference scenario is **`r SCENARIO_REFERENCE_NAME`**
 
-Column {data-width=600, .tabset}
+### VMT Comparison
+
+```{r Chart_tt_comp_vmt_tab}
+# Organize
+
+dat <- ref_tmh_vtods[,.(Reference = sum(VMT)), keyby = .(Vehicle)]
+
+dat[tmh_vtods[,.(Scenario = sum(VMT)), keyby = .(Vehicle)],
+    Scenario := i.Scenario, on = "Vehicle"]
+
+dat[, Difference := Scenario - Reference]
+
+dat <- add_totals(dat, rowtotal = FALSE)                  
+
+dat[, Ratio := Scenario/Reference]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_comp_vmt_tab.csv"))
+assign("db_tab_tt_build_comp_vmt_tab", dat, envir = db_inputs)
+
+# Table
+cols <- names(dat)[2:(ncol(dat)-1)]
+dat[, (cols) := lapply(.SD, format, digits = 0, big.mark = ",", scientific = FALSE), .SDcols = cols]
+
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))  %>%
+  row_spec(nrow(dat), background = "#f2f2f2")
+
+```
+
+### Trip Table Comparison Summary
+
+```{r Chart_tt_comp_summary_tab}
+# Organize
+# summary/mean values in a table with measure, model, target
+
+# average trip distance
+# average tour distance
+# average tour time
+# average stops per tour (excluding return stop)
+# percent single stop tours (vs multistop)
+# average base to stop distance
+# average cluster distance
+# average stop duration
+
+# Create the reference portion of the table and then add observed data
+# Create from the ref_cv_trips table in case validation summaries not available
+dat <- data.table(Field = c("Trips: Distance", "Tours: Distance", "Tours: Number of Stops (Excluding Return to Base)",
+                             "Tours: Single Stop Tours (vs. Multi-Stop)", "Trips: Base-to-StopDistance",
+                             "Tours: Cluster Distance", "Trips: Stop Duration", "Tours: Tour Duration"),
+                  Statistic = c("Mean (Miles)", "Mean (Miles)", "Mean (# Stops)",
+                                "Proportion", "Mean (Miles)", "Mean (Miles)",
+                                "Mean (Minutes)", "Mean (Minutes)"))
+
+dat[Field == "Trips: Distance", Reference := round(mean(ref_cv_trips$Distance, na.rm = TRUE), 2)]
+dat[Field == "Tours: Distance", Reference := round(mean(ref_cv_trips[,.(Distance = sum(Distance)), by = TourID]$Distance),2)]
+dat[Field == "Tours: Number of Stops (Excluding Return to Base)", Reference := round(mean(ref_cv_trips[Activity != "Return",.(NumStops = .N), by = TourID]$NumStops),2)]
+dat[Field == "Tours: Single Stop Tours (vs. Multi-Stop)", Reference := round((ref_cv_trips[Activity != "Return",.N,by = TourID][N==1,.N])/uniqueN(cv_trips$TourID),2)]
+dat[Field == "Trips: Base-to-StopDistance", Reference := round(mean(ref_cv_trips[Activity != "Return"]$Distance.Start),2)]
+dat[Field == "Tours: Cluster Distance", Reference := round(mean(ref_cv_trips_cluster$MeanDist),2)]
+dat[Field == "Trips: Stop Duration", Reference := round(mean(ref_cv_trips[Activity != "Return"]$StopDuration),2)]
+dat[Field == "Tours: Tour Duration", Reference := round(mean(ref_cv_trips[,.(TourDuration = sum(TravelTime, StopDuration)), by = TourID]$TourDuration),2)]
+
+dat[Field == "Trips: Distance", Scenario := round(mean(cv_trips$Distance, na.rm = TRUE), 2)]
+dat[Field == "Tours: Distance", Scenario := round(mean(cv_trips[,.(Distance = sum(Distance)), by = TourID]$Distance),2)]
+dat[Field == "Tours: Number of Stops (Excluding Return to Base)", Scenario := round(mean(cv_trips[Activity != "Return",.(NumStops = .N), by = TourID]$NumStops),2)]
+dat[Field == "Tours: Single Stop Tours (vs. Multi-Stop)", Scenario := round((cv_trips[Activity != "Return",.N,by = TourID][N==1,.N])/uniqueN(cv_trips$TourID),2)]
+dat[Field == "Trips: Base-to-StopDistance", Scenario := round(mean(cv_trips[Activity != "Return"]$Distance.Start),2)]
+dat[Field == "Tours: Cluster Distance", Scenario := round(mean(cv_trips_cluster$MeanDist),2)]
+dat[Field == "Trips: Stop Duration", Scenario := round(mean(cv_trips[Activity != "Return"]$StopDuration),2)]
+dat[Field == "Tours: Tour Duration", Scenario := round(mean(cv_trips[,.(TourDuration = sum(TravelTime, StopDuration)), by = TourID]$TourDuration),2)]
+
+dat[, Difference := Scenario - Reference]
+dat[, Ratio := Scenario/Reference]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_comp_summary_tab.csv"))
+assign("db_tab_tt_build_comp_summary_tab", dat, envir = db_inputs)
+
+# Table
+kable(dat, escape=FALSE, digits = 3) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+
+```
+
+
+Column {data-width=500, .tabset}
 --------------------------------------------
 
-### County Origins (All Vehicles) 
+### District Origins (All Vehicles) 
 
-```{r Chart_tt_val_county_origins}
+```{r Chart_tt_comp_District_origins}
 # Organize
-dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog)]
 dat_scen[, Scenario := ScenTrips/sum(ScenTrips)]
 
-dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog)]
 dat_ref[, Reference := RefTrips/sum(RefTrips)]
 
 
-dat <- merge(dat_ref, dat_scen, by= "OriginCounty", all = TRUE)
+dat <- merge(dat_ref, dat_scen, by= "OriginDistrict", all = TRUE)
 dat[is.na(Reference), Reference := 0]
 dat[is.na(Scenario), Scenario := 0]
 
@@ -45,27 +131,27 @@ dat[, Difference := Scenario - Reference]
 dat[, Ratio := ifelse(Reference != 0, Scenario/Reference, 0)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_all.csv"))
-assign("db_tab_tt_build_county_origins_all", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_origins_all.csv"))
+assign("db_tab_tt_build_district_origins_all", dat, envir = db_inputs)
 
 # Table
-kable(dat[,.(OriginCounty, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[,.(OriginDistrict, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
 
-### County Destinations (All Vehicles) 
+### District Destinations (All Vehicles) 
 
-```{r Chart_tt_val_county_dest}
+```{r Chart_tt_comp_District_dest}
 # Organize
-dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationCounty = DSummaryGeog)]
+dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationDistrict = DSummaryGeog)]
 dat_scen[, Scenario := ScenTrips/sum(ScenTrips)]
 
-dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationCounty = DSummaryGeog)]
+dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationDistrict = DSummaryGeog)]
 dat_ref[, Reference := RefTrips/sum(RefTrips)]
 
-dat <- merge(dat_ref, dat_scen, by= "DestinationCounty", all = TRUE)
+dat <- merge(dat_ref, dat_scen, by= "DestinationDistrict", all = TRUE)
 dat[is.na(Reference), Reference := 0]
 dat[is.na(Scenario), Scenario := 0]
 
@@ -73,27 +159,27 @@ dat[, Difference := Scenario - Reference]
 dat[, Ratio := ifelse(Reference != 0, Scenario/Reference, 0)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_dest_all.csv"))
-assign("db_tab_tt_build_county_origins_all", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_dest_all.csv"))
+assign("db_tab_tt_build_district_origins_all", dat, envir = db_inputs)
 
 # Table
-kable(dat[,.(DestinationCounty, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[,.(DestinationDistrict, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
-### County Origins (Light Vehicles) 
+### District Origins (Light Vehicles) 
 
-```{r Chart_tt_val_county_origins_light}
+```{r Chart_tt_comp_District_origins_light}
 # Organize
-dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog, Vehicle)]
+dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog, Vehicle)]
 dat_scen[, Scenario := ScenTrips/sum(ScenTrips), by = Vehicle]
 
-dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog, Vehicle)]
+dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog, Vehicle)]
 dat_ref[, Reference := RefTrips/sum(RefTrips), by = Vehicle]
 
 
-dat <- merge(dat_ref, dat_scen, by= c("OriginCounty", "Vehicle"), all = TRUE)
+dat <- merge(dat_ref, dat_scen, by= c("OriginDistrict", "Vehicle"), all = TRUE)
 dat[is.na(Reference), Reference := 0]
 dat[is.na(Scenario), Scenario := 0]
 
@@ -101,48 +187,48 @@ dat[, Difference := Scenario - Reference]
 dat[, Ratio := ifelse(Reference != 0, Scenario/Reference, 0)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_vehicle.csv"))
-assign("db_tab_tt_build_county_origins_vehicle", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_origins_vehicle.csv"))
+assign("db_tab_tt_build_district_origins_vehicle", dat, envir = db_inputs)
 
 # Table
-kable(dat[Vehicle == "Light",.(OriginCounty, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[Vehicle == "Light",.(OriginDistrict, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
-### County Origins (Medium Trucks) 
+### District Origins (Medium Trucks) 
 
-```{r Chart_tt_val_county_origins_medium}
+```{r Chart_tt_comp_District_origins_medium}
 # Table
-kable(dat[Vehicle == "Medium",.(OriginCounty, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[Vehicle == "Medium",.(OriginDistrict, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
-### County Origins (Heavy Trucks) 
+### District Origins (Heavy Trucks) 
 
-```{r Chart_tt_val_county_origins_heavy}
+```{r Chart_tt_val_District_origins_heavy}
 # Table
-kable(dat[Vehicle == "Heavy",.(OriginCounty, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[Vehicle == "Heavy",.(OriginDistrict, Reference, Scenario, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
 
-### Percent Trips by County OD: Scenario
+### Percent Trips by District OD: Scenario
 
-```{r Chart_Percent_Trips_By_County_OD_scen}
+```{r Chart_Percent_Trips_By_District_OD_scen}
 # Organize
-dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat_scen <- TripTable[, .(ScenTrips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat_scen[, Scenario := ScenTrips/sum(ScenTrips)]
 dat <- add_totals(dcast.data.table(dat_scen,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Scenario"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_scen.csv"))
-assign("db_tab_tt_build_county_od_scen", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_od_scen.csv"))
+assign("db_tab_tt_build_district_od_scen", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -152,20 +238,20 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```
 
-### Percent Trips by County OD: Reference
+### Percent Trips by District OD: Reference
 
-```{r Chart_Percent_Trips_By_County_OD_obs}
+```{r Chart_Percent_Trips_By_District_OD_ref}
 # Organize
-dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat_ref <- ref_TripTable[, .(RefTrips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat_ref[, Reference := RefTrips/sum(RefTrips)]
 dat <- add_totals(dcast.data.table(dat_ref,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Reference"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_ref.csv"))
-assign("db_tab_tt_build_county_od_ref", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_District_od_ref.csv"))
+assign("db_tab_tt_build_district_od_ref", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -176,21 +262,21 @@ kable(dat, escape=FALSE, digits = 3) %>%
 ```
 
 
-### Percent Trips by County OD: Difference (Scenario - Reference)
+### Percent Trips by District OD: Difference (Scenario - Reference)
 
-```{r Chart_Percent_Trips_By_County_OD_diff}
+```{r Chart_Percent_Trips_By_District_OD_diff}
 # Organize
-dat_diff <- merge(dat_ref, dat_scen, by = c("OriginCounty", "DestinationCounty"))
+dat_diff <- merge(dat_ref, dat_scen, by = c("OriginDistrict", "DestinationDistrict"))
 dat_diff[, Difference := Scenario - Reference]
 
 dat <- dcast.data.table(dat_diff,
-       OriginCounty ~ DestinationCounty,
+       OriginDistrict ~ DestinationDistrict,
        fun.aggregate = sum,
        value.var = "Difference")
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_comp_diff.csv"))
-assign("db_tab_tt_build_county_od_comp_diff", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_od_comp_diff.csv"))
+assign("db_tab_tt_build_district_od_comp_diff", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%

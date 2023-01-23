@@ -138,48 +138,6 @@ db_build_process_inputs <- function(envir){
     cv_trips_taz[, StopPerHH := ifelse(HH > 0, Stops/HH, 0)]
     cv_trips_taz[, StopPerEmp := ifelse(NEmp_Total > 0, Stops/NEmp_Total, 0)]
     
-    cv_trips_taz[order(-Stops)]
-    cv_trips_taz[order(-Scheduled)]
-    cv_trips_taz[order(-Return)]
-    cv_trips_taz[order(-Intermediate)]
-    cv_trips_taz[order(-Other)]
-    cv_trips_taz[order(-NEmp_Total)]
-    cv_trips_taz[order(-NEmp_Service_FoodDrink)]
-
-    cv_trips_taz[order(-PctIntermediate)][Stops > 500][1:50]
-    cv_trips_taz[NEmp_Total == 0 & Stops > 0]
-
-    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$Goods, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$Service, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$Return, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$BreakMeal, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$VehicleService, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$Other, cv_trips_taz$NEmp_Total)
-    # 
-    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Retail)
-    # plot(cv_trips_taz$Goods, cv_trips_taz$NEmp_Retail)
-    # plot(cv_trips_taz$Service, cv_trips_taz$NEmp_Retail)
-    # plot(cv_trips_taz$Return, cv_trips_taz$NEmp_Retail)
-    # plot(cv_trips_taz$BreakMeal, cv_trips_taz$NEmp_Retail)
-    # plot(cv_trips_taz$VehicleService, cv_trips_taz$NEmp_Retail)
-    # plot(cv_trips_taz$Other, cv_trips_taz$NEmp_Retail)
-    # 
-    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Service_FoodDrink)
-    # plot(cv_trips_taz$Goods, cv_trips_taz$NEmp_Service_FoodDrink)
-    # plot(cv_trips_taz$Service, cv_trips_taz$NEmp_Service_FoodDrink)
-    # plot(cv_trips_taz$Return, cv_trips_taz$NEmp_Service_FoodDrink)
-    # plot(cv_trips_taz$BreakMeal, cv_trips_taz$NEmp_Service_FoodDrink)
-    # plot(cv_trips_taz$VehicleService, cv_trips_taz$NEmp_Service_FoodDrink)
-    # plot(cv_trips_taz$Other, cv_trips_taz$NEmp_Service_FoodDrink)
-    # 
-    # plot(cv_trips_taz[cv_trips_taz$Other > 100]$PctIntermediate, cv_trips_taz[cv_trips_taz$Other > 100]$NEmp_Service_FoodDrink)
-    # 
-    # plot(cv_trips_taz$Stops, cv_trips_taz$HH)
-    # plot(cv_trips_taz$Stops, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$StopPerEmp, cv_trips_taz$NEmp_Total)
-    # plot(cv_trips_taz$StopPerHH, cv_trips_taz$HH)
-
     envir[["cv_trips_taz"]] <- cv_trips_taz
   }
   
@@ -335,7 +293,7 @@ db_build_process_inputs <- function(envir){
       #extract some of the reference tables and remove the other inputs, functions, etc, that are in the env.
       ref_obj <- ls(db_reference$db_inputs, all.names=TRUE)
       ref_obj <- ref_obj[grep("db_tab_", ref_obj)]
-      ref_obj <- c("ScenarioFirms", "TAZLandUseCVTM", "cv_trips", "TripTable", "tmh_vtods", "truck_trip_gen", "tmh_vtods_wide", ref_obj)
+      ref_obj <- c("ScenarioFirms", "TAZLandUseCVTM", "cv_trips", "cv_trips_cluster",  "TripTable", "tmh_vtods", "truck_trip_gen", "tmh_vtods_wide", ref_obj)
       for(n in ref_obj) assign(paste0("ref_", n), get(n, db_reference$db_inputs), envir)
       
     } else {

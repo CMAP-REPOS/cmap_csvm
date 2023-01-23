@@ -159,18 +159,18 @@ assign("db_tab_firms_size", dat, envir = db_inputs)
 bar_plotter(dat, xvar = "Size", yvar = "N", xlabel = "Firm Size Category", ylabel = "Firms", fill = "Region", position = "dodge", coord_flip = TRUE)
 ```
 
-### Firms by County
+### Firms by District
 
-```{r Chart_Firms_By_County}
+```{r Chart_Firms_By_District}
 # Organize
 dat <- ScenarioFirms[, .N, keyby = .(Region)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_County.csv"))
-assign("db_tab_firms_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_District.csv"))
+assign("db_tab_firms_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "N", xlabel = "County or other Geography", ylabel = "Firms", 
+bar_plotter(dat, xvar = "Region", yvar = "N", xlabel = "District", ylabel = "Firms", 
              coord_flip = TRUE)
 ```
 
@@ -226,9 +226,9 @@ kable(dat, escape=FALSE) %>%
 
 > Includes firms within the rest of the model region only
 
-### Firms by Industry and County/Region
+### Firms by Industry and District
 
-```{r Chart_Firms_By_Industry_And_County}
+```{r Chart_Firms_By_Industry_And_District}
 # Organize
 dat <- ScenarioFirms[, .N, keyby = .(Industry = EmpCatGroupedName, Region)]
 
@@ -238,8 +238,8 @@ dat <- add_totals(dcast.data.table(dat,
                      value.var = "N"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Industry_and_County.csv"))
-assign("db_tab_firms_industry_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Firms_by_Industry_and_District.csv"))
+assign("db_tab_firms_industry_district", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%
@@ -382,18 +382,18 @@ bar_plotter(dat, xvar = "Size", yvar = "Employees", xlabel = "Firm Size Category
 
 ```
 
-### Employment by County
+### Employment by District
 
-```{r Chart_Employment_By_County}
+```{r Chart_Employment_By_District}
 # Organize
 dat <- ScenarioFirms[, .(Employees = sum(Employees)), keyby = .(Region)]
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_County.csv"))
-assign("db_tab_emp_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_District.csv"))
+assign("db_tab_emp_district", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat, xvar = "Region", yvar = "Employees", xlabel = "County or other Geography", coord_flip = TRUE)
+bar_plotter(dat, xvar = "Region", yvar = "Employees", xlabel = "District", coord_flip = TRUE)
 ```
 
 ### Employment by Industry and Size (CMAP)
@@ -420,7 +420,7 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
-> Includes employment within the CMAP 7 County region only
+> Includes employment within the CMAP MPO region only
 
 ### Employment by Industry and Size (Rest of Model Region)
 
@@ -448,9 +448,9 @@ kable(dat, escape=FALSE) %>%
 
 > Includes employment within the Rest of Model Region only
 
-### Employment by Industry and County/Region
+### Employment by Industry and District
 
-```{r Chart_Employment_By_Industry_And_County}
+```{r Chart_Employment_By_Industry_And_District}
 # Organize
 dat <- ScenarioFirms[, .(Employees = sum(Employees)), keyby = .(Industry = EmpCatGroupedName, Region)]
 
@@ -460,8 +460,8 @@ dat <- add_totals(dcast.data.table(dat,
                      value.var = "Employees"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Industry_and_County.csv"))
-assign("db_tab_emp_industry_county", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "Employees_by_Industry_and_District.csv"))
+assign("db_tab_emp_industry_district", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE) %>%

@@ -131,19 +131,19 @@ kable(dat, escape=FALSE, digits = 0) %>%
 
 ```
 
-### Total Trips by County OD 
+### Total Trips by District OD 
 
-```{r Chart_Total_Trips_By_County_OD}
+```{r Chart_Total_Trips_By_District_OD}
 # Organize
-dat <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Trips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_by_County_OD.csv"))
-assign("db_tab_tt_trips_county_od", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Trips_by_District_OD.csv"))
+assign("db_tab_tt_trips_district_od", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 0) %>%
@@ -153,19 +153,19 @@ kable(dat, escape=FALSE, digits = 0) %>%
 
 ```
 
-### Light Vehice Trips by County OD 
+### Light Vehice Trips by District OD 
 
-```{r Chart_Light_Trips_By_County_OD}
+```{r Chart_Light_Trips_By_District_OD}
 # Organize
-dat <- TripTable[Vehicle == "Light", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[Vehicle == "Light", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Trips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Light_Trips_by_County_OD.csv"))
-assign("db_tab_tt_trips_county_od_light", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Light_Trips_by_District_OD.csv"))
+assign("db_tab_tt_trips_district_od_light", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 0) %>%
@@ -175,19 +175,19 @@ kable(dat, escape=FALSE, digits = 0) %>%
 
 ```
 
-### Medium Truck Trips by County OD 
+### Medium Truck Trips by District OD 
 
-```{r Chart_Medium_Trips_By_County_OD}
+```{r Chart_Medium_Trips_By_District_OD}
 # Organize
-dat <- TripTable[Vehicle == "Medium", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[Vehicle == "Medium", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Trips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Medium_Trips_by_County_OD.csv"))
-assign("db_tab_tt_trips_county_od_medium", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Medium_Trips_by_District_OD.csv"))
+assign("db_tab_tt_trips_district_od_medium", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 0) %>%
@@ -197,19 +197,19 @@ kable(dat, escape=FALSE, digits = 0) %>%
 
 ```
 
-### Heavy Truck Trips by County OD 
+### Heavy Truck Trips by District OD 
 
-```{r Chart_Heavy_Trips_By_County_OD}
+```{r Chart_Heavy_Trips_By_District_OD}
 # Organize
-dat <- TripTable[Vehicle == "Heavy", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[Vehicle == "Heavy", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Trips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Heavy_Trips_by_County_OD.csv"))
-assign("db_tab_tt_trips_county_od_heavy", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Heavy_Trips_by_District_OD.csv"))
+assign("db_tab_tt_trips_district_od_heavy", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 0) %>%
@@ -218,20 +218,20 @@ kable(dat, escape=FALSE, digits = 0) %>%
   column_spec(ncol(dat), background = "#f2f2f2")
 ```
 
-### Percent Trips by County OD 
+### Percent Trips by District OD 
 
-```{r Chart_Percent_Trips_By_County_OD}
+```{r Chart_Percent_Trips_By_District_OD}
 # Organize
-dat <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[, .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat[, PctTrips := Trips/sum(Trips)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "PctTrips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_PctTrips_by_County_OD.csv"))
-assign("db_tab_tt_pcttrips_county_od", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_PctTrips_by_District_OD.csv"))
+assign("db_tab_tt_pcttrips_district_od", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -241,20 +241,20 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```
 
-### Light Vehice Percent Trips by County OD 
+### Light Vehice Percent Trips by District OD 
 
-```{r Chart_Light_PctTrips_By_County_OD}
+```{r Chart_Light_PctTrips_By_District_OD}
 # Organize
-dat <- TripTable[Vehicle == "Light", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[Vehicle == "Light", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat[, PctTrips := Trips/sum(Trips)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "PctTrips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Light_PctTrips_by_County_OD.csv"))
-assign("db_tab_tt_pcttrips_county_od_light", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Light_PctTrips_by_District_OD.csv"))
+assign("db_tab_tt_pcttrips_district_od_light", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -264,20 +264,20 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```
 
-### Medium Truck Percent Trips by County OD 
+### Medium Truck Percent Trips by District OD 
 
-```{r Chart_Medium_PctTrips_By_County_OD}
+```{r Chart_Medium_PctTrips_By_District_OD}
 # Organize
-dat <- TripTable[Vehicle == "Medium", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[Vehicle == "Medium", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat[, PctTrips := Trips/sum(Trips)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "PctTrips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Medium_PctTrips_by_County_OD.csv"))
-assign("db_tab_tt_pcttrips_county_od_medium", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Medium_PctTrips_by_District_OD.csv"))
+assign("db_tab_tt_pcttrips_district_od_medium", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -287,20 +287,20 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```
 
-### Heavy Truck Percent Trips by County OD 
+### Heavy Truck Percent Trips by District OD 
 
-```{r Chart_Heavy_PctTrips_By_County_OD}
+```{r Chart_Heavy_PctTrips_By_District_OD}
 # Organize
-dat <- TripTable[Vehicle == "Heavy", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat <- TripTable[Vehicle == "Heavy", .(Trips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat[, PctTrips := Trips/sum(Trips)]
 dat <- add_totals(dcast.data.table(dat,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "PctTrips"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Heavy_PctTrips_by_County_OD.csv"))
-assign("db_tab_tt_pcttrips_county_od_heavy", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "TripTable_Heavy_PctTrips_by_District_OD.csv"))
+assign("db_tab_tt_pcttrips_district_od_heavy", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%

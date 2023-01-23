@@ -11,7 +11,7 @@ editor_options:
 Validation {data-navmenu="Trip Tables"}
 ============================================
 
-Highlights {data-width=250}
+Highlights {data-width=300}
 --------------------------------------------
 
 **Trip Tables: Validation**
@@ -28,14 +28,18 @@ dat <- cal_results$calibration_targets_tt_sim$tt_build$vmt_est_fhwa[,.(Vehicle, 
 dat[tmh_vtods[,.(Model_VMT = sum(VMT)), keyby = .(Vehicle)],
     Model_VMT := i.Model_VMT, on = "Vehicle"]
 
+dat[, Difference := Model_VMT - Observed_CSVM_VMT]
+
 dat <- add_totals(dat, rowtotal = FALSE)                  
+
+dat[, Ratio := Model_VMT/Observed_CSVM_VMT]
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_val_vmt_tab.csv"))
 assign("db_tab_tt_build_val_vmt_tab", dat, envir = db_inputs)
 
 # Table
-cols <- names(dat)[2:ncol(dat)]
+cols <- names(dat)[2:(ncol(dat)-1)]
 dat[, (cols) := lapply(.SD, format, digits = 0, big.mark = ",", scientific = FALSE), .SDcols = cols]
 
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -72,6 +76,9 @@ dat[Field == "Tours: Cluster Distance", Model := round(mean(cv_trips_cluster$Mea
 dat[Field == "Trips: Stop Duration", Model := round(mean(cv_trips[Activity != "Return"]$StopDuration),2)]
 dat[Field == "Tours: Tour Duration", Model := round(mean(cv_trips[,.(TourDuration = sum(TravelTime, StopDuration)), by = TourID]$TourDuration),2)]
 
+dat[, Difference := Model - Observed]
+dat[, Ratio := Model/Observed]
+
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_val_summary_tab.csv"))
 assign("db_tab_tt_build_val_summary_tab", dat, envir = db_inputs)
@@ -86,137 +93,137 @@ kable(dat, escape=FALSE, digits = 3) %>%
 Column {data-width=500, .tabset}
 --------------------------------------------
 
-### County Origins (All Vehicles) 
+### District Origins (All Vehicles) 
 
-```{r Chart_tt_val_county_origins}
+```{r Chart_tt_val_District_origins}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(OriginDistrict = ODistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
-dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
 
-dat <- merge(dat_obs, dat_mod, by= "OriginCounty", all = TRUE)
+dat <- merge(dat_obs, dat_mod, by= "OriginDistrict", all = TRUE)
 dat[is.na(Target), Target := 0]
 dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
 
-dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
-setorder(dat, OriginCounty)
+dat[, OriginDistrict := factor(OriginDistrict, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, OriginDistrict)
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_all.csv"))
-assign("db_tab_tt_build_county_origins_all", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_origins_all.csv"))
+assign("db_tab_tt_build_district_origins_all", dat, envir = db_inputs)
 
 # Table
-kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[,.(OriginDistrict, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
 
-### County Destinations (All Vehicles) 
+### District Destinations (All Vehicles) 
 
-```{r Chart_tt_val_county_dest}
+```{r Chart_tt_val_District_dest}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(DestinationCounty = DDistrict)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(DestinationDistrict = DDistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
-dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationCounty = DSummaryGeog)]
+dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(DestinationDistrict = DSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
 
-dat <- merge(dat_obs, dat_mod, by= "DestinationCounty", all = TRUE)
+dat <- merge(dat_obs, dat_mod, by= "DestinationDistrict", all = TRUE)
 dat[is.na(Target), Target := 0]
 dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
 
-dat[, DestinationCounty := factor(DestinationCounty, levels = levels(TAZ_System$DistrictName))]
-setorder(dat, DestinationCounty)
+dat[, DestinationDistrict := factor(DestinationDistrict, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, DestinationDistrict)
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_dest_all.csv"))
-assign("db_tab_tt_build_county_dest_all", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_dest_all.csv"))
+assign("db_tab_tt_build_district_dest_all", dat, envir = db_inputs)
 
 # Table
-kable(dat[,.(DestinationCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[,.(DestinationDistrict, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
-### County Origins (Light Vehicles) 
+### District Origins (Light Vehicles) 
 
-```{r Chart_tt_val_county_origins_light}
+```{r Chart_tt_val_District_origins_light}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_light[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_light[, .(TargetTrips = sum(n)), keyby = .(OriginDistrict = ODistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
-dat_mod <- TripTable[Vehicle == "Light", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_mod <- TripTable[Vehicle == "Light", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
 
-dat <- merge(dat_obs, dat_mod, by= "OriginCounty", all = TRUE)
+dat <- merge(dat_obs, dat_mod, by= "OriginDistrict", all = TRUE)
 dat[is.na(Target), Target := 0]
 dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
 
-dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
-setorder(dat, OriginCounty)
+dat[, OriginDistrict := factor(OriginDistrict, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, OriginDistrict)
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_light.csv"))
-assign("db_tab_tt_build_county_origins_light", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_origins_light.csv"))
+assign("db_tab_tt_build_district_origins_light", dat, envir = db_inputs)
 
 # Table
-kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[,.(OriginDistrict, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
 
-### County Origins (Medium Trucks) 
+### District Origins (Medium Trucks) 
 
-```{r Chart_tt_val_county_origins_medium}
+```{r Chart_tt_val_District_origins_medium}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_medium[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_medium[, .(TargetTrips = sum(n)), keyby = .(OriginDistrict = ODistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
-dat_mod <- TripTable[Vehicle == "Medium", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginCounty = OSummaryGeog)]
+dat_mod <- TripTable[Vehicle == "Medium", .(ModelTrips = sum(trips, na.rm = TRUE)), keyby = .(OriginDistrict = OSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
 
-dat <- merge(dat_obs, dat_mod, by= "OriginCounty", all = TRUE)
+dat <- merge(dat_obs, dat_mod, by= "OriginDistrict", all = TRUE)
 dat[is.na(Target), Target := 0]
 dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, Ratio := ifelse(Target != 0, Model/Target, 0)]
 
-dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
-setorder(dat, OriginCounty)
+dat[, OriginDistrict := factor(OriginDistrict, levels = levels(TAZ_System$DistrictName))]
+setorder(dat, OriginDistrict)
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_origins_medium.csv"))
-assign("db_tab_tt_build_county_origins_medium", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_origins_medium.csv"))
+assign("db_tab_tt_build_district_origins_medium", dat, envir = db_inputs)
 
 # Table
-kable(dat[,.(OriginCounty, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
+kable(dat[,.(OriginDistrict, Target, Model, Difference, Ratio)], escape=FALSE, digits = 3) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed"))
 
 ```
 
-### Percent Trips by County OD: Model
+### Percent Trips by District OD: Model
 
-```{r Chart_Percent_Trips_By_County_OD_val_mod}
+```{r Chart_Percent_Trips_By_District_OD_val_mod}
 # Organize
-dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), by = .(OriginCounty = OSummaryGeog, DestinationCounty = DSummaryGeog)]
+dat_mod <- TripTable[, .(ModelTrips = sum(trips, na.rm = TRUE)), by = .(OriginDistrict = OSummaryGeog, DestinationDistrict = DSummaryGeog)]
 dat_mod[, Model := ModelTrips/sum(ModelTrips)]
 dat <- add_totals(dcast.data.table(dat_mod,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Model"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_val_mod.csv"))
-assign("db_tab_tt_build_county_od_val_mod", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_od_val_mod.csv"))
+assign("db_tab_tt_build_district_od_val_mod", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -226,23 +233,23 @@ kable(dat, escape=FALSE, digits = 3) %>%
 
 ```
 
-### Percent Trips by County OD: Observed
+### Percent Trips by District OD: Observed
 
-```{r Chart_Percent_Trips_By_County_OD_obs}
+```{r Chart_Percent_Trips_By_District_OD_obs}
 # Organize
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = ODistrict, DestinationCounty = DDistrict)]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$districtod_all[, .(TargetTrips = sum(n)), keyby = .(OriginDistrict = ODistrict, DestinationDistrict = DDistrict)]
 dat_obs[, Target := TargetTrips/sum(TargetTrips)]
-dat_obs[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
-dat_obs[, DestinationCounty := factor(DestinationCounty, levels = levels(TAZ_System$DistrictName))]
+dat_obs[, OriginDistrict := factor(OriginDistrict, levels = levels(TAZ_System$DistrictName))]
+dat_obs[, DestinationDistrict := factor(DestinationDistrict, levels = levels(TAZ_System$DistrictName))]
 
 dat <- add_totals(dcast.data.table(dat_obs,
-                                  OriginCounty ~ DestinationCounty,
+                                  OriginDistrict ~ DestinationDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Target"))
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_val_obs.csv"))
-assign("db_tab_tt_build_county_od_val_obs", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_od_val_obs.csv"))
+assign("db_tab_tt_build_district_od_val_obs", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -253,21 +260,21 @@ kable(dat, escape=FALSE, digits = 3) %>%
 ```
 
 
-### Percent Trips by County OD: Difference (Model - Observed)
+### Percent Trips by District OD: Difference (Model - Observed)
 
-```{r Chart_Percent_Trips_By_County_OD_diff}
+```{r Chart_Percent_Trips_By_District_OD_diff}
 # Organize
-dat_diff <- merge(dat_obs, dat_mod, by = c("OriginCounty", "DestinationCounty"))
+dat_diff <- merge(dat_obs, dat_mod, by = c("OriginDistrict", "DestinationDistrict"))
 dat_diff[, Difference := Model - Target]
 
 dat <- dcast.data.table(dat_diff,
-       OriginCounty ~ DestinationCounty,
+       OriginDistrict ~ DestinationDistrict,
        fun.aggregate = sum,
        value.var = "Difference")
 
 # Save
-fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_od_val_diff.csv"))
-assign("db_tab_tt_build_county_od_val_diff", dat, envir = db_inputs)
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_od_val_diff.csv"))
+assign("db_tab_tt_build_district_od_val_diff", dat, envir = db_inputs)
 
 # Table
 kable(dat, escape=FALSE, digits = 3) %>%
@@ -306,32 +313,32 @@ bar_plotter(dat, xvar = "Distance", yvar = "PctTrips",  fill = "Source", positio
 
 ```{r Chart_tt_trip_dist_Val_mod}
 # Organize
-dat_mod <- TripTable[, .(ModelTrips = sum(trips)), keyby = .(OriginCounty = ODistrictName, Distance = round(dist,-1))]
+dat_mod <- TripTable[, .(ModelTrips = sum(trips)), keyby = .(OriginDistrict = ODistrictName, Distance = round(dist,-1))]
 dat_mod[is.na(ModelTrips), ModelTrips := 0]
-dat_mod[, Model := ModelTrips/sum(ModelTrips), by = OriginCounty]
+dat_mod[, Model := ModelTrips/sum(ModelTrips), by = OriginDistrict]
 
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripdistancedist_district[, .(TargetTrips = sum(n)), keyby = .(OriginCounty = tripOrigin_District, Distance = round(Trip_dist,-1))]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripdistancedist_district[, .(TargetTrips = sum(n)), keyby = .(OriginDistrict = tripOrigin_District, Distance = round(Trip_dist,-1))]
 dat_obs[is.na(TargetTrips), TargetTrips := 0]
-dat_obs[, Target := TargetTrips/sum(TargetTrips), by = OriginCounty]
+dat_obs[, Target := TargetTrips/sum(TargetTrips), by = OriginDistrict]
 
-dat <- merge(dat_obs, dat_mod, by = c("Distance", "OriginCounty"), all = TRUE)
+dat <- merge(dat_obs, dat_mod, by = c("Distance", "OriginDistrict"), all = TRUE)
 dat[is.na(Target), Target := 0]
 dat[is.na(Model), Model := 0]
 
 dat[, Difference := Model - Target]
 dat[, DistanceLabel := paste0(Distance, "-", Distance+10)]
 dat[, DistanceLabel := factor(DistanceLabel, levels = unique(dat[,.(DistanceLabel, Distance)])[order(Distance)]$DistanceLabel)]
-dat[, OriginCounty := factor(OriginCounty, levels = levels(TAZ_System$DistrictName))]
+dat[, OriginDistrict := factor(OriginDistrict, levels = levels(TAZ_System$DistrictName))]
 
 dat_mod <- add_totals(dcast.data.table(dat,
-                                  DistanceLabel ~ OriginCounty,
+                                  DistanceLabel ~ OriginDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Model"),
                       rowtotal = FALSE)
 
 # Save
-fwrite(dat_mod, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_distance_val_mod.csv"))
-assign("db_tab_tt_build_county_distance_val_mod", dat_mod, envir = db_inputs)
+fwrite(dat_mod, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_distance_val_mod.csv"))
+assign("db_tab_tt_build_district_distance_val_mod", dat_mod, envir = db_inputs)
 
 # Table
 kable(dat_mod, escape=FALSE, digits = 3) %>%
@@ -346,14 +353,14 @@ kable(dat_mod, escape=FALSE, digits = 3) %>%
 # Organize
 
 dat_obs <- add_totals(dcast.data.table(dat,
-                                  DistanceLabel ~ OriginCounty,
+                                  DistanceLabel ~ OriginDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Target"),
                       rowtotal = FALSE)
 
 # Save
-fwrite(dat_obs, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_distance_val_obs.csv"))
-assign("db_tab_tt_build_county_distance_val_obs", dat_obs, envir = db_inputs)
+fwrite(dat_obs, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_distance_val_obs.csv"))
+assign("db_tab_tt_build_district_distance_val_obs", dat_obs, envir = db_inputs)
 
 # Table
 kable(dat_obs, escape=FALSE, digits = 3) %>%
@@ -368,14 +375,14 @@ kable(dat_obs, escape=FALSE, digits = 3) %>%
 # Organize
 
 dat_obs <- add_totals(dcast.data.table(dat,
-                                  DistanceLabel ~ OriginCounty,
+                                  DistanceLabel ~ OriginDistrict,
                                    fun.aggregate = sum,
                                    value.var = "Difference"),
                       rowtotal = FALSE)
 
 # Save
-fwrite(dat_obs, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_county_distance_val_diff.csv"))
-assign("db_tab_tt_build_county_distance_val_diff", dat_obs, envir = db_inputs)
+fwrite(dat_obs, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_district_distance_val_diff.csv"))
+assign("db_tab_tt_build_district_distance_val_diff", dat_obs, envir = db_inputs)
 
 # Table
 kable(dat_obs, escape=FALSE, digits = 3) %>%
@@ -388,14 +395,14 @@ kable(dat_obs, escape=FALSE, digits = 3) %>%
 
 ```{r Chart_tt_trip_dist_chicago_Val}
 # Organize
-dat <- melt.data.table(dat[, .(Distance, OriginCounty, Model, Target)], id.vars = c("OriginCounty", "Distance"), variable.name = "Source", value.name = "PctTrips")
+dat <- melt.data.table(dat[, .(Distance, OriginDistrict, Model, Target)], id.vars = c("OriginDistrict", "Distance"), variable.name = "Source", value.name = "PctTrips")
 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripdistancedist_district_val.csv"))
 assign("db_tab_tt_build_tripdistancedist_district_val", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[OriginCounty == "Chicago"], xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_chicago_val.png", xrotate = TRUE)
+bar_plotter(dat[OriginDistrict == "Chicago"], xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_chicago_val.png", xrotate = TRUE)
 
 ```
 
@@ -403,13 +410,13 @@ bar_plotter(dat[OriginCounty == "Chicago"], xvar = "Distance", yvar = "PctTrips"
 
 ```{r Chart_tt_trip_dist_cook_Val}
 # Plot
-bar_plotter(dat[OriginCounty == "COOK, IL (Outside Chicago)"], xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_cook_val.png", xrotate = TRUE)
+bar_plotter(dat[OriginDistrict == "COOK, IL (Outside Chicago)"], xvar = "Distance", yvar = "PctTrips",  fill = "Source", position = "dodge", ylabel = "Percentage of Trips", png_name = "p_tt_build_tripdistancedist_cook_val.png", xrotate = TRUE)
 ```
 
 ### Percent Trips by Distance for Rest of CMAP MPO Area (Outside Cook)
 
 ```{r Chart_tt_trip_dist_cmap_Val}
-dat <- dat[!OriginCounty %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
+dat <- dat[!OriginDistrict %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
            .(PctTrips = sum(PctTrips)), keyby = .(Distance, Source)]
 dat[, PctTrips := PctTrips/sum(PctTrips), keyby = Source]
 
@@ -705,9 +712,9 @@ bar_plotter(dat, xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", positi
 
 # for this summary comparing the final set of trip start times
 # use the cv_trips table as the TripTable is too aggregated
-dat_mod <- cv_trips[, .(ModelTrips = .N), keyby = .(TOD, OriginCounty = Region.Origin)]
-dat_mod[, Model := ModelTrips/sum(ModelTrips), keyby = OriginCounty]
-dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist_district[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour), OriginCounty = tripOrigin_district)]
+dat_mod <- cv_trips[, .(ModelTrips = .N), keyby = .(TOD, OriginDistrict = Region.Origin)]
+dat_mod[, Model := ModelTrips/sum(ModelTrips), keyby = OriginDistrict]
+dat_obs <- cal_results$calibration_targets_tt_sim$tt_build$tripstarttimedist_district[,.(Target = sum(Target)), keyby = .(StopTime = floor(StopDepartHour), OriginDistrict = tripOrigin_district)]
 
 # p1 - 8 pm to 6 am
 # p2 - 6 am to 7 am
@@ -721,13 +728,13 @@ tod_hours <- data.table(StopTime = 0:23,
                         TOD = c(rep("P1",6),"P2", rep("P3",2), "P4", rep("P5",4), rep("P6",2), rep("P7",2), rep("P8",2), rep("P1", 4)))
 
 dat_obs[tod_hours, TOD := i.TOD, on = "StopTime"]
-dat_obs <- dat_obs[,.(Target = sum(Target)), keyby = .(TOD, OriginCounty)]
+dat_obs <- dat_obs[,.(Target = sum(Target)), keyby = .(TOD, OriginDistrict)]
 
-dat <- merge(dat_obs, dat_mod[,.(OriginCounty, TOD, Model)], by = c("TOD", "OriginCounty"), all = TRUE)
+dat <- merge(dat_obs, dat_mod[,.(OriginDistrict, TOD, Model)], by = c("TOD", "OriginDistrict"), all = TRUE)
 dat[is.na(Target), Target := 0]
 dat[is.na(Model), Model := 0]
 
-dat <- melt.data.table(dat, id.vars = c("OriginCounty", "TOD"), variable.name = "Source", value.name = "PctTrips")
+dat <- melt.data.table(dat, id.vars = c("OriginDistrict", "TOD"), variable.name = "Source", value.name = "PctTrips")
 dat[tod_labels, Hours := i.Hours, on = "TOD"]
 dat[, TOD_Label := paste(TOD, Hours)]
 
@@ -736,7 +743,7 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "tt_build_tripstarttime_tod_d
 assign("db_tab_tt_build_tripstarttime_tod_district_val", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[OriginCounty == "Chicago"], xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_chicago_val.png")
+bar_plotter(dat[OriginDistrict == "Chicago"], xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_chicago_val.png")
 
 ```
 
@@ -745,7 +752,7 @@ bar_plotter(dat[OriginCounty == "Chicago"], xvar = "TOD_Label", yvar = "PctTrips
 ```{r Chart_tt_trip_start_tod_cook_Val}
 
 # Plot
-bar_plotter(dat[OriginCounty == "COOK, IL (Outside Chicago)"], xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_cook_val.png")
+bar_plotter(dat[OriginDistrict == "COOK, IL (Outside Chicago)"], xvar = "TOD_Label", yvar = "PctTrips",  fill = "Source", position = "dodge", xlabel = "Trip Start Time Period", ylabel = "Percentage of Trips", xrotate = TRUE, png_name = "p_tt_build_tripstarttime_tod_cook_val.png")
 
 ```
 
@@ -753,7 +760,7 @@ bar_plotter(dat[OriginCounty == "COOK, IL (Outside Chicago)"], xvar = "TOD_Label
 
 ```{r Chart_tt_trip_start_tod_cmap_Val}
 
-dat <- dat[!OriginCounty %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
+dat <- dat[!OriginDistrict %in% c("Chicago", "COOK, IL (Outside Chicago)", "Non-CMAP Part of Model Regio"),
            .(PctTrips = sum(PctTrips)), keyby = .(TOD_Label, Source)]
 dat[, PctTrips := PctTrips/sum(PctTrips), keyby = Source]
 
