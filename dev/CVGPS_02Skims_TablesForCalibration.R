@@ -1070,7 +1070,14 @@ TSP_SOLUTIONS3 <- TSP_SOLUTIONS3 %>%
 TSP_SOLUTIONS3 <- TSP_SOLUTIONS3 %>% 
   mutate(ratio = floor(Actual_Dist/TSP_dist * 100)/100) %>% 
   mutate(ratio = floor(ratio * 20)/20)
- 
+
+TSP_VMT <- sum(TSP_SOLUTIONS3$TSP_dist)
+Actual_VMT <- sum(TSP_SOLUTIONS3$Actual_Dist)
+Ratio <- Actual_VMT/TSP_VMT
+
+TSP_Analysis <- tibble(Actual_VMT, TSP_VMT, Ratio)
+
+
 library(tidyverse)
 
 ## Group by Ratio and tally
