@@ -87,6 +87,10 @@ dat <- cal_results$firm_sim_scale_employees$submodel_comparison[, .(Model = sum(
 
 dat <- melt.data.table(dat, id.vars = "Industry", variable.name = "Source", value.name = "Employment")
 
+# Shorten long label
+dat[Industry == "Administrative and Support and Waste Management and Remediation Services",
+    Industry := "Admin, Support, Waste Man, Remediation Services"]
+                 
 # Save
 fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "firm_sim_scale_employees_industry.csv"))
 assign("db_tab_firm_sim_scale_employees_industry", dat, envir = db_inputs)
