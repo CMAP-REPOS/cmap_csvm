@@ -355,7 +355,7 @@ fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_stopduration_activity
 assign("db_tab_cv_sim_stopduration_activity", dat, envir = db_inputs)
 
 # Plot
-bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_goods.png")
+bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_activity_goods.png")
 
 ```
 
@@ -364,7 +364,7 @@ bar_plotter(dat[Activity == "Goods"], xvar = "stop_duration_label", yvar = "Stop
 ```{r Chart_cv_sim_stopduration_activity_service}
 
 # Plot
-bar_plotter(dat[Activity == "Service"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", png_name = "p_cv_sim_stopduration_activity_service.png")
+bar_plotter(dat[Activity == "Service"], xvar = "stop_duration_label", yvar = "Stops",  fill = "Source", position = "dodge", ylabel = "Number of Stops", xlabel = "Stop Duration (Minutes)", xrotate = TRUE, png_name = "p_cv_sim_stopduration_activity_service.png")
 
 ```
 
