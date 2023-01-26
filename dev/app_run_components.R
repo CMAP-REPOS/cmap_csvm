@@ -501,3 +501,14 @@ save(db_inputs,
                       SYSTEM_DB_OUTPUTNAME)) 
 rm(list = names(db_inputs)) # For scratch only, remove variables that were added from model component environment
 
+### Dashboards in docs folder -----------------------
+
+# Copy dashboards from base and future scenarios to docs
+
+file.copy(from = "scenarios/base/outputs/ReportDashboard.html",
+          to = "docs/ReportDashboardBase.html",
+          overwrite = TRUE)
+
+file.copy(from = "scenarios/future/outputs/ReportDashboard.html",
+          to = "docs/ReportDashboardFuture.html",
+          overwrite = TRUE)
