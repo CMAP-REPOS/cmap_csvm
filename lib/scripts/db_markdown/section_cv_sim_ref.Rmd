@@ -220,6 +220,57 @@ kable(dat, escape=FALSE) %>%
 
 ```
 
+### cv_sim_scheduledstops: Base to Stop Distance by Activity
+
+```{r Table_cv_sim_scheduledstops_base_stop_activity}
+
+# Organize
+dat_scen <- cv_trips[Activity %in% c("Goods", "Service"), .(Distance.Start, BusID, Activity)]
+dat_scen[ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_scen <- dat_scen[, .(Distance.Start = sum(Distance.Start), Stops = .N), keyby = .(Activity, Industry)]
+
+dat_ref <- ref_cv_trips[Activity %in% c("Goods", "Service"), .(Distance.Start, BusID, Activity)]
+dat_ref[ref_ScenarioFirms, Industry := i.EmpCatGroupedName, on = "BusID"]
+dat_ref <- dat_ref[, .(Distance.Start = sum(Distance.Start), Stops = .N), keyby = .(Activity, Industry)]
+
+# Combine
+dat <- rbind(dat_scen[, Source := SCENARIO_NAME], dat_ref[, Source := SCENARIO_REFERENCE_NAME])
+dat <- dat[, Distance.Mean := Distance.Start/Stops]
+dat[, Source := factor(Source, levels = c(SCENARIO_REFERENCE_NAME, SCENARIO_NAME))]
+
+# Save
+fwrite(dat, file = file.path(SCENARIO_OUTPUT_PATH, "cv_sim_scheduledstops_base_stop_industry_activity_tab.csv"), row.names = FALSE)
+assign("db_tab_cv_sim_scheduledstops_base_stop_industry_activity_tab", dat, envir = db_inputs)
+
+# Table
+dat_Wide <- dcast.data.table(dat[,.(Distance = sum(Distance.Start)/sum(Stops)), keyby = .(Activity, Source)],
+                             Activity ~ Source, fun.aggregate = sum, value.var = "Distance")
+dat_Wide[, Ratio := round(get(SCENARIO_NAME)/get(SCENARIO_REFERENCE_NAME),2)]
+
+kable(dat_wide, escape=FALSE) %>%
+  kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
+
+```
+
+### cv_sim_scheduledstops: Base to Stop Distance by Industry (Goods Stops)
+
+```{r Chart_cv_sim_scheduledstops_base_stop_industry_goods}
+
+# Plot
+bar_plotter(dat[Activity == "Goods"], xvar = "Industry", yvar = "Distance.Mean",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Base to Stop Distance", png_name = "p_cv_sim_scheduledstops_base_stop_industry_goods.png")
+
+```
+
+### cv_sim_scheduledstops: Base to Stop Distance by Industry (Service Stops)
+
+```{r Chart_cv_sim_scheduledstops_base_stop_industry_service}
+
+# Plot
+bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "Distance",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Base to Stop Distance", png_name = "p_cv_sim_scheduledstops_base_stop_industry_service.png")
+
+```
+
+
 Chart Column 3 {.tabset}
 --------------------------------------------
 
