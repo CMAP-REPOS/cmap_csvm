@@ -266,7 +266,7 @@ bar_plotter(dat[Activity == "Goods"], xvar = "Industry", yvar = "Distance.Mean",
 ```{r Chart_cv_sim_scheduledstops_base_stop_industry_service}
 
 # Plot
-bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "Distance",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Base to Stop Distance", png_name = "p_cv_sim_scheduledstops_base_stop_industry_service.png")
+bar_plotter(dat[Activity == "Service"], xvar = "Industry", yvar = "Distance.Mean",  fill = "Source", position = "dodge", coord_flip = TRUE, ylabel = "Base to Stop Distance", png_name = "p_cv_sim_scheduledstops_base_stop_industry_service.png")
 
 ```
 
