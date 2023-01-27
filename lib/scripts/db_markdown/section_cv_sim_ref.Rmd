@@ -247,7 +247,7 @@ dat_wide <- dcast.data.table(dat[,.(Distance = sum(Distance.Start)/sum(Stops)), 
                              Activity ~ Source, fun.aggregate = sum, value.var = "Distance")
 dat_wide[, Ratio := round(get(SCENARIO_NAME)/get(SCENARIO_REFERENCE_NAME),2)]
 
-kable(dat_wide, escape=FALSE) %>%
+kable(dat_wide, digits = 2, escape=FALSE) %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("condensed")) 
 
 ```
