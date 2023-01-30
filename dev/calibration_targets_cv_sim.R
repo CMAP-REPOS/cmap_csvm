@@ -131,15 +131,27 @@ stop_counts[, NAICS3 := as.integer(NAICS3)]
 
 # Summaries by stop type
 # Mean firm-to-stop distance, by industry group, 
-mean_stop_distance <- stop_counts[,.(Stops = sum(STOPS), 
+mean_stop_distance <- stop_counts[,.(Stops = sum(STOPS), StopsRes = sum(STOPS_RES), StopsNonRes = sum(STOPS_NON_RES), 
                MeanDistance = sum(dist * STOPS)/sum(STOPS),
+               MeanDistanceRes = sum(dist * STOPS_RES)/sum(STOPS_RES),
+               MeanDistanceNonRes = sum(dist * STOPS_NON_RES)/sum(STOPS_NON_RES),
                WeightedStops = sum(WEIGHTED_STOPS),
-               WeightedMeanDistance = sum(dist * WEIGHTED_STOPS)/sum(WEIGHTED_STOPS)), keyby = Activity]
+               WeightedStopsRes = sum(WEIGHTED_STOPS_RES),
+               WeightedStopsNonRes = sum(WEIGHTED_STOPS_NON_RES),
+               WeightedMeanDistance = sum(dist * WEIGHTED_STOPS)/sum(WEIGHTED_STOPS),
+               WeightedMeanDistanceRes = sum(dist * WEIGHTED_STOPS_RES)/sum(WEIGHTED_STOPS_RES),
+               WeightedMeanDistanceNonRes = sum(dist * WEIGHTED_STOPS_NON_RES)/sum(WEIGHTED_STOPS_NON_RES)), keyby = Activity]
 
-mean_stop_distance_industry <- stop_counts[,.(Stops = sum(STOPS), 
-               MeanDistance = sum(dist * STOPS)/sum(STOPS),
-               WeightedStops = sum(WEIGHTED_STOPS),
-               WeightedMeanDistance = sum(dist * WEIGHTED_STOPS)/sum(WEIGHTED_STOPS)), keyby = .(Activity, IndustryCat)]
+mean_stop_distance_industry <- stop_counts[,.(Stops = sum(STOPS), StopsRes = sum(STOPS_RES), StopsNonRes = sum(STOPS_NON_RES), 
+                                              MeanDistance = sum(dist * STOPS)/sum(STOPS),
+                                              MeanDistanceRes = sum(dist * STOPS_RES)/sum(STOPS_RES),
+                                              MeanDistanceNonRes = sum(dist * STOPS_NON_RES)/sum(STOPS_NON_RES),
+                                              WeightedStops = sum(WEIGHTED_STOPS),
+                                              WeightedStopsRes = sum(WEIGHTED_STOPS_RES),
+                                              WeightedStopsNonRes = sum(WEIGHTED_STOPS_NON_RES),
+                                              WeightedMeanDistance = sum(dist * WEIGHTED_STOPS)/sum(WEIGHTED_STOPS),
+                                              WeightedMeanDistanceRes = sum(dist * WEIGHTED_STOPS_RES)/sum(WEIGHTED_STOPS_RES),
+                                              WeightedMeanDistanceNonRes = sum(dist * WEIGHTED_STOPS_NON_RES)/sum(WEIGHTED_STOPS_NON_RES)), keyby = .(Activity, IndustryCat)]
 
 distance_bins <- c(seq(0,10, by = 2), seq(15,60, by = 5), 70, 80)
 stop_counts[, distance_bin := distance_bins[findInterval(dist, distance_bins)]]
@@ -164,10 +176,12 @@ emp_ind_total <- emp_ind[TAZ %in% TAZ_System_SEMCOG[TAZ_TYPE == "SEMCOG"]$TAZ,
                          by = EmpCatGroupedName]
 
 emp_stops  <- merge(emp_ind_total,
-                    mean_stop_distance_industry[,.(Activity, EmpCatGroupedName = IndustryCat, Stops, WeightedStops)],
+                    mean_stop_distance_industry[,.(Activity, EmpCatGroupedName = IndustryCat, Stops, StopsRes, StopsNonRes, WeightedStops, WeightedStopsRes, WeightedStopsNonRes)],
                     by = "EmpCatGroupedName")
 
 emp_stops[, StopsEmp := WeightedStops/Employment]
+emp_stops[, StopsResEmp := WeightedStopsRes/Employment]
+emp_stops[, StopsNonResEmp := WeightedStopsNonRes/Employment]
 
 ### Stops generation/distance distribution as a function of 
 ### employment and household density around the establishment

@@ -103,6 +103,70 @@ goods.fit <- hurdle(formula = myFormula, data = good_stop_counts,
                       link="logit")
 summary(goods.fit)
 
+
+# Segmentation by Residential and non-residentail stops
+myFormulaRes <- STOPS_RES ~ 
+  log1p(HH) + 
+  log(time) + 
+  log(TOTAL_EMPLOYEES) +
+  log(time):(Transport_Industry) | 
+  log1p(HH) + 
+  log(dist) + 
+  Admin_Support_Waste + 
+  Construction +
+  Ed_Health_Social_Public +
+  Office_Professional + 
+  #Retail + removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
+  Service_FoodDrink + 
+  Service_Other + 
+  Transport_Industry + 
+  Wholesale + 
+  (Construction):log(dist) + 
+  (Transport_Industry):log(dist) + 
+  (Office_Professional):log(dist) + 
+  log(TOTAL_EMPLOYEES)
+
+goods_res.fit <- hurdle(formula = myFormulaRes, data = good_stop_counts,
+                    dist="poisson",
+                    zero.dist="binomial",
+                    link="logit")
+summary(goods_res.fit)
+
+
+myFormulaNonRes <- STOPS_NON_RES ~ 
+  log1p(NEmp_Ed_Health_Social_Public) + 
+  log1p(NEmp_Office_Professional) + 
+  log1p(NEmp_Retail) +
+  log1p(NEmp_Transport_Industry) +
+  log(time) + 
+  log(TOTAL_EMPLOYEES) +
+  log(time):(Transport_Industry) | 
+  log1p(NEmp_Construction) + 
+  log1p(NEmp_Retail) +
+  log1p(NEmp_Service_Other) +
+  log1p(NEmp_Transport_Industry) +
+  log(dist) + 
+  Admin_Support_Waste + 
+  Construction +
+  Ed_Health_Social_Public +
+  Office_Professional + 
+  #Retail + removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
+  Service_FoodDrink + 
+  Service_Other + 
+  Transport_Industry + 
+  Wholesale + 
+  (Construction):log(dist) + 
+  (Transport_Industry):log(dist) + 
+  (Office_Professional):log(dist) + 
+  log(TOTAL_EMPLOYEES)
+
+goods_non_res.fit <- hurdle(formula = myFormulaNonRes, data = good_stop_counts,
+                    dist="poisson",
+                    zero.dist="binomial",
+                    link="logit")
+summary(goods_non_res.fit)
+
+
 # # Test
 # good_stop_counts[, STOPSPRED := predict(object = goods.fit)]
 # good_stop_counts[, STOPSPREDMC := as.integer(montecarlo.predict(object = goods.fit, at = 0:100))]
@@ -131,5 +195,51 @@ saveRDS(finalModel, file = file.path(model_loc, "new_models/goods/cv_goods_model
 options(width = 10000)
 sink(file = file.path(model_loc, "new_models/goods/goods_model_results.txt"))
 print(summary(goods.fit))
+sink()
+options(width = 137)
+
+# Repeat for the res model
+# Trim all the junk from the hurdle model object to save space
+# residuals, model, weights, fitted.values
+finalModelRes <- goods_res.fit
+finalModelRes$residuals <- NULL
+finalModelRes$fitted.values <- NULL
+finalModelRes$model <- NULL
+finalModelRes$weights <- NULL
+attr(finalModelRes$terms$count, ".Environment") <- NULL
+attr(finalModelRes$terms$zero, ".Environment") <- NULL
+attr(finalModelRes$terms$full, ".Environment") <- NULL
+
+# Save final model
+saveRDS(finalModelRes, file = file.path(model_loc, "new_models/goods/cv_goods_res_model.RDS"))
+
+# Write results to csv
+options(width = 10000)
+sink(file = file.path(model_loc, "new_models/goods/goods_res_model_results.txt"))
+print(summary(goods_res.fit))
+sink()
+options(width = 137)
+
+
+# Repeat for the non-res model
+# Trim all the junk from the hurdle model object to save space
+# residuals, model, weights, fitted.values
+
+finalModelNonRes <- goods_non_res.fit
+finalModelNonRes$residuals <- NULL
+finalModelNonRes$fitted.values <- NULL
+finalModelNonRes$model <- NULL
+finalModelNonRes$weights <- NULL
+attr(finalModelNonRes$terms$count, ".Environment") <- NULL
+attr(finalModelNonRes$terms$zero, ".Environment") <- NULL
+attr(finalModelNonRes$terms$full, ".Environment") <- NULL
+
+# Save final model
+saveRDS(finalModelNonRes, file = file.path(model_loc, "new_models/goods/cv_goods_non_res_model.RDS"))
+
+# Write results to csv
+options(width = 10000)
+sink(file = file.path(model_loc, "new_models/goods/goods_non_res_model_results.txt"))
+print(summary(goods_non_res.fit))
 sink()
 options(width = 137)

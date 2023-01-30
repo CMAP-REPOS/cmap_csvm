@@ -6,7 +6,7 @@ cv_sim_scheduledtrips <- function(firmTourSequence, firms, skims_tod, model) {
   
   # Convert tour sequences into trips
   scheduledTrips <- merge(firmTourSequence[, .(BusID, Vehicle, TourID, SequenceID, OTAZ = StopTAZ)],
-                          firmTourSequence[, .(BusID, Vehicle, TourID, SequenceID = SequenceID - 1L, DTAZ = StopTAZ, Activity, StopDuration, TourType, TourStartEndLoc)],
+                          firmTourSequence[, .(BusID, Vehicle, TourID, SequenceID = SequenceID - 1L, DTAZ = StopTAZ, Activity, StopLocType, StopDuration, TourType, TourStartEndLoc)],
                           by = c("BusID", "Vehicle", "TourID", "SequenceID"))
   
   # Drop Start Tour activity level
@@ -350,7 +350,7 @@ cv_sim_scheduledtrips <- function(firmTourSequence, firms, skims_tod, model) {
   # Set variable order
   setcolorder(scheduledTrips, neworder = c("BusID", "Vehicle", "TourID", "TripID", "OTAZ", "DTAZ",
                                            "MAMDepart", "TravelTime", "Distance", "MAMArrive", 
-                                           "StopDuration", "Activity", "TourType", "TourStartEndLoc"))
+                                           "StopDuration", "Activity", "StopLocType", "TourType", "TourStartEndLoc"))
   
   progressUpdate(subtaskprogress = 1, subtask = "Arrival Time", prop = 1/7, dir = SCENARIO_LOG_PATH)
   

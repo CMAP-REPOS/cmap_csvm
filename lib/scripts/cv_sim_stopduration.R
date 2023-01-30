@@ -254,6 +254,6 @@ cv_sim_stopduration <- function(database, model, firms) {
   
   progressUpdate(subtaskprogress = 1, subtask = "Stop Duration", prop = 1/7, dir = SCENARIO_LOG_PATH)
   
-  return(database[, .(BusID, StopID, DTAZ, Activity, Vehicle, StopDuration, choice, lower, upper)])
+  return(database[, .(BusID, StopID, DTAZ, Activity, StopLocType, Vehicle, StopDuration, choice, lower, upper)])
 
 }

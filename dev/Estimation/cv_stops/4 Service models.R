@@ -112,6 +112,71 @@ service.fit <- hurdle(formula = myFormula, data = service_stop_counts,
                       link="logit")
 summary(service.fit)
 
+myFormulaRes <- STOPS_RES ~ 
+  log(time) + 
+  Construction:log(time) + 
+  Ed_Health_Social_Public:log(time) | 
+  log1p(HH) + 
+  Admin_Support_Waste + 
+  Construction +
+  Ed_Health_Social_Public +
+  Office_Professional + 
+  #Retail + #removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
+  Service_FoodDrink + 
+  Service_Other +
+  Transport_Industry + 
+  Wholesale + 
+  log(time) + 
+  log(TOTAL_EMPLOYEES) + 
+  Admin_Support_Waste:log(TOTAL_EMPLOYEES) + 
+  Office_Professional:log(TOTAL_EMPLOYEES) +
+  Service_FoodDrink:log(TOTAL_EMPLOYEES)  +
+  Service_Other:log(TOTAL_EMPLOYEES) 
+
+service_res.fit <- hurdle(formula = myFormulaRes, data = service_stop_counts,
+                      dist="poisson",
+                      zero.dist="binomial",
+                      link="logit")
+summary(service_res.fit)
+
+myFormulaNonRes <- STOPS_NON_RES ~ 
+  log1p(NEmp_Admin_Support_Waste) +
+  log1p(NEmp_Office_Professional) + 
+  log1p(NEmp_Service_FoodDrink) + 
+  log1p(NEmp_Service_Other) + 
+  log1p(NEmp_Transport_Industry) + 
+  log(time) + 
+  Construction:log(time) + 
+  Ed_Health_Social_Public:log(time) | 
+  log1p(NEmp_Admin_Support_Waste) +
+  log1p(NEmp_Ed_Health_Social_Public) + 
+  log1p(NEmp_Office_Professional) + 
+  log1p(NEmp_Retail) + 
+  log1p(NEmp_Service_FoodDrink) + 
+  log1p(NEmp_Service_Other) + 
+  log1p(NEmp_Transport_Industry) + 
+  Admin_Support_Waste + 
+  Construction +
+  Ed_Health_Social_Public +
+  Office_Professional + 
+  #Retail + #removed to prevent errors resulting from overspecification,  decision informed by summary of employment category trip rates
+  Service_FoodDrink + 
+  Service_Other +
+  Transport_Industry + 
+  Wholesale + 
+  log(time) + 
+  log(TOTAL_EMPLOYEES) + 
+  Admin_Support_Waste:log(TOTAL_EMPLOYEES) + 
+  Office_Professional:log(TOTAL_EMPLOYEES) +
+  Service_FoodDrink:log(TOTAL_EMPLOYEES)  +
+  Service_Other:log(TOTAL_EMPLOYEES) 
+
+service_non_res.fit <- hurdle(formula = myFormulaNonRes, data = service_stop_counts,
+                      dist="poisson",
+                      zero.dist="binomial",
+                      link="logit")
+summary(service_non_res.fit)
+
 # Trim all the junk from the hurdle model object to save space
 # residuals, model, weights, fitted.values
 finalModel <- service.fit
@@ -130,5 +195,51 @@ saveRDS(finalModel, file = file.path(model_loc, "new_models/services/cv_service_
 options(width = 10000)
 sink(file = file.path(model_loc, "new_models/services/Service Model Results.txt"))
 print(summary(service.fit))
+sink()
+options(width = 137)
+
+# Res
+
+# Trim all the junk from the hurdle model object to save space
+# residuals, model, weights, fitted.values
+finalModelRes <- service_res.fit
+finalModelRes$residuals <- NULL
+finalModelRes$fitted.values <- NULL
+finalModelRes$model <- NULL
+finalModelRes$weights <- NULL
+attr(finalModelRes$terms$count, ".Environment") <- NULL
+attr(finalModelRes$terms$zero, ".Environment") <- NULL
+attr(finalModelRes$terms$full, ".Environment") <- NULL
+
+# Save final model
+saveRDS(finalModelRes, file = file.path(model_loc, "new_models/services/cv_service_res_model.RDS"))
+
+# Write results to csv
+options(width = 10000)
+sink(file = file.path(model_loc, "new_models/services/Service Res Model Results.txt"))
+print(summary(service_res.fit))
+sink()
+options(width = 137)
+
+# Non Res
+
+# Trim all the junk from the hurdle model object to save space
+# residuals, model, weights, fitted.values
+finalModelNonRes <- service_non_res.fit
+finalModelNonRes$residuals <- NULL
+finalModelNonRes$fitted.values <- NULL
+finalModelNonRes$model <- NULL
+finalModelNonRes$weights <- NULL
+attr(finalModelNonRes$terms$count, ".Environment") <- NULL
+attr(finalModelNonRes$terms$zero, ".Environment") <- NULL
+attr(finalModelNonRes$terms$full, ".Environment") <- NULL
+
+# Save final model
+saveRDS(finalModelNonRes, file = file.path(model_loc, "new_models/services/cv_service_non_res_model.RDS"))
+
+# Write results to csv
+options(width = 10000)
+sink(file = file.path(model_loc, "new_models/services/Service Non Res Model Results.txt"))
+print(summary(service_non_res.fit))
 sink()
 options(width = 137)

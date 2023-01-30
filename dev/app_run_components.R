@@ -328,7 +328,12 @@ firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
                                    hurdle_support = hurdle_support,
                                    TAZLandUseCVTM = TAZLandUseCVTM,
                                    cv_goods_model = cv_goods_model,
-                                   cv_service_model = cv_service_model)
+                                   cv_goods_res_model = cv_goods_res_model,
+                                   cv_goods_non_res_model = cv_goods_non_res_model,
+                                   cv_service_model = cv_service_model,
+                                   cv_service_res_model = cv_service_res_model,
+                                   cv_service_non_res_model = cv_service_non_res_model,
+                                   segment_res_non_res = TRUE)
 gc()
 
 # Simulate vehicle choice

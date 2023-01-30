@@ -24,6 +24,7 @@ cv_sim <- function(firms) {
 
     # Simulate scheduled stops
     cat("Simulating Commercial Vehicle Scheduled Stops", "\n")
+    # Simulate scheduled stops
     firmStops <- cv_sim_scheduledstops(firmActivities = firmActivities,
                                        skims = skims_tod[, .(OTAZ, DTAZ, time = time.avg, dist = dist.avg, toll = toll.avg)],
                                        firms = firms,
@@ -32,7 +33,12 @@ cv_sim <- function(firms) {
                                        hurdle_support = hurdle_support,
                                        TAZLandUseCVTM = TAZLandUseCVTM,
                                        cv_goods_model = cv_goods_model,
-                                       cv_service_model = cv_service_model)
+                                       cv_goods_res_model = cv_goods_res_model,
+                                       cv_goods_non_res_model = cv_goods_non_res_model,
+                                       cv_service_model = cv_service_model,
+                                       cv_service_res_model = cv_service_res_model,
+                                       cv_service_non_res_model = cv_service_non_res_model,
+                                       segment_res_non_res = TRUE)
     gc()
   }
 

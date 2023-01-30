@@ -68,3 +68,12 @@ paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_
 file.copy(from = paths_to_models,
           to = "./lib/data",
           overwrite = TRUE)
+
+paths_to_stop_seg_models <- file.path("./dev/Estimation", c("cv_stops/new_models/goods/cv_goods_res_model.RDS",
+                                                            "cv_stops/new_models/goods/cv_goods_non_res_model.RDS",
+                                                   "cv_stops/new_models/services/cv_service_res_model.RDS",
+                                                   "cv_stops/new_models/services/cv_service_non_res_model.RDS"))
+
+file.copy(from = paths_to_stop_seg_models,
+          to = "./lib/data",
+          overwrite = TRUE)

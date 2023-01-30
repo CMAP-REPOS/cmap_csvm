@@ -1,0 +1,38 @@
+
+Call:
+hurdle(formula = myFormulaRes, data = good_stop_counts, dist = "poisson", 
+    zero.dist = "binomial", link = "logit")
+
+Pearson residuals:
+       Min         1Q     Median         3Q        Max 
+ -0.488756  -0.009379  -0.005923  -0.003704 865.288106 
+
+Count model coefficients (truncated poisson with log link):
+                             Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                  -5.54555    2.64232  -2.099   0.0358 *  
+log1p(HH)                     0.61884    0.36907   1.677   0.0936 .  
+log(time)                    -1.20655    0.27481  -4.390 1.13e-05 ***
+log(TOTAL_EMPLOYEES)          1.02339    0.18231   5.613 1.98e-08 ***
+log(time):Transport_Industry  0.09061    0.19557   0.463   0.6432    
+Zero hurdle model coefficients (binomial with logit link):
+                              Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                   -6.40650    0.48694 -13.157  < 2e-16 ***
+log1p(HH)                      0.29740    0.06413   4.638 3.52e-06 ***
+log(dist)                     -1.55201    0.07481 -20.747  < 2e-16 ***
+Admin_Support_Waste            0.08917    0.53436   0.167   0.8675    
+Construction                  -1.65128    0.67656  -2.441   0.0147 *  
+Ed_Health_Social_Public       -2.19940    1.01787  -2.161   0.0307 *  
+Office_Professional           -1.18372    0.78798  -1.502   0.1330    
+Service_FoodDrink              0.11961    0.38407   0.311   0.7555    
+Service_Other                  1.32160    0.23874   5.536 3.10e-08 ***
+Transport_Industry            -0.43485    0.32076  -1.356   0.1752    
+Wholesale                     -0.11560    0.29639  -0.390   0.6965    
+log(TOTAL_EMPLOYEES)           0.10270    0.05595   1.836   0.0664 .  
+log(dist):Construction         0.04367    0.27543   0.159   0.8740    
+log(dist):Transport_Industry   0.20378    0.11505   1.771   0.0765 .  
+log(dist):Office_Professional -0.06610    0.35811  -0.185   0.8536    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Number of iterations in BFGS optimization: 23 
+Log-likelihood: -1728 on 20 Df

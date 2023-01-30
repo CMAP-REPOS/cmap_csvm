@@ -205,12 +205,13 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
   
   # Build tables of scheduled trips and an enumerated table of intermediate trips
   scheduledTrips <- database[,.(BusID, EmpCatName, TAZ, Vehicle, TourID, TripID, 
-                                NintStops, OTAZ, DTAZ, Activity, StopDuration, 
+                                NintStops, OTAZ, DTAZ, Activity, StopLocType, StopDuration, 
                                 TravelTime, Distance, MAMArrive, MAMDepart,
                                 TourType, TourStartEndLoc)]
   
   intTrips <- database[rep(1:.N, times = NintStops), .(BusID, TAZ, EmpCatName, Vehicle, TourID, TripID, 
                                                        OTAZ, StopTAZ = DTAZ, DTAZ = NA, Activity, 
+                                                       StopLocType = "NonRes",
                                                        NintStops, IntStop_1, IntStop_2, IntStop_3, 
                                                        TourType, TourStartEndLoc)]
   
@@ -244,7 +245,7 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
   allTrips <- rbind(scheduledTrips[, Scheduled := 1L],
                     intTrips[,.(BusID, EmpCatName, TAZ, Vehicle, TourID, TripID, IntID,
                                NintStops, OTAZ, DTAZ, StopTAZ,
-                               Activity, StopDuration, TourType, 
+                               Activity, StopLocType, StopDuration, TourType, 
                                TourStartEndLoc, IntStop_1, IntStop_2, IntStop_3)][, Scheduled := 0L], 
                     fill = TRUE, 
                     use.names = TRUE)[order(BusID, Vehicle, TourID, TripID, IntID)]
@@ -511,7 +512,8 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
   }
   
   tidyDataTable(allTrips, select = c("BusID", "Vehicle", "TourID", "TripID",
-                                     "Scheduled", "OTAZ", "DTAZ", "Activity",
+                                     "Scheduled", "OTAZ", "DTAZ", 
+                                     "Activity", "StopLocType",
                                      "MAMDepart", "MAMArrive", "TravelTime",
                                      "Distance", "StopDuration", "TOD",
                                      "TourType", "TourStartEndLoc"),

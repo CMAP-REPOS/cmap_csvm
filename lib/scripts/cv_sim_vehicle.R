@@ -164,6 +164,6 @@ cv_sim_vehicle <- function(database, model, firms, skims) {
   
   progressUpdate(subtaskprogress = 1, subtask = "Vehicle Choice", prop = 1/7, dir = SCENARIO_LOG_PATH)
   
-  return(database[, .(BusID, StopID, DTAZ, Activity, Vehicle)])
+  return(database[, .(BusID, StopID, DTAZ, Activity, StopLocType, Vehicle)])
 
 }

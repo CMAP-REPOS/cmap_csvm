@@ -308,7 +308,7 @@ cv_sim_tours <- function(firmStopsVehDur, firms, branch.limit, skims, model) {
   firmTourSequence[SequenceID == maxSeq, DTAZ := ifelse(TourStartEndType %in% c("bb", "nb"), as.numeric(TAZ), 
                                                         ifelse(TourStartEndType == "nn" & TourStartEndLoc == "SameTAZ", as.numeric(fsTAZ), as.numeric(DTAZ)))]
   # Order and set key
-  firmTourSequence <- firmTourSequence[, .(BusID, Vehicle, TourID, SequenceID, StopTAZ = DTAZ, Activity, StopDuration, TourType, TourStartEndLoc)]
+  firmTourSequence <- firmTourSequence[, .(BusID, Vehicle, TourID, SequenceID, StopTAZ = DTAZ, Activity, StopLocType, StopDuration, TourType, TourStartEndLoc)]
   setkey(firmTourSequence, BusID, Vehicle, TourID, SequenceID)
   
   progressUpdate(subtaskprogress = 1, subtask = "Tour Generation", prop = 1/7, dir = SCENARIO_LOG_PATH)

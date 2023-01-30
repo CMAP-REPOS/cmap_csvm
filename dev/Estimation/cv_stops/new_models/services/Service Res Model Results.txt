@@ -1,0 +1,38 @@
+
+Call:
+hurdle(formula = myFormulaRes, data = service_stop_counts, dist = "poisson", 
+    zero.dist = "binomial", link = "logit")
+
+Pearson residuals:
+       Min         1Q     Median         3Q        Max 
+ -0.729091  -0.018327  -0.011412  -0.007268 695.601465 
+
+Count model coefficients (truncated poisson with log link):
+                                  Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                        0.27078    0.21421   1.264   0.2062    
+log(time)                         -0.48224    0.09429  -5.115 3.14e-07 ***
+log(time):Construction             0.24896    0.05795   4.296 1.74e-05 ***
+log(time):Ed_Health_Social_Public  0.19988    0.08403   2.379   0.0174 *  
+Zero hurdle model coefficients (binomial with logit link):
+                                          Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                               -4.08469    0.31534 -12.953  < 2e-16 ***
+log1p(HH)                                  0.33548    0.03518   9.535  < 2e-16 ***
+Admin_Support_Waste                        1.87474    0.31543   5.943 2.79e-09 ***
+Construction                               0.83245    0.18646   4.464 8.03e-06 ***
+Ed_Health_Social_Public                    0.67182    0.21133   3.179 0.001478 ** 
+Office_Professional                        0.87045    0.28825   3.020 0.002530 ** 
+Service_FoodDrink                          0.75464    0.73486   1.027 0.304460    
+Service_Other                              1.20337    0.35072   3.431 0.000601 ***
+Transport_Industry                        -0.02546    0.20243  -0.126 0.899930    
+Wholesale                                  0.27550    0.25126   1.096 0.272864    
+log(time)                                 -1.98111    0.04178 -47.418  < 2e-16 ***
+log(TOTAL_EMPLOYEES)                       0.25956    0.03034   8.554  < 2e-16 ***
+Admin_Support_Waste:log(TOTAL_EMPLOYEES)  -0.51814    0.16320  -3.175 0.001499 ** 
+Office_Professional:log(TOTAL_EMPLOYEES)  -0.93155    0.20978  -4.441 8.97e-06 ***
+Service_FoodDrink:log(TOTAL_EMPLOYEES)   -14.93607  329.68623  -0.045 0.963865    
+Service_Other:log(TOTAL_EMPLOYEES)        -0.30590    0.13949  -2.193 0.028306 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Number of iterations in BFGS optimization: 17 
+Log-likelihood: -5548 on 20 Df
