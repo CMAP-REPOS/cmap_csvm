@@ -617,10 +617,10 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
                         submodel_comparison_rep = submodel_comparison_rep)
                          
   submodel_parameters[["cv_goods_model"]] = model_step_inputs$model_step_env$cv_goods_model
-  submodel_parameters[["cv_service_model"]] = model_step_inputs$model_step_env$cv_service_model
   submodel_parameters[["cv_goods_res_model"]] = model_step_inputs$model_step_env$cv_goods_res_model
-  submodel_parameters[["cv_service_res_model"]] = model_step_inputs$model_step_env$cv_service_res_model
   submodel_parameters[["cv_goods_non_res_model"]] = model_step_inputs$model_step_env$cv_goods_non_res_model
+  submodel_parameters[["cv_service_model"]] = model_step_inputs$model_step_env$cv_service_model
+  submodel_parameters[["cv_service_res_model"]] = model_step_inputs$model_step_env$cv_service_res_model
   submodel_parameters[["cv_service_non_res_model"]] = model_step_inputs$model_step_env$cv_service_non_res_model
   
   # return a list of items to support calibration and debugging

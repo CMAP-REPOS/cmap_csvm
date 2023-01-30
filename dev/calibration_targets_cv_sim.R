@@ -1214,5 +1214,5 @@ saveRDS(model_step_targets_cv_sim,
 # check 
 model_step_targets_cv_sim <- readRDS(file = file.path(SYSTEM_DEV_CALIBRATION_PATH, "calibration_targets_cv_sim.RDS"))
 
-
+model_step_targets_cv_sim[["cv_sim_scheduledstops"]]$emp_stops[Activity == "Goods"]
 
