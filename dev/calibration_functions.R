@@ -224,6 +224,16 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   
   submodel_results_emp_stops = rbind(submodel_results[,.(ModelStops = .N), keyby = .(Activity, EmpCatGroupedName)],
                                      submodel_results[,.(ModelStops = .N, EmpCatGroupedName = "Total"), keyby = .(Activity)])[order(Activity, EmpCatGroupedName)]
+  submodel_results_emp_stops_res <- rbind(submodel_results[StopLocType == "Res",.(ModelStopsRes = .N), keyby = .(Activity, EmpCatGroupedName)],
+                                          submodel_results[StopLocType == "Res",.(ModelStopsRes = .N, EmpCatGroupedName = "Total"), keyby = .(Activity)])[order(Activity, EmpCatGroupedName)]
+  submodel_results_emp_stops_non_res <- rbind(submodel_results[StopLocType == "NonRes",.(ModelStopsNonRes = .N), keyby = .(Activity, EmpCatGroupedName)],
+                                          submodel_results[StopLocType == "NonRes",.(ModelStopsNonRes = .N, EmpCatGroupedName = "Total"), keyby = .(Activity)])[order(Activity, EmpCatGroupedName)]
+  submodel_results_emp_stops[submodel_results_emp_stops_res,
+                             ModelStopsRes := i.ModelStopsRes,
+                             on = c("Activity", "EmpCatGroupedName")]
+  submodel_results_emp_stops[submodel_results_emp_stops_non_res,
+                             ModelStopsNonRes := i.ModelStopsNonRes,
+                             on = c("Activity", "EmpCatGroupedName")]
   
   # remove any industries for which there are no stops from the emp total
   cols <- grep("NEmp_",names(model_step_inputs$model_step_env$TAZLandUseCVTM))
@@ -236,27 +246,35 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   submodel_results_emp_stops[industry_emp_totals, Emp := i.Emp, on = "EmpCatGroupedName"]
   
   submodel_results_emp_stops[, Model := ModelStops/Emp]
+  submodel_results_emp_stops[, ModelRes := ModelStopsRes/Emp]
+  submodel_results_emp_stops[, ModelNonRes := ModelStopsNonRes/Emp]
   
   # Estimate totals and add to the targets and then merge with model
   # Exclude Transport_Industry as not covered by the CSVM 
   model_step_target$emp_stops_total <- model_step_target$emp_stops[!EmpCatGroupedName %in% c("Transport_Industry", "Total") ,
                                                                     .(Employment = sum(Employment), 
-                                                                      Stops = sum(Stops), 
-                                                                      WeightedStops = sum(WeightedStops), 
+                                                                      Stops = sum(Stops),
+                                                                      StopsRes = sum(StopsRes),
+                                                                      StopsNonRes = sum(StopsNonRes),
+                                                                      WeightedStops = sum(WeightedStops),
+                                                                      WeightedStopsRes = sum(WeightedStopsRes),
+                                                                      WeightedStopsNonRes = sum(WeightedStopsNonRes),
                                                                       EmpCatGroupedName = "Total"), 
-                                                                   by = .(Activity)][, StopsEmp := WeightedStops/Employment]
+                                                                   by = .(Activity)][, c("StopsEmp","StopsResEmp", "StopsNonResEmp") := 
+                                                                                       .(WeightedStops/Employment, WeightedStopsRes/Employment, WeightedStopsNonRes/Employment)]
   
   model_step_target$emp_stops <- rbind(model_step_target$emp_stops[!EmpCatGroupedName %in% c("Transport_Industry", "Total") ],
                                        model_step_target$emp_stops_total)
   
-  submodel_comparison_emp_stops <- merge(model_step_target$emp_stops[, .(Activity, EmpCatGroupedName, Target = StopsEmp)], 
+  submodel_comparison_emp_stops <- merge(model_step_target$emp_stops[, .(Activity, EmpCatGroupedName, Target = StopsEmp, TargetRes = StopsResEmp, TargetNonRes = StopsNonResEmp)], 
                                          submodel_results_emp_stops, 
                                          by = c("Activity", "EmpCatGroupedName"), 
                                          all = TRUE)
   
   submodel_comparison_emp_stops[is.na(submodel_comparison_emp_stops)] <- 0
   
-  submodel_comparison_emp_stops[,TargetStops := Target * Emp]
+  submodel_comparison_emp_stops[, c("TargetStops", "TargetStopsRes", "TargetStopsNonRes") := 
+                                  .(Target * Emp, TargetRes * Emp, TargetNonRes * Emp)]
   
   
   # names(model_step_target)
@@ -320,7 +338,7 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   submodel_comparison_stop_dist_gps_mean <- cbind(model_step_target$gps_dist_mean[, .(Target = mean)], 
                                              submodel_results[,.(Model = mean(Distance))])
   
-  # Fator the the Target value to account for intermediate stops reducing the mean distance when added later
+  # Factor the the Target value to account for intermediate stops reducing the mean distance when added later
   # the observed data already includes the intermediate stops so is too short
   # distance is running at about 15% too low
   DISTANCE_CORRECTION = 1.15
@@ -350,6 +368,8 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
   # should be small but is not expected to be zero due to simulation differences. 
   
   submodel_comparison_emp_stops[, Difference := abs(ModelStops - TargetStops)]
+  submodel_comparison_emp_stops[, DifferenceRes := abs(ModelStopsRes - TargetStopsRes)]
+  submodel_comparison_emp_stops[, DifferenceNonRes := abs(ModelStopsNonRes- TargetStopsNonRes)]
   
   # Set a threshold for the model to reach
   submodel_difference_threshold = 1000
@@ -367,31 +387,87 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
     # Parameter adjustments 
     
     # Adjust the constants in the model
-    coefficients = 
+    # coefficients = 
+    #   rbind(data.table(
+    #     Activity = "Goods",
+    #     modelstep = "count",
+    #     coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$count), 
+    #     estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$count),
+    #     data.table(
+    #       Activity = "Goods",
+    #       modelstep = "zero",
+    #       coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$zero), 
+    #       estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$zero),
+    #     data.table(
+    #       Activity = "Service",
+    #       modelstep = "count",
+    #       coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$count), 
+    #       estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$count),
+    #     data.table(
+    #       Activity = "Service",
+    #       modelstep = "zero",
+    #       coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero), 
+    #       estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$zero))
+    
+    coefficients =
       rbind(data.table(
         Activity = "Goods",
+        StopLocType = "Res",
         modelstep = "count",
-        coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$count), 
-        estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$count),
+        coefficient = names(model_step_inputs$model_step_env$cv_goods_res_model$coefficients$count),
+        estimate = model_step_inputs$model_step_env$cv_goods_res_model$coefficients$count),
         data.table(
           Activity = "Goods",
+          StopLocType = "Res",
           modelstep = "zero",
-          coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$zero), 
-          estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$zero),
+          coefficient = names(model_step_inputs$model_step_env$cv_goods_res_model$coefficients$zero),
+          estimate = model_step_inputs$model_step_env$cv_goods_res_model$coefficients$zero),
         data.table(
           Activity = "Service",
+          StopLocType = "Res",
           modelstep = "count",
-          coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$count), 
-          estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$count),
+          coefficient = names(model_step_inputs$model_step_env$cv_service_res_model$coefficients$count),
+          estimate = model_step_inputs$model_step_env$cv_service_res_model$coefficients$count),
         data.table(
           Activity = "Service",
+          StopLocType = "Res",
           modelstep = "zero",
-          coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero), 
-          estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$zero))
+          coefficient = names(model_step_inputs$model_step_env$cv_service_res_model$coefficients$zero),
+          estimate = model_step_inputs$model_step_env$cv_service_res_model$coefficients$zero),
+        data.table(
+          Activity = "Goods",
+          StopLocType = "NonRes",
+          modelstep = "count",
+          coefficient = names(model_step_inputs$model_step_env$cv_goods_non_res_model$coefficients$count),
+          estimate = model_step_inputs$model_step_env$cv_goods_non_res_model$coefficients$count),
+        data.table(
+          Activity = "Goods",
+          StopLocType = "NonRes",
+          modelstep = "zero",
+          coefficient = names(model_step_inputs$model_step_env$cv_goods_non_res_model$coefficients$zero),
+          estimate = model_step_inputs$model_step_env$cv_goods_non_res_model$coefficients$zero),
+        data.table(
+          Activity = "Service",
+          StopLocType = "NonRes",
+          modelstep = "count",
+          coefficient = names(model_step_inputs$model_step_env$cv_service_non_res_model$coefficients$count),
+          estimate = model_step_inputs$model_step_env$cv_service_non_res_model$coefficients$count),
+        data.table(
+          Activity = "Service",
+          StopLocType = "NonRes",
+          modelstep = "zero",
+          coefficient = names(model_step_inputs$model_step_env$cv_service_non_res_model$coefficients$zero),
+          estimate = model_step_inputs$model_step_env$cv_service_non_res_model$coefficients$zero))
+    
     
     # Stops by industry
     submodel_comparison_emp_stops[, Ratio := Target/Model]
+    submodel_comparison_emp_stops[, RatioRes := TargetRes/ModelRes]
+    submodel_comparison_emp_stops[, RatioNonRes := TargetNonRes/ModelNonRes]
+    
     submodel_comparison_emp_stops[, Adjustment := ifelse(is.infinite(Ratio)|Ratio == 0, 0, log(Ratio))]
+    submodel_comparison_emp_stops[, AdjustmentRes := ifelse(is.infinite(RatioRes)|RatioRes == 0, 0, log(RatioRes))]
+    submodel_comparison_emp_stops[, AdjustmentNonRes := ifelse(is.infinite(RatioNonRes)|RatioNonRes == 0, 0, log(RatioNonRes))]
     
     # Distance by industry/activity/mean overall
     submodel_comparison_stop_dist[, Ratio := Target/Model]
@@ -424,21 +500,42 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
       
     } else if (submodel_iter %%5 == 1) { # 1,6,11,16 etc iterations
       
-      # Apply the total adjustment to the intercept
-      coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",.(Activity, coefficient = "(Intercept)", modelstep = "zero", Adjustment)], 
-                   adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+      # Apply the total adjustment to the intercept (Res and NonRes)
+      coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",
+                                                 .(Activity, StopLocType = "Res", 
+                                                   coefficient = "(Intercept)", 
+                                                   modelstep = "zero", Adjustment, AdjustmentRes, AdjustmentNonRes)], 
+                   adjustment := i.AdjustmentRes, on = c("Activity", "StopLocType", "modelstep", "coefficient")]
+      
+      coefficients[submodel_comparison_emp_stops[EmpCatGroupedName == "Total",
+                                                 .(Activity, StopLocType = "NonRes", 
+                                                   coefficient = "(Intercept)", 
+                                                   modelstep = "zero", Adjustment, AdjustmentRes, AdjustmentNonRes)], 
+                   adjustment := i.AdjustmentNonRes, on = c("Activity", "StopLocType", "modelstep", "coefficient")]
+      
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
       
     } else if (submodel_iter %%5 == 2) { # 2,7,12,17 etc iterations
       
       # Normalize the adjustments to zero out retail adjustment (it is the zero level)
       submodel_comparison_emp_stops[submodel_comparison_emp_stops[EmpCatGroupedName == "Retail"], 
-                                    Adjustment := Adjustment - i.Adjustment,
+                                    c("Adjustment", "AdjustmentRes", "AdjustmentNonRes") := 
+                                        .(Adjustment - i.Adjustment, 
+                                          AdjustmentRes - i.AdjustmentRes, 
+                                          AdjustmentNonRes - i.AdjustmentNonRes),
                                     on = "Activity"]
       
       # Apply the emp group adjustments to their parameters
-      coefficients[submodel_comparison_emp_stops[,.(Activity, coefficient = EmpCatGroupedName, modelstep = "zero", Adjustment)], 
-                   adjustment := i.Adjustment, on = c("Activity", "modelstep", "coefficient")]
+      coefficients[submodel_comparison_emp_stops[,.(Activity, StopLocType = "Res",
+                                                    coefficient = EmpCatGroupedName, modelstep = "zero", 
+                                                    Adjustment, AdjustmentRes, AdjustmentNonRes)], 
+                   adjustment := i.AdjustmentRes, on = c("Activity","StopLocType", "modelstep", "coefficient")]
+      
+      coefficients[submodel_comparison_emp_stops[,.(Activity, StopLocType = "NonRes",
+                                                    coefficient = EmpCatGroupedName, modelstep = "zero", 
+                                                    Adjustment, AdjustmentRes, AdjustmentNonRes)], 
+                   adjustment := i.AdjustmentNonRes, on = c("Activity","StopLocType", "modelstep", "coefficient")]
+      
       coefficients[!is.na(adjustment), estimate := estimate + adjustment]
     
     } else if (submodel_iter %%5 == 3) { # 3,8,13,18 etc iterations
@@ -463,21 +560,53 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
       
     }
     
-    new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
-    names(new_coefficients_zero_goods) = coefficients[Activity == "Goods" & modelstep == "zero", coefficient]
-    model_step_inputs$model_step_env$cv_goods_model$coefficients$zero = new_coefficients_zero_goods
+    # new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
+    # names(new_coefficients_zero_goods) = coefficients[Activity == "Goods" & modelstep == "zero", coefficient]
+    # model_step_inputs$model_step_env$cv_goods_model$coefficients$zero = new_coefficients_zero_goods
+    # 
+    # new_coefficients_zero_service = coefficients[Activity == "Service" & modelstep == "zero", estimate]
+    # names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
+    # model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
+    # 
+    # new_coefficients_count_goods = coefficients[Activity == "Goods" & modelstep == "count", estimate]
+    # names(new_coefficients_count_goods) = coefficients[Activity == "Goods" & modelstep == "count", coefficient]
+    # model_step_inputs$model_step_env$cv_goods_model$coefficients$count = new_coefficients_count_goods
+    # 
+    # new_coefficients_count_service = coefficients[Activity == "Service" & modelstep == "count", estimate]
+    # names(new_coefficients_count_service) = coefficients[Activity == "Service" & modelstep == "count", coefficient]
+    # model_step_inputs$model_step_env$cv_service_model$coefficients$count = new_coefficients_count_service
     
-    new_coefficients_zero_service = coefficients[Activity == "Service" & modelstep == "zero", estimate]
-    names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
-    model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
+    new_coefficients_zero_goods_res = coefficients[Activity == "Goods" & StopLocType == "Res" & modelstep == "zero", estimate]
+    names(new_coefficients_zero_goods_res) = coefficients[Activity == "Goods" & StopLocType == "Res" & modelstep == "zero", coefficient]
+    model_step_inputs$model_step_env$cv_goods_res_model$coefficients$zero = new_coefficients_zero_goods_res
+
+    new_coefficients_zero_service_res = coefficients[Activity == "Service" & StopLocType == "Res" & modelstep == "zero", estimate]
+    names(new_coefficients_zero_service_res) = coefficients[Activity == "Service" & StopLocType == "Res" & modelstep == "zero", coefficient]
+    model_step_inputs$model_step_env$cv_service_res_model$coefficients$zero = new_coefficients_zero_service_res
+
+    new_coefficients_count_goods_res = coefficients[Activity == "Goods" & StopLocType == "Res" & modelstep == "count", estimate]
+    names(new_coefficients_count_goods_res) = coefficients[Activity == "Goods" & StopLocType == "Res" & modelstep == "count", coefficient]
+    model_step_inputs$model_step_env$cv_goods_res_model$coefficients$count = new_coefficients_count_goods_res
+
+    new_coefficients_count_service_res = coefficients[Activity == "Service" & StopLocType == "Res" & modelstep == "count", estimate]
+    names(new_coefficients_count_service_res) = coefficients[Activity == "Service" & StopLocType == "Res" & modelstep == "count", coefficient]
+    model_step_inputs$model_step_env$cv_service_res_model$coefficients$count = new_coefficients_count_service_res
+
+    new_coefficients_zero_goods_non_res = coefficients[Activity == "Goods" & StopLocType == "NonRes" & modelstep == "zero", estimate]
+    names(new_coefficients_zero_goods_non_res) = coefficients[Activity == "Goods" & StopLocType == "NonRes" & modelstep == "zero", coefficient]
+    model_step_inputs$model_step_env$cv_goods_non_res_model$coefficients$zero = new_coefficients_zero_goods_non_res
     
-    new_coefficients_count_goods = coefficients[Activity == "Goods" & modelstep == "count", estimate]
-    names(new_coefficients_count_goods) = coefficients[Activity == "Goods" & modelstep == "count", coefficient]
-    model_step_inputs$model_step_env$cv_goods_model$coefficients$count = new_coefficients_count_goods
+    new_coefficients_zero_service_non_res = coefficients[Activity == "Service" & StopLocType == "NonRes" & modelstep == "zero", estimate]
+    names(new_coefficients_zero_service_non_res) = coefficients[Activity == "Service" & StopLocType == "NonRes" & modelstep == "zero", coefficient]
+    model_step_inputs$model_step_env$cv_service_non_res_model$coefficients$zero = new_coefficients_zero_service_non_res
     
-    new_coefficients_count_service = coefficients[Activity == "Service" & modelstep == "count", estimate]
-    names(new_coefficients_count_service) = coefficients[Activity == "Service" & modelstep == "count", coefficient]
-    model_step_inputs$model_step_env$cv_service_model$coefficients$count = new_coefficients_count_service
+    new_coefficients_count_goods_non_res = coefficients[Activity == "Goods" & StopLocType == "NonRes" & modelstep == "count", estimate]
+    names(new_coefficients_count_goods_non_res) = coefficients[Activity == "Goods" & StopLocType == "NonRes" & modelstep == "count", coefficient]
+    model_step_inputs$model_step_env$cv_goods_non_res_model$coefficients$count = new_coefficients_count_goods_non_res
+    
+    new_coefficients_count_service_non_res = coefficients[Activity == "Service" & StopLocType == "NonRes" & modelstep == "count", estimate]
+    names(new_coefficients_count_service_non_res) = coefficients[Activity == "Service" & StopLocType == "NonRes" & modelstep == "count", coefficient]
+    model_step_inputs$model_step_env$cv_service_non_res_model$coefficients$count = new_coefficients_count_service_non_res
     
   }
   
@@ -489,6 +618,10 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
                          
   submodel_parameters[["cv_goods_model"]] = model_step_inputs$model_step_env$cv_goods_model
   submodel_parameters[["cv_service_model"]] = model_step_inputs$model_step_env$cv_service_model
+  submodel_parameters[["cv_goods_res_model"]] = model_step_inputs$model_step_env$cv_goods_res_model
+  submodel_parameters[["cv_service_res_model"]] = model_step_inputs$model_step_env$cv_service_res_model
+  submodel_parameters[["cv_goods_non_res_model"]] = model_step_inputs$model_step_env$cv_goods_non_res_model
+  submodel_parameters[["cv_service_non_res_model"]] = model_step_inputs$model_step_env$cv_service_non_res_model
   
   # return a list of items to support calibration and debugging
   return(list(submodel_calibrated = submodel_calibrated,
