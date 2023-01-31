@@ -2,10 +2,16 @@
 library(tidyverse)
 library(readxl)
 library(sf)
+
+
+## Future Year
+#Emp <- read_xlsx('dev/Data_Processed/Future_Year_Inputs/r211_empsbySZ_fullmodelregion_2050.xlsx')
+
+
 # Process Internal (Updated File Received 11/10/22) -----
 ## Base Year
 #Emp <- read.csv('dev/Data_Processed/CBP_Emp_HH/subzonetm_211_2019.csv')
-## FUTure Year
+
 
 Emp1 <- Emp %>% 
   select(subzone_id, contains('jobs')) %>% 
@@ -96,8 +102,7 @@ Emp_Control_external <- Emp_TAZ_long2_external %>%
 
 
 
-#Bind Interanl and Exteranl
-
+#Bind Internal and External
 CompleteEmp <- rbind(Emp_Control, Emp_Control_external) %>%
   arrange(NAICS, Zone17)
 
@@ -108,7 +113,12 @@ CompleteEmp <- rbind(Emp_Control, Emp_Control_external) %>%
 
 #for writing future year scenario file
 #write_csv(Emp_Control, 'scenarios/future/inputs/data_emp_control_taz.csv')
-write_csv(CompleteEmp, 'scenarios/base/inputs/data_emp_control_taz.csv')
+#write_csv(CompleteEmp, 'scenarios/base/inputs/data_emp_control_taz.csv')
+
+
+
+
+
 
 
 
