@@ -158,9 +158,8 @@ for(model_step_num in 1:length(models)){
   # Loop over the submodels
   
   for(submodel_num in 1:length(model_step_submodels)){
-  #for(submodel_num in 3:length(model_step_submodels)){
     
-    #submodel_num <- 2
+    #submodel_num <- 7
     # Name to use for submodel files
     submodel_name <- model_step_submodels[submodel_num]  
     
