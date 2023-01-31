@@ -32,13 +32,10 @@ cv_sim <- function(firms) {
                                        d_bars = d_bars,
                                        hurdle_support = hurdle_support,
                                        TAZLandUseCVTM = TAZLandUseCVTM,
-                                       cv_goods_model = cv_goods_model,
                                        cv_goods_res_model = cv_goods_res_model,
                                        cv_goods_non_res_model = cv_goods_non_res_model,
-                                       cv_service_model = cv_service_model,
                                        cv_service_res_model = cv_service_res_model,
-                                       cv_service_non_res_model = cv_service_non_res_model,
-                                       segment_res_non_res = TRUE)
+                                       cv_service_non_res_model = cv_service_non_res_model)
     gc()
   }
 

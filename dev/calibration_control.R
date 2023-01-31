@@ -49,10 +49,8 @@ models <- list(firm_sim = list(firm_sim_taz_land_use = list(require_calibration 
                              cv_sim_scheduledstops = list(require_calibration = TRUE,
                                                           submodel_results_name = "firmStops",
                                                           last_output_step = "cv_sim_activities",
-                                                          estimated_models = list(cv_goods_model = "cv_goods_model",
-                                                                                  cv_goods_res_model = "cv_goods_res_model",
+                                                          estimated_models = list(cv_goods_res_model = "cv_goods_res_model",
                                                                                   cv_goods_non_res_model = "cv_goods_non_res_model",
-                                                                                  cv_service_model = "cv_service_model",
                                                                                   cv_service_res_model = "cv_service_res_model",
                                                                                   cv_service_non_res_model = "cv_service_non_res_model"),
                                                           max_iterations = 31),
@@ -103,10 +101,8 @@ source("./dev/init_dev.R")
 if(CALIBRATION_RESET_TO_ESTIMATED){
   
   paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_model.RDS",
-                                                   "cv_stops/new_models/goods/cv_goods_model.RDS",
                                                    "cv_stops/new_models/goods/cv_goods_res_model.RDS",
                                                    "cv_stops/new_models/goods/cv_goods_non_res_model.RDS",
-                                                   "cv_stops/new_models/services/cv_service_model.RDS",
                                                    "cv_stops/new_models/services/cv_service_res_model.RDS",
                                                    "cv_stops/new_models/services/cv_service_non_res_model.RDS",
                                                    "cv_vehicle/final_model/cv_vehicle_model.rds",
@@ -242,8 +238,6 @@ for(model_step_num in 1:length(models)){
              function(x) saveRDS(object = submodel_calibrated_list$submodel_parameters[[x]],
                                  file = file.path(SYSTEM_DATA_PATH,
                                                   paste0(models[[model_step_num]][[submodel_name]]$estimated_models[[x]],".RDS"))))
-      
-      ### TODO add a function here to also save the cv_settings.Rdata file if that is needed
       
       print(paste("  Calibration complete and parameters saved for", submodel_name))
       

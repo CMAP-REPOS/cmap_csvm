@@ -385,30 +385,7 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
     submodel_calibrated <- TRUE
   } else {
     # Parameter adjustments 
-    
     # Adjust the constants in the model
-    # coefficients = 
-    #   rbind(data.table(
-    #     Activity = "Goods",
-    #     modelstep = "count",
-    #     coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$count), 
-    #     estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$count),
-    #     data.table(
-    #       Activity = "Goods",
-    #       modelstep = "zero",
-    #       coefficient = names(model_step_inputs$model_step_env$cv_goods_model$coefficients$zero), 
-    #       estimate = model_step_inputs$model_step_env$cv_goods_model$coefficients$zero),
-    #     data.table(
-    #       Activity = "Service",
-    #       modelstep = "count",
-    #       coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$count), 
-    #       estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$count),
-    #     data.table(
-    #       Activity = "Service",
-    #       modelstep = "zero",
-    #       coefficient = names(model_step_inputs$model_step_env$cv_service_model$coefficients$zero), 
-    #       estimate = model_step_inputs$model_step_env$cv_service_model$coefficients$zero))
-    
     coefficients =
       rbind(data.table(
         Activity = "Goods",
@@ -560,22 +537,6 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
       
     }
     
-    # new_coefficients_zero_goods = coefficients[Activity == "Goods" & modelstep == "zero", estimate]
-    # names(new_coefficients_zero_goods) = coefficients[Activity == "Goods" & modelstep == "zero", coefficient]
-    # model_step_inputs$model_step_env$cv_goods_model$coefficients$zero = new_coefficients_zero_goods
-    # 
-    # new_coefficients_zero_service = coefficients[Activity == "Service" & modelstep == "zero", estimate]
-    # names(new_coefficients_zero_service) = coefficients[Activity == "Service" & modelstep == "zero", coefficient]
-    # model_step_inputs$model_step_env$cv_service_model$coefficients$zero = new_coefficients_zero_service
-    # 
-    # new_coefficients_count_goods = coefficients[Activity == "Goods" & modelstep == "count", estimate]
-    # names(new_coefficients_count_goods) = coefficients[Activity == "Goods" & modelstep == "count", coefficient]
-    # model_step_inputs$model_step_env$cv_goods_model$coefficients$count = new_coefficients_count_goods
-    # 
-    # new_coefficients_count_service = coefficients[Activity == "Service" & modelstep == "count", estimate]
-    # names(new_coefficients_count_service) = coefficients[Activity == "Service" & modelstep == "count", coefficient]
-    # model_step_inputs$model_step_env$cv_service_model$coefficients$count = new_coefficients_count_service
-    
     new_coefficients_zero_goods_res = coefficients[Activity == "Goods" & StopLocType == "Res" & modelstep == "zero", estimate]
     names(new_coefficients_zero_goods_res) = coefficients[Activity == "Goods" & StopLocType == "Res" & modelstep == "zero", coefficient]
     model_step_inputs$model_step_env$cv_goods_res_model$coefficients$zero = new_coefficients_zero_goods_res
@@ -616,10 +577,8 @@ calibrate_cv_sim_scheduledstops <- function(submodel_calibrated, submodel_result
                         submodel_comparison_stop_dist_gps_mean = submodel_comparison_stop_dist_gps_mean,
                         submodel_comparison_rep = submodel_comparison_rep)
                          
-  submodel_parameters[["cv_goods_model"]] = model_step_inputs$model_step_env$cv_goods_model
   submodel_parameters[["cv_goods_res_model"]] = model_step_inputs$model_step_env$cv_goods_res_model
   submodel_parameters[["cv_goods_non_res_model"]] = model_step_inputs$model_step_env$cv_goods_non_res_model
-  submodel_parameters[["cv_service_model"]] = model_step_inputs$model_step_env$cv_service_model
   submodel_parameters[["cv_service_res_model"]] = model_step_inputs$model_step_env$cv_service_res_model
   submodel_parameters[["cv_service_non_res_model"]] = model_step_inputs$model_step_env$cv_service_non_res_model
   

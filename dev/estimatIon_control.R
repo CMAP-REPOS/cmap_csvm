@@ -45,35 +45,19 @@ apollo_modelOutput(intermattr)
 
 ### Copy the estimated model components over to the lib/data folder for use in applcation
 
-# # stop duration model is misnamed!
-# stopdur <- readRDS("./dev/Estimation/cv_duration/cv_duration.rds")
-# saveRDS(stopdur, "./dev/Estimation/cv_duration/cv_stopduration_model.rds")
-
-# ###TEMP rename
-# activities <- readRDS("./dev/Estimation/cv_activities/cv_activities_model_fortesting.RDS")
-# saveRDS(activities, "./dev/Estimation/cv_activities/cv_activities_model.RDS")
-
-
 paths_to_models <- file.path("./dev/Estimation", c("cv_activities/cv_activities_model.RDS",
-                                                   "cv_stops/new_models/goods/cv_goods_model.RDS",
-                                                   "cv_stops/new_models/services/cv_service_model.RDS",
+                                                   "cv_stops/new_models/goods/cv_goods_res_model.RDS",
+                                                   "cv_stops/new_models/goods/cv_goods_non_res_model.RDS",
+                                                   "cv_stops/new_models/services/cv_service_res_model.RDS",
+                                                   "cv_stops/new_models/services/cv_service_non_res_model.RDS",
                                                    "cv_vehicle/final_model/cv_vehicle_model.rds",
-                                                   # "cv_duration/cv_stopduration_model.rds",
+                                                   "cv_duration/cv_stopduration_model.rds",
                                                    "cv_tours/cv_tours_model.rds",
-                                                   # "cv_arrival/cv_arrival_model.rds",
-                                                   # "cv_intermediate/cv_intermediate_model.rds",
-                                                   # "cv_intermediate/cv_intermediate_deviations.rds",
-                                                   "cv_intermediate/cv_intermediate_model_attraction.rds"))
+                                                   "cv_arrival/cv_arrival_model.rds",
+                                                   "cv_intermediate/cv_intermediate_model.rds",
+                                                   "cv_intermediate/cv_intermediate_deviations.rds",
+                                                   "cv_intermediate/cv_intermediate_attraction_model.rds"))
 
 file.copy(from = paths_to_models,
-          to = "./lib/data",
-          overwrite = TRUE)
-
-paths_to_stop_seg_models <- file.path("./dev/Estimation", c("cv_stops/new_models/goods/cv_goods_res_model.RDS",
-                                                            "cv_stops/new_models/goods/cv_goods_non_res_model.RDS",
-                                                   "cv_stops/new_models/services/cv_service_res_model.RDS",
-                                                   "cv_stops/new_models/services/cv_service_non_res_model.RDS"))
-
-file.copy(from = paths_to_stop_seg_models,
           to = "./lib/data",
           overwrite = TRUE)
