@@ -235,7 +235,7 @@ cv_sim_intermediatestops <- function(database, firms, skims_tod,
   intTrips[, OTAZ := ifelse(NintStops > 1L & IntID > 1L, NA, OTAZ)]
   
   # Predict intermediate stop durations
-  intTrips[, StopDuration := cv_sim_stopduration(database = intTrips[,.(BusID, StopID, DTAZ, Activity, Vehicle)], 
+  intTrips[, StopDuration := cv_sim_stopduration(database = intTrips[,.(BusID, StopID, DTAZ, Activity, StopLocType, Vehicle)], 
                                                  firms = firms,
                                                  model = cv_stopduration_model)$StopDuration]
   
