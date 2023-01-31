@@ -99,7 +99,7 @@ cv_sim_scheduledstops <- function(firmActivities, skims, firms, TAZLandUseCVTM, 
   firmZoneSetNonRes <- cbind(firmsInd[firmsIndex, .(BusID)], tazZones[ZonesIndexNonRes, .(TAZ = DTAZ)])
   
   rm(firmsInd, firmSample, tazInd, tazZones, ZonesIndexRes, ZonesIndexNonRes, 
-     firmsIndex, ProbList, SampledZonesRes, SampledZonesNonRes)
+     firmsIndex, ProbListRes, ProbListNonRes, SampledZonesRes, SampledZonesNonRes)
   gc()
   
   ### Service stops Res
