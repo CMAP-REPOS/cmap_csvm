@@ -298,12 +298,12 @@ cv_sim_tours <- function(firmStopsVehDur, firms, branch.limit, skims, model) {
   firmTourSequence[, SequenceID := 1:.N, by = .(BusID, Vehicle, TourID)]
   
   # For cases where first sequence record is a tour start
-  firmTourSequence[SequenceID == 1, c("StopID", "StopDuration", "Activity") := .(NA, 0, "Start Tour")]
+  firmTourSequence[SequenceID == 1, c("StopID", "StopDuration", "Activity", "StopLocType") := .(NA, 0, "Start Tour", "NonRes")]
   firmTourSequence[SequenceID == 1, DTAZ := ifelse(TourStartEndType %in% c("bb", "bn"), as.numeric(TAZ), as.numeric(DTAZ))]
   
   # Last sequence record is a tour end
   firmTourSequence[, maxSeq := .N, by = .(BusID, Vehicle, TourID)]
-  firmTourSequence[SequenceID == maxSeq, c("StopID", "StopDuration", "Activity") := .(NA, 0, "Return")]
+  firmTourSequence[SequenceID == maxSeq, c("StopID", "StopDuration", "Activity", "StopLocType") := .(NA, 0, "Return", "NonRes")]
   firmTourSequence[firmTourSequence[SequenceID ==2], fsTAZ := i.DTAZ, on = c("BusID", "Vehicle", "TourID")]
   firmTourSequence[SequenceID == maxSeq, DTAZ := ifelse(TourStartEndType %in% c("bb", "nb"), as.numeric(TAZ), 
                                                         ifelse(TourStartEndType == "nn" & TourStartEndLoc == "SameTAZ", as.numeric(fsTAZ), as.numeric(DTAZ)))]
