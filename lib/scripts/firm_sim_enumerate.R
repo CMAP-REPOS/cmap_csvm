@@ -10,7 +10,7 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   EmpCountyPublic[EmpCounty[EmpCatName != "92", .(Emp = sum(Emp)), by = CountyFIPS], EmpOther := i.Emp, on = "CountyFIPS"]
   EmpCountyPublic[, PctPublic := Emp/EmpOther]
   
-  EstablishmentsMiss <- Establishments[, .(est = sum(est)), by = .(CountyFIPS, esizecat)]
+  EstablishmentsMiss <- Establishments[, .(est = sum(est)), keyby = .(CountyFIPS, esizecat)]
   EstablishmentsMiss[EmpCountyPublic, PctPublic := i.PctPublic, on = "CountyFIPS"]
   EstablishmentsMiss[, estPublic := est * PctPublic]
   EstablishmentsMiss[, estPublic := bucketRound(estPublic)]
@@ -21,6 +21,7 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   
   # Enumerates the agent businesses using the est variable.
   Firms <- Establishments[rep(seq_len(Establishments[, .N]), est),]
+  setkey(Firms, NAICS6, CountyFIPS, EmpCatName, esizecat)
 
   # Estimate the number of employees
   # Sample from the employment range using probabilities that approximate a declining distribution (1 more likely than 2, etc)
@@ -35,9 +36,9 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
                          replace = TRUE,
                          prob = seq(EmpProb[esizecat],1, 
                                     by = -(EmpProb[esizecat] - 1)/EmpDiff[esizecat])), 
-        keyby = esizecat]
+        by = esizecat]
   
-  # Add an ID and firm type
+  # Add an ID
   Firms[, BusID := .I]
 
   # Remove uncessary fields
