@@ -32,7 +32,7 @@ firm_sim_process_inputs <- function(envir) {
     cbp <- cbp[,.(establishment = sum(establishment),
                   e1 = sum(e1), e2 = sum(e2), e3 = sum(e3), e4 = sum(e4),
                 e5 = sum(e5), e6 = sum(e6), e7 = sum(e7), e8 = sum(e8)),
-              by = .(NAICS6 = Industry_NAICS6_CBP, CountyFIPS = CBPZONE)]
+              keyby = .(CountyFIPS = CBPZONE, NAICS6 = Industry_NAICS6_CBP)]
     
     # Add 2 digit NAICS and the EmpCatName used in the model
     cbp[, NAICS2 := substr(NAICS6, 1, 2)]
@@ -57,7 +57,9 @@ firm_sim_process_inputs <- function(envir) {
     cbpn2[, intest := as.integer(gsub("e","", esizecat))]
     
     cbp_extra <- list()
-    for(n2 in unique(cbpn2$NAICS2)){
+    set.seed(BASE_SEED_VALUE)
+    
+    for(n2 in sort(unique(cbpn2$NAICS2))){
       cbp_extra_n2 <- cbp[NAICS2 == n2 & est_cat_miss > 0,
                           .(NAICS6, CountyFIPS, establishment, est_cat_sum, est_cat_miss, NAICS2, EmpCatName)]
       if(nrow(cbp_extra_n2)>0){
@@ -94,7 +96,7 @@ firm_sim_process_inputs <- function(envir) {
     
     # Combine with cbp extra and summarize
     cbp <- rbind(cbp, cbp_extra)
-    cbp <- cbp[, .(est = sum(est)), keyby = .(NAICS6, CountyFIPS, EmpCatName, esizecat)]
+    cbp <- cbp[, .(est = sum(est)), keyby = .(CountyFIPS, NAICS6, EmpCatName, esizecat)]
     
     # Convert esizecat to an integer (1:8)
     cbp[, esizecat := as.integer(esizecat)]

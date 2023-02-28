@@ -16,12 +16,12 @@ firm_synthesis_enumerate <- function(Establishments, EstSizeCategories, TAZEmplo
   EstablishmentsMiss[, estPublic := bucketRound(estPublic)]
   
   Establishments <- rbind(Establishments,
-                          EstablishmentsMiss[, .(NAICS6 = 920000, CountyFIPS, 
+                          EstablishmentsMiss[, .(CountyFIPS, NAICS6 = 920000, 
                                                  EmpCatName = "92", esizecat, est = estPublic)])
   
   # Enumerates the agent businesses using the est variable.
   Firms <- Establishments[rep(seq_len(Establishments[, .N]), est),]
-  setkey(Firms, NAICS6, CountyFIPS, EmpCatName, esizecat)
+  setkey(Firms, CountyFIPS, NAICS6, EmpCatName, esizecat)
 
   # Estimate the number of employees
   # Sample from the employment range using probabilities that approximate a declining distribution (1 more likely than 2, etc)
