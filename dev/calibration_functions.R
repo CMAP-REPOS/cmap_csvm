@@ -1143,7 +1143,7 @@ calibrate_cv_sim_scheduledtrips =
       coefficients[!is.na(adjustment), estimate := estimate + adjustment] 
       new_coefficients = coefficients[, estimate]
       names(new_coefficients) = coefficients[, coefficient]
-      model_step_inputs$model_step_env$cv_tours_model$estimate = new_coefficients
+      model_step_inputs$model_step_env$cv_arrival_model$estimate = new_coefficients
       
     }
     
